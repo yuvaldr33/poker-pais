@@ -1,0 +1,12 @@
+{
+  "name": "פוקר פייס",
+  "short_name": "פוקר פייס",
+  "description": "מעקב הגרלות צ'אנס, טיימר ותחזית",
+  "start_url": "/",
+  "display": "standalone",
+  "dir": "rtl",
+  "lang": "he",
+  "background_color": "#0c1512",
+  "theme_color": "#0c1512",
+  "icons": [{ "src": "logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>פוקר פייס</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0c1512">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f1ea; --panel:#ffffff; --panel2:#f7f5ef; --ink:#17201c; --mute:#68736d; --line:#e2dfd5;
+  --gold:#c08a12; --gold-soft:#f6e7bf; --felt:#1f6b4f; --red:#cf2a2a; --black:#17201c;
+  --ok:#1f8a4c; --ok-soft:#dff3e6; --card:#fffdf7; --shadow:0 1px 2px rgba(0,0,0,.05),0 6px 20px rgba(0,0,0,.06);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0c1512; --panel:#13201b; --panel2:#182a23; --ink:#eef3ef; --mute:#93a39b; --line:#22362e;
+  --gold:#f2b830; --gold-soft:#3a2f12; --felt:#2a8a66; --red:#ff6262; --black:#eef3ef;
+  --ok:#4cd087; --ok-soft:#173527; --card:#1d3129; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  --bg:#0c1512; --panel:#13201b; --panel2:#182a23; --ink:#eef3ef; --mute:#93a39b; --line:#22362e;
+  --gold:#f2b830; --gold-soft:#3a2f12; --felt:#2a8a66; --red:#ff6262; --black:#eef3ef;
+  --ok:#4cd087; --ok-soft:#173527; --card:#1d3129; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font:16px/1.5 Heebo,system-ui,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px 48px}
+header{display:flex;align-items:center;gap:12px;padding:6px 0 14px}
+header img{width:48px;height:48px;border-radius:12px;box-shadow:var(--shadow)}
+.brand h1{margin:0;font-size:22px;font-weight:800;letter-spacing:-.2px}
+.brand p{margin:0;color:var(--mute);font-size:13px}
+.hbtns{margin-inline-start:auto;display:flex;gap:8px}
+.ibtn{width:40px;height:40px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  display:grid;place-items:center;cursor:pointer;font-size:18px}
+.ibtn.on{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:18px;margin:12px 0;box-shadow:var(--shadow)}
+.kicker{font-size:13px;color:var(--mute);font-weight:500;display:flex;justify-content:space-between;align-items:center;gap:8px}
+h2{font-size:17px;margin:0 0 12px;font-weight:700}
+
+/* טיימר */
+.hero{background:radial-gradient(120% 140% at 50% 0%,#1f6b4f 0%,#0e3326 60%,#0a241b 100%);color:#fff;border:0;text-align:center;padding:22px 18px 18px}
+.hero .kicker{color:#cfe3d9;justify-content:center}
+.timer{font-family:"JetBrains Mono",ui-monospace,monospace;font-weight:700;font-size:clamp(44px,13vw,64px);
+  letter-spacing:1px;margin:6px 0 2px;direction:ltr;font-variant-numeric:tabular-nums}
+.timer .sep{opacity:.5}
+.when{color:#ffe59a;font-weight:600}
+.bar{height:6px;border-radius:99px;background:rgba(255,255,255,.14);overflow:hidden;margin:14px 0 4px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffe59a,#f2b830);border-radius:99px;transition:width .5s linear}
+.live{display:none;align-items:center;justify-content:center;gap:8px;font-weight:700;color:#ffe59a;margin-top:6px}
+.live .dot{width:10px;height:10px;border-radius:50%;background:#ff5d5d;animation:pulse 1.2s infinite}
+.hero.drawing .live{display:flex}
+.hero.drawing .timer{opacity:.35}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,93,93,.7)}100%{box-shadow:0 0 0 12px rgba(255,93,93,0)}}
+
+/* קלפים */
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;direction:ltr}
+.card{aspect-ratio:5/7;border-radius:14px;border:1.5px dashed var(--line);background:var(--panel2);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mute);position:relative}
+.card .s{font-size:20px;line-height:1}
+.card .v{font-size:28px;font-weight:800;line-height:1.1}
+.card.on{border:2px solid var(--gold);background:var(--card);color:var(--black);box-shadow:0 4px 14px rgba(192,138,18,.18)}
+.card.red .s,.card.red.on .v{color:var(--red)}
+.card.hit{border:2px solid var(--ok);background:var(--ok-soft)}
+.card.hit::after{content:"✓";position:absolute;top:4px;inset-inline-start:6px;font-size:12px;color:var(--ok);font-weight:800}
+.cards.sm{gap:6px;grid-template-columns:repeat(4,38px);justify-content:center}
+.cards.sm .card{border-radius:8px;border:1px solid var(--line);box-shadow:none;background:var(--card)}
+.cards.sm .card.hit{border:2px solid var(--ok);background:var(--ok-soft)}
+.cards.sm .card .v{font-size:16px}.cards.sm .card .s{font-size:11px}
+
+.method{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:var(--mute);flex-wrap:wrap}
+.badge{font-size:12px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--gold-soft);color:var(--gold);border:1px solid var(--gold)}
+.badge.gray{background:var(--panel2);color:var(--mute);border-color:var(--line)}
+
+/* היום */
+.slots{display:flex;gap:8px;flex-wrap:wrap}
+.slot{padding:7px 12px;border-radius:12px;border:1px solid var(--line);font-family:"JetBrains Mono",monospace;font-size:14px;font-weight:600;color:var(--mute);background:var(--panel2)}
+.slot.done{color:var(--ok);border-color:transparent;background:var(--ok-soft)}
+.slot.done::before{content:"✓ "}
+.slot.next{color:var(--ink);border-color:var(--gold);background:var(--gold-soft)}
+.slot.next::before{content:"● ";color:var(--gold)}
+
+/* היסטוריה */
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .meta{font-size:13px;color:var(--mute);line-height:1.35;min-width:74px}
+.row .meta b{color:var(--ink);font-size:14px;display:block}
+.row .sc{font-size:13px;font-weight:700;min-width:44px;text-align:center;padding:4px 8px;border-radius:10px;background:var(--panel2);color:var(--mute)}
+.row .sc.good{background:var(--ok-soft);color:var(--ok)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
+.stat{background:var(--panel2);border-radius:14px;padding:10px;text-align:center}
+.stat .n{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.stat .k{font-size:12px;color:var(--mute)}
+.empty{color:var(--mute);font-size:14px;text-align:center;padding:8px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--ink);color:var(--bg);
+  padding:12px 18px;border-radius:14px;font-weight:600;box-shadow:var(--shadow);transition:transform .3s;z-index:9;max-width:90vw}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.err{display:none;background:#fff1f0;color:#a61b1b;border:1px solid #f3c2bd;border-radius:14px;padding:10px 14px;font-size:14px;margin:8px 0}
+footer{text-align:center;color:var(--mute);font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="logo.svg" alt="">
+    <div class="brand"><h1>פוקר פייס</h1><p>מעקב ותחזית לצ'אנס</p></div>
+    <div class="hbtns">
+      <button class="ibtn" id="bell" title="התראות" aria-label="התראות">🔔</button>
+      <button class="ibtn" id="theme" title="מצב תצוגה" aria-label="מצב תצוגה">◐</button>
+    </div>
+  </header>
+
+  <div class="err" id="err">אין חיבור. בדקו את האינטרנט (או ש-start_app.bat פועל, בגרסה המקומית).</div>
+
+  <section class="panel hero" id="hero">
+    <div class="kicker">ההגרלה הבאה · <span id="nextNo">—</span></div>
+    <div class="timer" id="timer">--<span class="sep">:</span>--<span class="sep">:</span>--</div>
+    <div class="when" id="when">טוען…</div>
+    <div class="live"><span class="dot"></span>ההגרלה מתבצעת, ממתינים לתוצאה…</div>
+    <div class="bar"><i id="bar"></i></div>
+  </section>
+
+  <section class="panel">
+    <div class="kicker"><h2 style="margin:0">התחזית להגרלה <span id="predNo"></span></h2></div>
+    <div style="height:12px"></div>
+    <div class="cards" id="predCards"></div>
+    <div class="method" id="method"></div>
+  </section>
+
+  <section class="panel">
+    <h2>ההגרלות של <span id="dayLabel">היום</span></h2>
+    <div class="slots" id="slots"></div>
+  </section>
+
+  <section class="panel">
+    <h2>התוצאה האחרונה <span id="lastNo" style="color:var(--mute);font-weight:500;font-size:14px"></span></h2>
+    <div class="cards" id="lastCards"></div>
+  </section>
+
+  <section class="panel">
+    <h2>מעקב: תחזית מול תוצאה</h2>
+    <div class="stats">
+      <div class="stat"><div class="n" id="stDraws">0</div><div class="k">הגרלות במעקב</div></div>
+      <div class="stat"><div class="n" id="stHits">0</div><div class="k">קלפים שפגעו</div></div>
+      <div class="stat"><div class="n" id="stRate">—</div><div class="k">אחוז פגיעה (מזל: 12.5%)</div></div>
+    </div>
+    <div id="recent"></div>
+  </section>
+
+  <footer>השיטה מוגדרת בקובץ <code>method.py</code> · הנתונים מאתר מפעל הפיס</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SUITS = ["spade","heart","diamond","club"];
+const SYM = {spade:"♠",heart:"♥",diamond:"♦",club:"♣"};
+const RED = new Set(["heart","diamond"]);
+const $ = id => document.getElementById(id);
+let state = null, offset = 0, prevAt = null, waitingFor = null, warned = {}, lastSeenDraw = null;
+// מקומי (start_app.bat): שרת חי. בענן (GitHub Pages): קובץ state.json שמתעדכן כל כמה דקות
+const LIVE = location.port === "8777";
+const API = () => LIVE ? "/api/state" : "state.json?t=" + Date.now();
+
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); }catch{ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch{} }
+};
+
+function cardsHTML(values, {hits=[], small=false} = {}){
+  return `<div class="cards${small ? " sm" : ""}">` + SUITS.map(s => {
+    const v = values ? values[s] : null;
+    const cls = ["card", v ? "on" : "", RED.has(s) ? "red" : "", hits.includes(s) ? "hit" : ""].join(" ");
+    return `<div class="${cls}"><span class="s">${SYM[s]}</span><span class="v">${v || "–"}</span></div>`;
+  }).join("") + "</div>";
+}
+
+function pad(n){ return String(n).padStart(2, "0"); }
+function dayLabel(ts){
+  const d = new Date(ts), t = new Date(Date.now() + offset);
+  const diff = Math.round((new Date(d.toDateString()) - new Date(t.toDateString())) / 864e5);
+  const hm = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (diff === 0) return `היום ב-${hm}`;
+  if (diff === 1) return `מחר ב-${hm}`;
+  return `${["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"][d.getDay()]} ${pad(d.getDate())}/${pad(d.getMonth()+1)} ב-${hm}`;
+}
+
+function render(){
+  const s = state;
+  $("nextNo").textContent = "#" + s.next.draw;
+  $("when").textContent = dayLabel(s.next.at);
+  $("predNo").textContent = "#" + s.prediction.draw;
+  $("predCards").outerHTML = cardsHTML(s.prediction.cards).replace('class="cards"', 'class="cards" id="predCards"');
+  $("method").innerHTML = `<span>שיטה: <b style="color:var(--ink)">${s.method.name}</b></span>` +
+    (s.method.demo ? `<span class="badge">דמו</span>` : "") +
+    (s.prediction.reason ? `<span>· ${s.prediction.reason}</span>` : "");
+
+  $("dayLabel").textContent = s.day_label;
+  const nextSlot = s.today.find(x => !x.done && x.at >= s.now - 10*60e3);
+  $("slots").innerHTML = s.today.length ? s.today.map(x =>
+    `<span class="slot ${x.done ? "done" : (x === nextSlot ? "next" : "")}">${x.time}</span>`).join("")
+    : `<div class="empty">אין הגרלות היום</div>`;
+
+  $("lastNo").textContent = `#${s.last.draw} · ${s.last.date} ${s.last.time}`;
+  $("lastCards").outerHTML = cardsHTML(s.last).replace('class="cards"', 'class="cards" id="lastCards"');
+
+  const t = s.tracking;
+  $("stDraws").textContent = t.draws;
+  $("stHits").textContent = `${t.hits}/${t.picked}`;
+  $("stRate").textContent = t.picked ? (100 * t.hits / t.picked).toFixed(1) + "%" : "—";
+  $("recent").innerHTML = s.recent.map(r => {
+    const sc = r.score;
+    const scTxt = sc ? `${sc.hits}/${sc.picked}` : "—";
+    return `<div class="row">
+      <div class="meta"><b>#${r.draw}</b>${r.date.slice(0,5)} · ${r.time}</div>
+      ${cardsHTML(r, {hits: sc ? sc.hit_suits : [], small: true})}
+      <div class="sc ${sc && sc.hits ? "good" : ""}" title="${sc ? "קלפים שפגעו מתוך שנחזו" : "לא הייתה תחזית"}">${scTxt}</div>
+    </div>`;
+  }).join("");
+}
+
+function tick(){
+  if (!state) return;
+  const now = Date.now() + offset, left = state.next.at - now;
+  const hero = $("hero");
+  if (left <= 0){
+    hero.classList.add("drawing");
+    $("timer").innerHTML = `00<span class="sep">:</span>00<span class="sep">:</span>00`;
+    $("bar").style.width = "100%";
+    if (waitingFor !== state.next.draw){ waitingFor = state.next.draw; load(); }
+    return;
+  }
+  hero.classList.remove("drawing");
+  const sec = Math.floor(left / 1000);
+  const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), ss = sec % 60;
+  $("timer").innerHTML = `${pad(h)}<span class="sep">:</span>${pad(m)}<span class="sep">:</span>${pad(ss)}`;
+  const span = prevAt ? state.next.at - prevAt : 2 * 3600e3;
+  $("bar").style.width = Math.max(0, Math.min(100, 100 * (1 - left / span))) + "%";
+  if (left < 5*60e3 && !warned[state.next.draw]){
+    warned[state.next.draw] = true;
+    notify(`הגרלה #${state.next.draw} בעוד 5 דקות`, "התחזית: " + predText());
+  }
+}
+
+function predText(){
+  const c = state.prediction.cards;
+  return SUITS.filter(s => c[s]).map(s => c[s] + SYM[s]).join("  ") || "אין";
+}
+
+async function load(){
+  try{
+    const r = await fetch(API(), {cache: "no-store"});
+    if (!r.ok) throw new Error(r.status);
+    const s = await r.json();
+    $("err").style.display = "none";
+    offset = LIVE ? s.now - Date.now() : 0;          // בענן הקובץ נבנה מראש: סומכים על שעון הטלפון
+    s.now = Date.now() + offset;
+    prevAt = s.last_at;
+    if (lastSeenDraw !== null && s.last.draw > lastSeenDraw){
+      const rec = s.recent[0], sc = rec.score;
+      const msg = `#${rec.draw}: ` + SUITS.map(k => rec[k] + SYM[k]).join(" ") + (sc ? ` · פגיעות ${sc.hits}/${sc.picked}` : "");
+      toast("יצאה תוצאה! " + msg);
+      notify("יצאה תוצאה", msg);
+      waitingFor = null;
+    }
+    lastSeenDraw = s.last.draw;
+    state = s;
+    render(); tick();
+  }catch(e){
+    $("err").style.display = "block";
+  }
+}
+
+function toast(msg){
+  const t = $("toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove("show"), 6000);
+}
+
+/* התראות */
+function notifOn(){ return store.get("notify", false) && "Notification" in window && Notification.permission === "granted"; }
+function notify(title, body){ if (notifOn()) try{ new Notification(title, {body, icon: "logo.svg"}); }catch{} }
+function syncBell(){ $("bell").classList.toggle("on", notifOn()); }
+$("bell").onclick = async () => {
+  if (!("Notification" in window)) return toast("הדפדפן לא תומך בהתראות");
+  if (notifOn()){ store.set("notify", false); syncBell(); return toast("התראות כבויות"); }
+  const p = await Notification.requestPermission();
+  store.set("notify", p === "granted"); syncBell();
+  toast(p === "granted" ? "התראות פעילות: 5 דקות לפני כל הגרלה, וכשיוצאת תוצאה" : "ההתראות נחסמו בדפדפן");
+};
+
+/* מצב תצוגה */
+function applyTheme(t){ if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+applyTheme(store.get("theme", null));
+$("theme").onclick = () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const cur = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  const nxt = cur === "dark" ? "light" : "dark";
+  store.set("theme", nxt); applyTheme(nxt);
+};
+
+syncBell();
+load();
+setInterval(tick, 250);
+setInterval(() => { if (waitingFor) load(); }, 15000);   // בזמן המתנה לתוצאה: בדיקה כל 15 שניות
+setInterval(load, 60000);                                 // רענון כללי כל דקה
+</script>
+</body>
+</html>
