@@ -14,7 +14,7 @@ SRC = os.path.join(HERE, "strategic")
 OUT = os.path.join(HERE, "docs", "chance")
 CANON = os.path.join(SRC, "draws.json")
 FEED = "https://raw.githubusercontent.com/laly100/chance-feed/main/chance.csv"
-KEEP = 300
+KEEP = 2000
 VALUES = {"7", "8", "9", "10", "J", "Q", "K", "A"}
 SCHEDULE = {d: ["09:00", "11:00", "13:00", "15:00", "17:00", "19:00", "21:00"] for d in range(5)}  # 0=ראשון
 SCHEDULE[5] = ["10:00", "12:00", "14:00"]
