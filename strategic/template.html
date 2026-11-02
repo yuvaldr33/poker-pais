@@ -196,13 +196,13 @@ table.pairs td.nn{font-family:var(--mono)}
   </section>
 
   <section class="panel" id="trackSec">
-    <div class="top"><h2>מעקב השיטה</h2><span class="sub">כמה פעמים הזוג שהשיטה בחרה באמת עלה</span></div>
+    <div class="top"><h2>מעקב השיטה</h2><span class="sub">החל מהגרלה 53838 (02/11, 11:00)</span></div>
     <div class="hitbox" id="hitBox"></div>
     <h3 class="h3">הפגיעות האחרונות של השיטה</h3>
     <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>הזוג שנבחר</th><th>איפה הוא עלה</th></tr></thead><tbody id="hitRows"></tbody></table></div>
     <h3 class="h3">אחוז פגיעה לעומת המקרה</h3>
     <div class="trk" id="trkSum"></div>
-    <h3 class="h3">10 ההגרלות האחרונות</h3>
+    <h3 class="h3">ההגרלות האחרונות במעקב</h3>
     <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>הזוג שנבחר</th><th>מה עלה</th><th>תוצאה</th></tr></thead><tbody id="trkRows"></tbody></table></div>
     <p class="honest" id="trkNote"></p>
   </section>
@@ -495,19 +495,28 @@ function renderTrack(){
       else{sa.forEach(x=>sb.forEach(y=>{if(x!==y)where.push([x,A,y,B])}));}}
     rows.push({n:d.n,date:d.date,time:d.time,A,B,hit,exp:p.a===p.b?0.0789:0.1440,pay,tix,d,where});
   }
-  if(rows.length<20){document.getElementById("trackSec").hidden=true;return;}
-  document.getElementById("trackSec").hidden=false;
-  const box=(lbl,R)=>{const h=R.filter(x=>x.hit).length,e=R.reduce((s,x)=>s+x.exp,0),pct=h/R.length*100,ep=e/R.length*100,ret=R.reduce((s,x)=>s+x.pay,0)/R.reduce((s,x)=>s+x.tix,0);
-    return `<div class="tk"><span class="lb">${lbl}</span><span class="big">${pct.toFixed(1)}%</span><div class="bar2"><i style="width:${Math.min(100,pct*3)}%"></i><b style="left:${Math.min(100,ep*3)}%"></b></div><span class="cmp">במקרה: ${ep.toFixed(1)}% · ${h} פגיעות מתוך ${R.length}</span><span class="cmp">החזר על כל שקל (צ'אנס 2): ${Math.round(ret*100)} אגורות</span></div>`;};
-  const H=rows.filter(x=>x.hit),fmtD=iso=>{const [y,m,dd]=iso.split("-");return dd+"/"+m;};
-  const today=rows.filter(x=>x.date===rows[0].date);
-  document.getElementById("hitBox").innerHTML=`<div class="hb"><span>השיטה פגעה</span><b>${H.length}</b><span>מתוך ${rows.length.toLocaleString("he-IL")} הגרלות</span></div><div class="hb alt"><span>ב־100 האחרונות</span><b>${rows.slice(0,100).filter(x=>x.hit).length}</b><span>פגיעות</span></div><div class="hb alt"><span>היום (${fmtD(rows[0].date)})</span><b>${today.filter(x=>x.hit).length}</b><span>מתוך ${today.length} הגרלות</span></div>`;
+  const TRACK_FROM=53838;
+  const live=rows.filter(x=>x.n>=TRACK_FROM),past=rows.filter(x=>x.n<TRACK_FROM);
+  const fmtD=iso=>{const [y,m,dd]=iso.split("-");return dd+"/"+m;};
+  const nxt=pickTop(DRAWS.slice(0,5));
+  const nextTxt=nxt?`<span class="pp"><span class="k">${RANKS[nxt.a]}</span> + <span class="k">${RANKS[nxt.b]}</span></span>`:"אין זוג שחזר";
+  const ph=past.filter(x=>x.hit).length,pe=past.reduce((s,x)=>s+x.exp,0);
+  document.getElementById("trkNote").textContent=past.length?`המעקב סופר רק מהגרלה ${TRACK_FROM} והלאה. לשם השוואה, בבדיקה על ${past.length.toLocaleString("he-IL")} ההגרלות שלפני, השיטה פגעה ב־${(ph/past.length*100).toFixed(1)}% כשבמקרה מצופה ${(pe/past.length*100).toFixed(1)}%. על מעט הגרלות, הפרשים גדולים לכל כיוון הם תנודה רגילה של מזל.`:"";
+  if(!live.length){
+    document.getElementById("hitBox").innerHTML=`<div class="hb"><span>המעקב מתחיל מהגרלה</span><b>${TRACK_FROM}</b><span>הבחירה של השיטה: ${nextTxt}</span></div><div class="hb alt"><span>פגיעות עד עכשיו</span><b>0</b><span>מתוך 0 הגרלות</span></div><div class="hb alt"><span>אחוז פגיעה</span><b>–</b><span>יופיע אחרי ההגרלה הראשונה</span></div>`;
+    document.getElementById("hitRows").innerHTML=`<tr><td colspan="3" class="missm">עוד אין פגיעות. הפגיעות יופיעו כאן החל מהגרלה ${TRACK_FROM}.</td></tr>`;
+    document.getElementById("trkSum").innerHTML="";document.getElementById("trkRows").innerHTML=`<tr><td colspan="4" class="missm">ההגרלה הראשונה במעקב היא ${TRACK_FROM}.</td></tr>`;
+    return;
+  }
+  const H=live.filter(x=>x.hit),e=live.reduce((s,x)=>s+x.exp,0),pct=H.length/live.length*100,ep=e/live.length*100;
+  const ret=live.reduce((s,x)=>s+x.pay,0)/live.reduce((s,x)=>s+x.tix,0);
+  const today=live.filter(x=>x.date===rows[0].date);
+  document.getElementById("hitBox").innerHTML=`<div class="hb"><span>השיטה פגעה</span><b>${H.length}</b><span>מתוך ${live.length} הגרלות מאז ${TRACK_FROM}</span></div><div class="hb alt"><span>אחוז פגיעה</span><b>${pct.toFixed(1)}%</b><span>במקרה: ${ep.toFixed(1)}%</span></div><div class="hb alt"><span>הבחירה להגרלה הבאה</span><b style="font-size:1.2rem">${nextTxt}</b><span>היום: ${today.filter(x=>x.hit).length} פגיעות מתוך ${today.length}</span></div>`;
   const cw=(k,v)=>{const s=SUITS.find(z=>z[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
-  document.getElementById("hitRows").innerHTML=H.slice(0,15).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${fmtD(x.date)} ${x.time||""}</small></td><td><span class="pp"><span class="k">${x.A}</span> + <span class="k">${x.B}</span></span></td><td>${x.where.map(w=>`<span class="pp">${cw(w[0],w[1])} + ${cw(w[2],w[3])}</span>`).join("<br>")}</td></tr>`).join("");
-  document.getElementById("trkSum").innerHTML=box("100 ההגרלות האחרונות",rows.slice(0,100))+box("1,000 ההגרלות האחרונות",rows.slice(0,1000))+box(`כל ${rows.length.toLocaleString("he-IL")} ההגרלות`,rows);
+  document.getElementById("hitRows").innerHTML=H.length?H.slice(0,30).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${fmtD(x.date)} ${x.time||""}</small></td><td><span class="pp"><span class="k">${x.A}</span> + <span class="k">${x.B}</span></span></td><td>${x.where.map(w=>`<span class="pp">${cw(w[0],w[1])} + ${cw(w[2],w[3])}</span>`).join("<br>")}</td></tr>`).join(""):`<tr><td colspan="3" class="missm">עוד אין פגיעות מאז הגרלה ${TRACK_FROM}.</td></tr>`;
+  document.getElementById("trkSum").innerHTML=`<div class="tk"><span class="lb">מאז הגרלה ${TRACK_FROM}</span><span class="big">${pct.toFixed(1)}%</span><div class="bar2"><i style="width:${Math.min(100,pct*3)}%"></i><b style="left:${Math.min(100,ep*3)}%"></b></div><span class="cmp">במקרה: ${ep.toFixed(1)}% · ${H.length} פגיעות מתוך ${live.length}</span><span class="cmp">החזר על כל שקל (צ'אנס 2): ${Math.round(ret*100)} אגורות</span></div>`;
   const c=(k,v)=>{const s=SUITS.find(x=>x[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
-  document.getElementById("trkRows").innerHTML=rows.slice(0,10).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${x.time||""}</small></td><td><span class="pp"><span class="k">${x.A}</span> + <span class="k">${x.B}</span></span></td><td><span class="pp">${K.map(k=>c(k,x.d[k])).join(" ")}</span></td><td class="${x.hit?"hitm":"missm"}">${x.hit?"✓ עלה":"לא עלה"}</td></tr>`).join("");
-  document.getElementById("trkNote").textContent=`הקו השחור בכל פס הוא מה שיוצא בבחירה אקראית. כל הגרלה נבדקת רק לפי 5 ההגרלות שלפניה, בדיוק כמו בזמן אמת. ההחזר הממוצע בצ'אנס 2 בבחירה אקראית הוא 58 אגורות לשקל. ב־100 הגרלות, הפרש של עד 7 נקודות אחוז מהמקרה (לכל כיוון) הוא תנודה רגילה של מזל. ככל שיש יותר הגרלות, המספר אמין יותר.`;
+  document.getElementById("trkRows").innerHTML=live.slice(0,10).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${x.time||""}</small></td><td><span class="pp"><span class="k">${x.A}</span> + <span class="k">${x.B}</span></span></td><td><span class="pp">${K.map(k=>c(k,x.d[k])).join(" ")}</span></td><td class="${x.hit?"hitm":"missm"}">${x.hit?"✓ עלה":"לא עלה"}</td></tr>`).join("");
 }
 renderTrack();
 // ---- live refresh: pull new results without reloading ----
