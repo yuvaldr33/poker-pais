@@ -949,6 +949,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const out=[];const h=thirdHot(p,L5()),l=thirdLinked(p,L5());
     if(h){const b=bestPlace(p,h.k);out.push({kind:"חם",cs:[...b.cs,[h.k,h.r]],why:`${ck(h.r,h.k)} עלה במיקום הזה ב־${h.hot.length} מתוך 5 ההגרלות האחרונות${h.co.length?`, ופעם${h.co.length>1?"ים":""} יחד עם הזוג (${h.co.map(d=>d.n).join(", ")})`:""}.`});}
     if(l){const b=bestPlace(p,l.k);out.push({kind:"מקושר",cs:[...b.cs,[l.k,l.r]],why:`${ck(l.r,l.k)} עלה עם ${RANKS[p.a]} ב־${l.wa.map(d=>d.n).join(", ")} ${p.a===p.b?"":` ועם ${RANKS[p.b]} ב־${l.wb.map(d=>d.n).join(", ")}`}.`});}
+    if(out.length===2&&out[0].cs.map(String).sort().join()===out[1].cs.map(String).sort().join()){out[0].why+=" זה גם הקלף המקושר: "+out[1].why;out.pop();}
     return out;
   }
   function hottestIn(k,avoid){
@@ -1036,9 +1037,9 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
   const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים</li><li>מתי ההגרלה הבאה, מה יצא באחרונה</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
 
   // ---- understanding the question ----
-  const WORD={"נסיך":"J","נסיכים":"J","מלכה":"Q","מלכות":"Q","מלך":"K","מלכים":"K","אס":"A","אסים":"A","אסים":"A"};
+  const WORD={"נסיך":"J","נסיכים":"J","גק":"J","ג׳ק":"J","מלכה":"Q","מלכות":"Q","דמה":"Q","דמות":"Q","קווין":"Q","מלך":"K","מלכים":"K","קינג":"K","קינגים":"K","אס":"A","אסים":"A"};
   function cardsIn(t){
-    const out=[];const re=/(?<![0-9a-z])(10|[789]|[jqka])(?![0-9a-z:])|(?<![א-ת])[והבל]?(נסיכים|נסיך|מלכות|מלכה|מלכים|מלך|אסים|אס)(?![א-ת])/g;let m;
+    const out=[];const re=/(?<![0-9a-z])(10|[789]|[jqka])(?![0-9a-z:])|(?<![א-ת])[והבל]?(נסיכים|נסיך|גק|מלכות|מלכה|דמות|דמה|קווין|מלכים|מלך|קינגים|קינג|אסים|אס)(?![א-ת])/g;let m;
     while((m=re.exec(t))){out.push(m[1]?m[1].toUpperCase():WORD[m[2]]);}
     return out;
   }
