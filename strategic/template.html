@@ -131,6 +131,21 @@ table.pairs td.nn{font-family:var(--mono)}
 .hb.alt{background:var(--chip);color:var(--ink)}
 .hb b{font-family:var(--mono);font-size:1.6rem;line-height:1.1}
 .hb span{font-size:.78rem;opacity:.9}
+.explain{border:1px solid var(--felt);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:10px;background:color-mix(in srgb,var(--felt) 6%,var(--surface))}
+.explain h3{margin:0;font-size:1.05rem;font-family:var(--display);font-weight:400}
+.explain ul{margin:0;padding-inline-start:18px;display:flex;flex-direction:column;gap:6px;font-size:.92rem}
+.mini{display:flex;flex-direction:column;gap:4px}
+.mrow{display:flex;align-items:center;gap:4px;font-size:.85rem}
+.mrow .mn{font-family:var(--mono);color:var(--muted);width:84px;flex:0 0 auto;white-space:nowrap;font-size:.72rem}
+.mrow .mc{display:flex;gap:4px;direction:ltr}
+.mrow .mc span{font-family:var(--mono);font-weight:700;border:1px solid var(--line);border-radius:6px;padding:1px 3px;min-width:32px;text-align:center;color:var(--ink);background:var(--surface)}
+.mrow .mc span.r{color:var(--red)}
+.mrow .mc span.on{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.mrow .mt{font-size:.75rem;color:var(--felt);font-weight:700}
+.cg{display:inline-flex;gap:3px;direction:ltr;vertical-align:baseline;font-family:var(--mono);font-weight:700}
+.ck{font-family:var(--mono);font-weight:700;direction:ltr;unicode-bidi:isolate;display:inline-block}
+.ck.r{color:var(--red)}
+.reality{font-size:.82rem;color:var(--muted)}
 /* my slip */
 .guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .glab{font-weight:700;font-size:.9rem}
@@ -190,6 +205,7 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
+    <div class="explain" id="preExplain"></div>
     <div class="glab">כל המיקומים של הזוג שנבחר (<span id="preCount"></span> טפסי צ'אנס 2)</div>
     <div class="places" id="places"></div>
     <div class="honest" id="preHonest"></div>
@@ -414,14 +430,42 @@ function preDraw(){
   const last5=DRAWS.slice(0,5);
   preList=pickAll(last5);
   document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
-  if(!preList.length){document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
+  if(!preList.length){document.getElementById("preExplain").innerHTML="";document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
   document.getElementById("preWhy").textContent=`שני הזוגות החזקים ביותר לפי השיטה: עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
   document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.hit.length} מתוך 5 · ${p.hit.map(n=>String(n).slice(-3)).join(", ")}</small></button>`).join("");
   showPlaces();
   document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
 }
+function explainPair(p,idx){
+  const A=RANKS[p.a],B=RANKS[p.b],last5=DRAWS.slice(0,5),K=["S","H","D","C"];
+  const appears=d=>{const r=K.map(k=>d[k]);return p.a===p.b?r.filter(x=>x===A).length>=2:(r.includes(A)&&r.includes(B));};
+  const where=d=>K.filter(k=>d[k]===A||d[k]===B);
+  const hitD=last5.filter(appears);
+  const sn=k=>SUITS.find(s=>s[0]===k);
+  const chip=(v,k)=>`<span class="ck${sn(k)[3]?" r":""}">${v}${sn(k)[1]}</span>`;
+  const cardTxt=(d)=>`<span class="cg">${where(d).map(k=>chip(d[k],k)).join("")}</span>`;
+  const items=[];
+  items.push(`עלו יחד ב־${hitD.length} מתוך 5 ההגרלות האחרונות: ${hitD.map(d=>`בהגרלה ${d.n} ${cardTxt(d)}`).join("; ")}.`);
+  if(appears(last5[0]))items.push(`עלו בהגרלה האחרונה (${last5[0].n}), כלומר הזוג "חם" עכשיו.`);
+  const nums=hitD.map(d=>d.n),consec=nums.some(n=>nums.includes(n-1));
+  if(consec)items.push("עלו בשתי הגרלות ברצף, בדיוק הדפוס של קלפים שחוזרים אחד אחרי השני.");
+  const suitSets=hitD.map(d=>new Set(where(d).map(k=>k+d[k])));
+  const common=[...suitSets[0]].filter(x=>suitSets.every(s=>s.has(x)));
+  if(common.length)items.push(`${common.map(x=>`<span class="cg">${chip(x.slice(1),x[0])}</span> ${sn(x[0])[2]}`).join(" ו־")} עלה באותו מיקום בכל הפעמים.`);
+  else items.push("בכל פעם הזוג עלה במיקומים אחרים, לכן כדאי לכסות את כל המיקומים.");
+  if(preList.length>1){const o=preList[idx===0?1:0],oA=RANKS[o.a],oB=RANKS[o.b];
+    if(idx===0){
+      if(p.hit.length>o.hit.length)items.push(`דורג ראשון כי עלה יותר פעמים מ־${oA}+${oB}.`);
+      else if(Math.max(...p.hit)>Math.max(...o.hit))items.push(`דורג ראשון כי עלה מאוחר יותר מ־${oA}+${oB}.`);
+      else if(consec)items.push(`דורג ראשון כי <bdi dir="ltr">${oA}+${oB}</bdi> עלה אותו מספר פעמים ובאותה הגרלה אחרונה, אבל לא ברצף.`);
+      else items.push(`דורג ראשון כי ההופעות שלו קרובות יותר להגרלה האחרונה מאלה של ${oA}+${oB}.`);
+    } else items.push(`דורג שני, אחרי <bdi dir="ltr">${oA}+${oB}</bdi>, לפי אותם כללים.`);}
+  const rows=last5.map(d=>{const on=appears(d);return `<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${K.map(k=>{const s=sn(k);const hl=on&&(d[k]===A||d[k]===B);return `<span class="${s[3]?"r ":""}${hl?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${on?'<span class="mt">✓</span>':""}</div>`;}).join("");
+  const base=p.a===p.b?"7.9%":"14.4%";
+  document.getElementById("preExplain").innerHTML=`<h3>למה <span class="cg">${A}+${B}</span>?</h3><ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul><div class="mini">${rows}</div><div class="reality">זה ההיגיון של השיטה. בפועל, הסיכוי ש־<bdi dir="ltr">${A}+${B}</bdi> יעלו בהגרלה הבאה, בכל מיקום, הוא כ־${base} בכל הגרלה, ובבדיקה על אלפי הגרלות זוגות שנבחרו כך חזרו בערך באותו שיעור. המעקב למטה מראה איך השיטה מצליחה בפועל.</div>`;
+}
 function showPlaces(){
-  const p=preList[preSel];if(!p)return;const A=RANKS[p.a],B=RANKS[p.b];const pl=[];
+  const p=preList[preSel];if(!p){document.getElementById("preExplain").innerHTML="";return;}explainPair(p,preSel);const A=RANKS[p.a],B=RANKS[p.b];const pl=[];
   if(A===B){for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)pl.push([SUITS[i],A,SUITS[j],B]);}
   else{for(let i=0;i<4;i++)for(let j=0;j<4;j++)if(i!==j)pl.push([SUITS[i],A,SUITS[j],B]);}
   document.getElementById("preCount").textContent=pl.length;
