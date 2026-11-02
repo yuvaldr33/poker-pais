@@ -163,6 +163,11 @@ table.pairs td.nn{font-family:var(--mono)}
 .pchip.mine{border-style:dashed}
 .crit{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .crit ul{list-style:none;padding-inline-start:0}
+.manual{border:1px solid var(--felt);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.mansel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;direction:ltr}
+.mansel label{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.85rem;direction:rtl}
+.mansel label .s.r{color:var(--red)}
+.mansel select{font-family:var(--mono);font-weight:700;font-size:1.05rem;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%}
 /* my slip */
 .guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .glab{font-weight:700;font-size:.9rem}
@@ -283,6 +288,17 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="top"><h2>ההגרלה האחרונה</h2><span class="sub" id="lMeta"></span></div>
     <div class="hand" id="lHand"></div>
     <div class="sub" id="stale" hidden></div>
+    <div class="acts"><button class="btn pri" type="button" id="manBtn">עדכון הגרלה אחרונה</button></div>
+    <div class="manual" id="manForm" hidden>
+      <div class="glab" id="manTitle"></div>
+      <div class="mansel" id="manSel"></div>
+      <div class="acts">
+        <button class="btn pri" type="button" id="manOk">אישור ועדכון הניתוח</button>
+        <button class="btn" type="button" id="manCancel">ביטול</button>
+      </div>
+      <div class="gnote">התוצאה נשמרת אצלך בטלפון וכל הניתוחים מתעדכנים מיד. כשהתוצאה הרשמית תיכנס לאתר, היא תחליף את מה שהזנת.</div>
+    </div>
+    <div class="gnote" id="manNote" hidden></div>
   </section>
 
   <section class="panel">
@@ -387,6 +403,20 @@ function* slotsAfter(last){
     i++;
   }
 }
+// ---- results typed in by the user (kept until the official result arrives) ----
+let manualDraws=[];try{const v=JSON.parse(localStorage.getItem("chance-manual")||"[]");if(Array.isArray(v))manualDraws=v;}catch(e){}
+let manualMsg="";
+function mergeManual(base){
+  const out=base.slice();manualMsg="";const keep=[];
+  for(const m of manualDraws.slice().sort((a,b)=>a.n-b.n)){
+    const off=base.find(d=>d.n===m.n);
+    if(off){if(["S","H","D","C"].some(k=>off[k]!==m[k]))manualMsg=`התוצאה הרשמית של הגרלה ${m.n} שונה ממה שהוזן, והיא זו שנשמרה.`;continue;}
+    if(m.n===out[0].n+1){out.unshift(m);keep.push(m);}
+  }
+  if(keep.length!==manualDraws.length){manualDraws=keep;try{localStorage.setItem("chance-manual",JSON.stringify(keep));}catch(e){}}
+  return out;
+}
+DRAWS=mergeManual(DRAWS);
 let last=DRAWS[0];
 function dayLabel(s,nowP){
   const today=Date.UTC(nowP.year,nowP.month-1,nowP.day), that=Date.UTC(s.y,s.m-1,s.d);
@@ -785,13 +815,38 @@ function renderTrack(){
   document.getElementById("trkRows").innerHTML=live.slice(0,10).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${x.time||""}</small></td><td>${x.cands.map(c=>pairTxt(c)).join("<br>")}</td><td><span class="pp">${K.map(k=>c(k,x.d[k])).join(" ")}</span></td><td class="${x.hit?"hitm":"missm"}">${x.hit?"✓ עלה: "+x.hits.map(h=>h.A+"+"+h.B).join(", "):"לא עלה"}</td></tr>`).join("");
 }
 renderTrack();renderTrack3();
+
+// ---- manual result entry ----
+function rerenderAll(){last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();tick();showManNote();}
+function showManNote(){const n=document.getElementById("manNote");const t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
+  n.textContent=[t,manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
+function nextSlot(){const g=slotsAfter(last);const s=g.next().value;return s;}
+document.getElementById("manBtn").addEventListener("click",()=>{
+  const f=document.getElementById("manForm");if(!f.hidden){f.hidden=true;return;}
+  const s=nextSlot();
+  document.getElementById("manTitle").textContent=`הגרלה ${s.n} · ${pad(s.d)}/${pad(s.m)} · ${s.time}: בחר את הקלף שעלה בכל צורה`;
+  document.getElementById("manSel").innerHTML=SUITS.map(([k,sym,name,red])=>`<label><span><span class="s${red?" r":""}">${sym}</span> ${name}</span><select id="man-${k}">${RANKS.map(r=>`<option>${r}</option>`).join("")}</select></label>`).join("");
+  f.hidden=false;
+});
+document.getElementById("manCancel").addEventListener("click",()=>{document.getElementById("manForm").hidden=true;});
+document.getElementById("manOk").addEventListener("click",()=>{
+  const s=nextSlot();
+  const m={n:s.n,date:`${s.y}-${pad(s.m)}-${pad(s.d)}`,time:s.time,manual:true};
+  for(const [k] of SUITS)m[k]=document.getElementById("man-"+k).value;
+  manualDraws=manualDraws.filter(x=>x.n!==m.n);manualDraws.push(m);
+  try{localStorage.setItem("chance-manual",JSON.stringify(manualDraws));}catch(e){}
+  DRAWS=mergeManual(DRAWS);document.getElementById("manForm").hidden=true;rerenderAll();
+  document.getElementById("lHand").scrollIntoView({behavior:"smooth",block:"center"});
+});
+showManNote();
 // ---- live refresh: pull new results without reloading ----
 async function refreshDraws(){
   try{
     const r=await fetch("draws.json?t="+Date.now(),{cache:"no-store"});
     if(!r.ok)return;
     const d=await r.json();
-    if(Array.isArray(d)&&d.length&&d[0].n>DRAWS[0].n){DRAWS=d;last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();tick();}
+    if(Array.isArray(d)&&d.length){const merged=mergeManual(d);
+      if(merged[0].n!==DRAWS[0].n||merged[0].manual!==DRAWS[0].manual||["S","H","D","C"].some(k=>merged[0][k]!==DRAWS[0][k])){DRAWS=merged;rerenderAll();}}
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
