@@ -427,16 +427,10 @@ document.getElementById("guess").addEventListener("click",e=>{
 let preSel=0,preList=[];
 function preDraw(){
   const last5=DRAWS.slice(0,5);
-  const cnt=last5.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));
-  preList=[];
-  for(let a=0;a<8;a++)for(let b=a;b<8;b++){
-    const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?last5[i].n:null).filter(Boolean);
-    if(hit.length>=2)preList.push({a,b,hit});
-  }
-  preList.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit));
+  preList=pickAll(last5);
   document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
   if(!preList.length){document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
-  document.getElementById("preWhy").textContent=`זוגות קלפים שעלו יחד בשתיים או יותר מ־5 ההגרלות האחרונות, בכל צורה שהיא. בחר זוג כדי לראות את כל המיקומים שלו בהגרלה הבאה.`;
+  document.getElementById("preWhy").textContent=`שני הזוגות החזקים ביותר לפי השיטה: עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
   document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.hit.length} מתוך 5 · ${p.hit.map(n=>String(n).slice(-3)).join(", ")}</small></button>`).join("");
   showPlaces();
   document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
@@ -501,7 +495,9 @@ function pickTop(win){
 function pickAll(win){
   const cnt=win.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));const list=[];
   for(let a=0;a<8;a++)for(let b=a;b<8;b++){const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?win[i].n:null).filter(Boolean);if(hit.length>=2)list.push({a,b,hit});}
-  list.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit));return list;
+  const consec=h=>h.some((n,i)=>h.includes(n-1))?1:0, sum=h=>h.reduce((s,n)=>s+n,0);
+  list.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit)||consec(y.hit)-consec(x.hit)||sum(y.hit)-sum(x.hit));
+  return list.slice(0,2);   // השיטה בוחרת את שני הזוגות החזקים ביותר
 }
 const _pairMask=(()=>{const m={};const c=new Array(8);
   for(let a=0;a<8;a++)for(let b=a;b<8;b++){const w=new Uint32Array(128);
@@ -538,7 +534,7 @@ function renderTrack(){
   const pairTxt=c=>`<span class="pp"><span class="k">${c[0]}</span>+<span class="k">${c[1]}</span></span>`;
   const nextTxt=nxt.length?nxt.map(p=>pairTxt([RANKS[p.a],RANKS[p.b]])).join(" · "):"אין זוג שחזר";
   const ph=past.filter(x=>x.hit).length,pe=past.reduce((s,x)=>s+x.exp,0);
-  document.getElementById("trkNote").textContent=past.length?`המעקב סופר רק מהגרלה ${TRACK_FROM} והלאה. לשם השוואה, בבדיקה על ${past.length.toLocaleString("he-IL")} ההגרלות שלפני, לפחות אחד מהזוגות של השיטה עלה ב־${(ph/past.length*100).toFixed(1)}% מההגרלות, כשבמקרה מצופה ${(pe/past.length*100).toFixed(1)}%. כל זוג נוסף מגדיל את הסיכוי לפגיעה, אבל גם את מספר הטפסים. על מעט הגרלות, הפרשים גדולים לכל כיוון הם תנודה רגילה של מזל.`:"";
+  document.getElementById("trkNote").textContent=past.length?`המעקב סופר רק מהגרלה ${TRACK_FROM} והלאה. לשם השוואה, בבדיקה על ${past.length.toLocaleString("he-IL")} ההגרלות שלפני, לפחות אחד משני הזוגות של השיטה עלה ב־${(ph/past.length*100).toFixed(1)}% מההגרלות, כשבמקרה מצופה ${(pe/past.length*100).toFixed(1)}% לאותם זוגות. על מעט הגרלות, הפרשים גדולים לכל כיוון הם תנודה רגילה של מזל.`:"";
   if(!live.length){
     document.getElementById("hitBox").innerHTML=`<div class="hb"><span>המעקב מתחיל מהגרלה</span><b>${TRACK_FROM}</b><span>הזוגות של השיטה: ${nextTxt}</span></div><div class="hb alt"><span>פגיעות עד עכשיו</span><b>0</b><span>מתוך 0 הגרלות</span></div><div class="hb alt"><span>אחוז פגיעה</span><b>–</b><span>יופיע אחרי ההגרלה הראשונה</span></div>`;
     document.getElementById("hitRows").innerHTML=`<tr><td colspan="3" class="missm">עוד אין פגיעות. הפגיעות יופיעו כאן החל מהגרלה ${TRACK_FROM}.</td></tr>`;
@@ -550,7 +546,7 @@ function renderTrack(){
   const today=live.filter(x=>x.date===rows[0].date);
   document.getElementById("hitBox").innerHTML=`<div class="hb"><span>השיטה פגעה</span><b>${H.length}</b><span>מתוך ${live.length} הגרלות מאז ${TRACK_FROM}</span></div><div class="hb alt"><span>אחוז פגיעה</span><b>${pct.toFixed(1)}%</b><span>במקרה: ${ep.toFixed(1)}%</span></div><div class="hb alt"><span>הזוגות להגרלה הבאה</span><b style="font-size:1rem;line-height:1.5">${nextTxt}</b><span>היום: ${today.filter(x=>x.hit).length} פגיעות מתוך ${today.length}</span></div>`;
   const cw=(k,v)=>{const s=SUITS.find(z=>z[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
-  document.getElementById("hitRows").innerHTML=H.length?H.slice(0,30).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${fmtD(x.date)} ${x.time||""}</small></td><td>${x.hits.map(h=>pairTxt([h.A,h.B])).join("<br>")}<br><small class="missm">מתוך ${x.cands.length} זוגות</small></td><td>${x.hits.map(h=>h.where.map(w=>`<span class="pp">${cw(w[0],w[1])} + ${cw(w[2],w[3])}</span>`).join("<br>")).join("<br>")}</td></tr>`).join(""):`<tr><td colspan="3" class="missm">עוד אין פגיעות מאז הגרלה ${TRACK_FROM}.</td></tr>`;
+  document.getElementById("hitRows").innerHTML=H.length?H.slice(0,30).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${fmtD(x.date)} ${x.time||""}</small></td><td>${x.hits.map(h=>pairTxt([h.A,h.B])).join("<br>")}<br><small class="missm">מתוך ${x.cands.length} ${x.cands.length===1?"זוג":"זוגות"}</small></td><td>${x.hits.map(h=>h.where.map(w=>`<span class="pp">${cw(w[0],w[1])} + ${cw(w[2],w[3])}</span>`).join("<br>")).join("<br>")}</td></tr>`).join(""):`<tr><td colspan="3" class="missm">עוד אין פגיעות מאז הגרלה ${TRACK_FROM}.</td></tr>`;
   document.getElementById("trkSum").innerHTML=`<div class="tk"><span class="lb">מאז הגרלה ${TRACK_FROM}</span><span class="big">${pct.toFixed(1)}%</span><div class="bar2"><i style="width:${Math.min(100,pct*3)}%"></i><b style="left:${Math.min(100,ep*3)}%"></b></div><span class="cmp">במקרה: ${ep.toFixed(1)}% · ${H.length} פגיעות מתוך ${live.length}</span><span class="cmp">החזר על כל שקל (צ'אנס 2): ${Math.round(ret*100)} אגורות</span></div>`;
   const c=(k,v)=>{const s=SUITS.find(x=>x[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
   document.getElementById("trkRows").innerHTML=live.slice(0,10).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${x.time||""}</small></td><td>${x.cands.map(c=>pairTxt(c)).join("<br>")}</td><td><span class="pp">${K.map(k=>c(k,x.d[k])).join(" ")}</span></td><td class="${x.hit?"hitm":"missm"}">${x.hit?"✓ עלה: "+x.hits.map(h=>h.A+"+"+h.B).join(", "):"לא עלה"}</td></tr>`).join("");
@@ -566,7 +562,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="7a971f61a1";
+const BUILD="8ee1acae12";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
