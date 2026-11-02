@@ -161,6 +161,8 @@ table.pairs td.nn{font-family:var(--mono)}
 .mypair{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .mypair select{font-family:var(--mono);font-weight:700;font-size:1rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
 .pchip.mine{border-style:dashed}
+.crit{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.crit ul{list-style:none;padding-inline-start:0}
 /* my slip */
 .guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .glab{font-weight:700;font-size:.9rem}
@@ -223,8 +225,8 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="mypair">
       <span class="glab">הזוג שלי:</span>
       <select id="myA" aria-label="קלף ראשון"></select><span>+</span><select id="myB" aria-label="קלף שני"></select>
-      <button class="btn pri" type="button" id="myPairBtn">נתח את הזוג</button>
-      <button class="btn" type="button" id="myPairClr" hidden>הסר</button>
+      <button class="btn pri" type="button" id="myPairBtn">נתח והוסף לאסטרטגיה</button>
+      <button class="btn" type="button" id="myPairClr" hidden>הסר את הזוג המסומן</button>
     </div>
     <div class="explain" id="preExplain"></div>
     <div class="c3" id="preC3"></div>
@@ -497,31 +499,38 @@ document.getElementById("guess").addEventListener("click",e=>{
 let preSel=0,preList=[];
 
 // ---- user's own pair ----
-let myPair=null;
-try{const v=JSON.parse(localStorage.getItem("chance-mypair")||"null");if(v&&v.a<=v.b)myPair=v;}catch(e){}
+let myPairs=[],mySel=-1;
+try{const v=JSON.parse(localStorage.getItem("chance-mypairs")||"null");if(Array.isArray(v))myPairs=v.filter(p=>p&&p.a<=p.b).slice(0,4);
+  else{const o=JSON.parse(localStorage.getItem("chance-mypair")||"null");if(o&&o.a<=o.b)myPairs=[{a:o.a,b:o.b,from:DRAWS[0].n+1}];}}catch(e){}
+function saveMine(){try{localStorage.setItem("chance-mypairs",JSON.stringify(myPairs));}catch(e){}}
 (function(){const o=RANKS.map((r,i)=>`<option value="${i}">${r}</option>`).join("");
   const a=document.getElementById("myA"),b=document.getElementById("myB");a.innerHTML=o;b.innerHTML=o;
-  if(myPair){a.value=myPair.a;b.value=myPair.b;document.getElementById("myPairClr").hidden=false;}})();
+  if(myPairs.length)document.getElementById("myPairClr").hidden=false;})();
 document.getElementById("myPairBtn").addEventListener("click",()=>{
   let a=+document.getElementById("myA").value,b=+document.getElementById("myB").value;if(a>b)[a,b]=[b,a];
-  myPair={a,b,sel:true};try{localStorage.setItem("chance-mypair",JSON.stringify(myPair));}catch(e){}
-  document.getElementById("myPairClr").hidden=false;preDraw();
+  let i=myPairs.findIndex(p=>p.a===a&&p.b===b);
+  if(i<0){if(myPairs.length>=4)myPairs.shift();myPairs.push({a,b,from:DRAWS[0].n+1});i=myPairs.length-1;}
+  saveMine();mySel=i;
+  document.getElementById("myPairClr").hidden=false;preDraw();renderTrack3();
   document.getElementById("preExplain").scrollIntoView({behavior:"smooth",block:"start"});
 });
 document.getElementById("myPairClr").addEventListener("click",()=>{
-  myPair=null;try{localStorage.removeItem("chance-mypair");}catch(e){}preSel=0;document.getElementById("myPairClr").hidden=true;preDraw();
+  const p=preList[preSel];
+  if(p&&p.mine){myPairs=myPairs.filter(m=>!(m.a===p.a&&m.b===p.b));}else myPairs.pop();
+  saveMine();preSel=0;mySel=-1;document.getElementById("myPairClr").hidden=!myPairs.length;preDraw();renderTrack3();
 });
 function preDraw(){
   const last5=DRAWS.slice(0,5);
   preList=pickAll(last5);
-  if(myPair){const hit=last5.filter(d=>pairIn(d,RANKS[myPair.a],RANKS[myPair.b])).map(d=>d.n);
-    const dup=preList.findIndex(p=>p.a===myPair.a&&p.b===myPair.b);
-    if(dup<0)preList.push({a:myPair.a,b:myPair.b,hit,mine:true});else preList[dup].mine=true;
-    if(myPair.sel)preSel=dup<0?preList.length-1:dup;}
+  myPairs.forEach((m,mi)=>{const hit=last5.filter(d=>pairIn(d,RANKS[m.a],RANKS[m.b])).map(d=>d.n);
+    let dup=preList.findIndex(p=>p.a===m.a&&p.b===m.b);
+    if(dup<0){preList.push({a:m.a,b:m.b,hit,mine:true});dup=preList.length-1;}else preList[dup].mine=true;
+    if(mi===mySel)preSel=dup;});
+  mySel=-1;
   if(preSel>=preList.length)preSel=0;
   document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
   if(!preList.length){document.getElementById("preExplain").innerHTML="";chance3(null);document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
-  document.getElementById("preWhy").textContent=`שני הזוגות החזקים ביותר לפי השיטה: עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
+  document.getElementById("preWhy").textContent=`ארבעת הזוגות החזקים ביותר לפי השיטה (ועד 4 זוגות שלך, מסומנים במסגרת מקווקוות): עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
   document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":""}${p.hit.length} מתוך 5${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}</small></button>`).join("");
   showPlaces();
   document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
@@ -554,7 +563,22 @@ function explainPair(p,idx){
     } else items.push(`דורג שני, אחרי <bdi dir="ltr">${oA}+${oB}</bdi>, לפי אותם כללים.`);}
   const rows=last5.map(d=>{const on=appears(d);return `<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${K.map(k=>{const s=sn(k);const hl=on&&(d[k]===A||d[k]===B);return `<span class="${s[3]?"r ":""}${hl?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${on?'<span class="mt">✓</span>':""}</div>`;}).join("");
   const base=p.a===p.b?"7.9%":"14.4%";
-  document.getElementById("preExplain").innerHTML=`<h3>למה <span class="cg">${A}+${B}</span>?</h3><ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul><div class="mini">${rows}</div><div class="reality">זה ההיגיון של השיטה. בפועל, הסיכוי ש־<bdi dir="ltr">${A}+${B}</bdi> יעלו בהגרלה הבאה, בכל מיקום, הוא כ־${base} בכל הגרלה, ובבדיקה על אלפי הגרלות זוגות שנבחרו כך חזרו בערך באותו שיעור. המעקב למטה מראה איך השיטה מצליחה בפועל.</div>`;
+  let crit="";
+  if(p.mine){
+    const all=rankAllPairs(last5),pos=all.findIndex(x=>x.a===p.a&&x.b===p.b)+1,mp=pickAll(last5);
+    const inM=mp.some(x=>x.a===p.a&&x.b===p.b);
+    const W=DRAWS.slice(0,1000),n1k=W.filter(d=>pairIn(d,A,B)).length,e1k=p.a===p.b?78.9:144.0,r=n1k/e1k;
+    const ok=(c,txt)=>`<li>${c?"✅":"⚠️"} ${txt}</li>`;
+    const verdict=inM?"חזק לפי השיטה: הוא כבר בין 4 הזוגות שהשיטה בוחרת.":pos<=10?"בינוני לפי השיטה: קרוב ל־4 המובילים אבל לא בתוכם.":"חלש לפי השיטה: הוא לא בולט ב־5 ההגרלות האחרונות.";
+    crit=`<div class="crit"><h3>ביקורת על הזוג שלך</h3><ul>${
+      ok(hitD.length>=2,`עלה יחד ב־${hitD.length} מתוך 5 ההגרלות האחרונות (השיטה דורשת לפחות 2).`)+
+      ok(appears(last5[0]),appears(last5[0])?"עלה בהגרלה האחרונה.":"לא עלה בהגרלה האחרונה.")+
+      ok(consec,consec?"עלה בשתי הגרלות ברצף.":"לא עלה ברצף.")+
+      ok(pos<=4,`מקום ${pos} מתוך 36 הזוגות האפשריים לפי כללי השיטה.`)+
+      ok(r>=1,`ב־1,000 ההגרלות האחרונות עלו יחד ${n1k} פעמים, לעומת ${Math.round(e1k)} במקרה (${r>=1?"מעל":"מתחת"} לממוצע ב־${Math.abs(Math.round((r-1)*100))}%).`)
+    }</ul><div class="verdict"><b>השורה התחתונה:</b> ${verdict} הזוג נכנס לאסטרטגיה שלך ונספר במעקב "הזוגות שלי" מהגרלה ${(myPairs.find(m=>m.a===p.a&&m.b===p.b)||{}).from||"הבאה"}.</div></div>`;
+  }
+  document.getElementById("preExplain").innerHTML=crit+`<h3>למה <span class="cg">${A}+${B}</span>?</h3><ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul><div class="mini">${rows}</div><div class="reality">זה ההיגיון של השיטה. בפועל, הסיכוי ש־<bdi dir="ltr">${A}+${B}</bdi> יעלו בהגרלה הבאה, בכל מיקום, הוא כ־${base} בכל הגרלה, ובבדיקה על אלפי הגרלות זוגות שנבחרו כך חזרו בערך באותו שיעור. המעקב למטה מראה איך השיטה מצליחה בפועל.</div>`;
 }
 function showPlaces(){
   const p=preList[preSel];if(!p){document.getElementById("preExplain").innerHTML="";chance3(null);return;}explainPair(p,preSel);chance3(p);const A=RANKS[p.a],B=RANKS[p.b];const pl=[];
@@ -565,7 +589,7 @@ function showPlaces(){
   document.getElementById("places").innerHTML=pl.map(([s1,r1,s2,r2],i)=>`<button type="button" class="pl" id="pl-${i}" data-a="${s1[0]}:${r1}" data-b="${s2[0]}:${r2}"><span>${k(s1,r1)} ${s1[2]} · ${k(s2,r2)} ${s2[2]}</span><small>לטופס</small></button>`).join("");
 }
 document.getElementById("prePair").addEventListener("click",e=>{
-  const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;if(myPair){myPair.sel=!!(preList[preSel]&&preList[preSel].mine);try{localStorage.setItem("chance-mypair",JSON.stringify(myPair));}catch(e){}}
+  const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;
   document.querySelectorAll(".pchip").forEach((x,i)=>x.classList.toggle("on",i===preSel));showPlaces();
 });
 document.getElementById("places").addEventListener("click",e=>{
@@ -625,7 +649,13 @@ function renderTrack3(){
   }
   const box=(lbl,key,ek)=>{const n=R3.length,h=R3.filter(x=>x[key]).length,e=R3.reduce((s,x)=>s+x[ek],0);
     return `<div class="tk"><span class="lb">${lbl}</span><span class="big">${n?h+" / "+n:"0 / 0"}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;};
-  document.getElementById("trk3").innerHTML=box("זוגות","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el");
+  let mineBox="";
+  if(myPairs.length){const from=Math.min(...myPairs.map(m=>m.from));const MR=[];
+    for(const d of DRAWS){if(d.n<from)break;const act=myPairs.filter(m=>m.from<=d.n);if(!act.length)continue;
+      MR.push({hit:act.some(m=>pairIn(d,RANKS[m.a],RANKS[m.b])),e:chanceAny(act.map(m=>({a:m.a,b:m.b})))});}
+    const n=MR.length,h=MR.filter(x=>x.hit).length,e=MR.reduce((s,x)=>s+x.e,0);
+    mineBox=`<div class="tk"><span class="lb">הזוגות שלי (${myPairs.map(m=>RANKS[m.a]+"+"+RANKS[m.b]).join(", ")})</span><span class="big">${h} / ${n}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;}
+  document.getElementById("trk3").innerHTML=box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+mineBox;
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
   document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td></tr>`).join(""):`<tr><td colspan="4" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
 }
@@ -689,12 +719,18 @@ function pickTop(win){
   for(let a=0;a<8;a++)for(let b=a;b<8;b++){const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?win[i].n:null).filter(Boolean);if(hit.length>=2)list.push({a,b,hit});}
   list.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit));return list[0]||null;
 }
+function rankAllPairs(win){ // every pair, ranked by the same rules (also pairs that came out 0-1 times)
+  const cnt=win.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));const list=[];
+  for(let a=0;a<8;a++)for(let b=a;b<8;b++){const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?win[i].n:null).filter(Boolean);list.push({a,b,hit});}
+  const consec=h=>h.some(n=>h.includes(n-1))?1:0,sum=h=>h.reduce((s,n)=>s+n,0),mx=h=>h.length?Math.max(...h):0;
+  list.sort((x,y)=>y.hit.length-x.hit.length||mx(y.hit)-mx(x.hit)||consec(y.hit)-consec(x.hit)||sum(y.hit)-sum(x.hit));return list;
+}
 function pickAll(win){
   const cnt=win.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));const list=[];
   for(let a=0;a<8;a++)for(let b=a;b<8;b++){const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?win[i].n:null).filter(Boolean);if(hit.length>=2)list.push({a,b,hit});}
   const consec=h=>h.some((n,i)=>h.includes(n-1))?1:0, sum=h=>h.reduce((s,n)=>s+n,0);
   list.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit)||consec(y.hit)-consec(x.hit)||sum(y.hit)-sum(x.hit));
-  return list.slice(0,2);   // השיטה בוחרת את שני הזוגות החזקים ביותר
+  return list.slice(0,4);   // השיטה בוחרת את ארבעת הזוגות החזקים ביותר
 }
 const _pairMask=(()=>{const m={};const c=new Array(8);
   for(let a=0;a<8;a++)for(let b=a;b<8;b++){const w=new Uint32Array(128);
@@ -731,7 +767,7 @@ function renderTrack(){
   const pairTxt=c=>`<span class="pp"><span class="k">${c[0]}</span>+<span class="k">${c[1]}</span></span>`;
   const nextTxt=nxt.length?nxt.map(p=>pairTxt([RANKS[p.a],RANKS[p.b]])).join(" · "):"אין זוג שחזר";
   const ph=past.filter(x=>x.hit).length,pe=past.reduce((s,x)=>s+x.exp,0);
-  document.getElementById("trkNote").textContent=past.length?`המעקב סופר רק מהגרלה ${TRACK_FROM} והלאה. לשם השוואה, בבדיקה על ${past.length.toLocaleString("he-IL")} ההגרלות שלפני, לפחות אחד משני הזוגות של השיטה עלה ב־${(ph/past.length*100).toFixed(1)}% מההגרלות, כשבמקרה מצופה ${(pe/past.length*100).toFixed(1)}% לאותם זוגות. על מעט הגרלות, הפרשים גדולים לכל כיוון הם תנודה רגילה של מזל.`:"";
+  document.getElementById("trkNote").textContent=past.length?`המעקב סופר רק מהגרלה ${TRACK_FROM} והלאה. לשם השוואה, בבדיקה על ${past.length.toLocaleString("he-IL")} ההגרלות שלפני, לפחות אחד מהזוגות של השיטה עלה ב־${(ph/past.length*100).toFixed(1)}% מההגרלות, כשבמקרה מצופה ${(pe/past.length*100).toFixed(1)}% לאותם זוגות. על מעט הגרלות, הפרשים גדולים לכל כיוון הם תנודה רגילה של מזל.`:"";
   if(!live.length){
     document.getElementById("hitBox").innerHTML=`<div class="hb"><span>המעקב מתחיל מהגרלה</span><b>${TRACK_FROM}</b><span>הזוגות של השיטה: ${nextTxt}</span></div><div class="hb alt"><span>פגיעות עד עכשיו</span><b>0</b><span>מתוך 0 הגרלות</span></div><div class="hb alt"><span>אחוז פגיעה</span><b>–</b><span>יופיע אחרי ההגרלה הראשונה</span></div>`;
     document.getElementById("hitRows").innerHTML=`<tr><td colspan="3" class="missm">עוד אין פגיעות. הפגיעות יופיעו כאן החל מהגרלה ${TRACK_FROM}.</td></tr>`;
