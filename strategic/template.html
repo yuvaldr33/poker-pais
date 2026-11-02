@@ -248,6 +248,7 @@ table.pairs td.nn{font-family:var(--mono)}
       <div class="acts" id="guess">
         <button class="btn pri" type="button" data-m="rand">ניחוש אקראי</button>
         <button class="btn" type="button" data-m="hot">לפי הקלפים החמים</button>
+        <button class="btn" type="button" data-m="hot3">חמים לצ'אנס 3</button>
         <button class="btn" type="button" data-m="cold">לפי הקלפים הקרים</button>
       </div>
       <div class="gnote" id="gnote">שלוש השיטות נותנות בדיוק אותו סיכוי: 1 ל־4,096 לצ'אנס 4.</div>
@@ -462,13 +463,17 @@ document.getElementById("guess").addEventListener("click",e=>{
   SUITS.forEach(([k])=>{
     if(m==="rand"){mine[k]=pickFrom(RANKS);return;}
     const cnt=RANKS.map(r=>L.filter(x=>x[k]===r).length);
-    const target=m==="hot"?Math.max(...cnt):Math.min(...cnt);
+    const target=m==="cold"?Math.min(...cnt):Math.max(...cnt);
     mine[k]=pickFrom(RANKS.filter((r,i)=>cnt[i]===target));
   });
+  if(m==="hot3"){ // keep the 3 suits whose hottest card came out most often; leave the 4th empty
+    const heat=SUITS.map(([k])=>({k,c:L.filter(x=>x[k]===mine[k]).length,rnd:Math.random()}));
+    heat.sort((a,b)=>a.c-b.c||a.rnd-b.rnd);mine[heat[0].k]=null;
+  }
   save();renderSlip();document.getElementById("res").hidden=true;
   const h=document.getElementById("myHand");h.classList.remove("flip");void h.offsetWidth;h.classList.add("flip");
-  const lab={rand:"ניחוש אקראי",hot:"הקלף שעלה הכי הרבה בכל סדרה",cold:"הקלף שעלה הכי מעט בכל סדרה"}[m];
-  document.getElementById("gnote").textContent=`${lab}. הסיכוי זהה בכל השיטות: 1 ל־4,096 לצ'אנס 4.`;
+  const lab={rand:"ניחוש אקראי",hot:"הקלף שעלה הכי הרבה בכל סדרה",cold:"הקלף שעלה הכי מעט בכל סדרה",hot3:"3 הקלפים הכי חמים, ב־3 סדרות"}[m];
+  document.getElementById("gnote").textContent=m==="hot3"?`${lab} (ב־50 ההגרלות האחרונות). צ'אנס 3: סיכוי 1 ל־512, פרס פי 300.`:`${lab}. הסיכוי זהה בכל השיטות: 1 ל־4,096 לצ'אנס 4.`;
 });
 
 // ---- pre-draw analysis: pairs that keep coming back in the last 5 draws ----
