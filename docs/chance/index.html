@@ -130,6 +130,17 @@ table.pairs td.nn{font-family:var(--mono)}
 .hand,.stats,.bars,.ranks,.since,.tbl table,.places,.pl>span,.upc{direction:ltr}
 .suit,.pl,.tbl th{direction:rtl}
 .pl>span{unicode-bidi:isolate}
+.trk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.trk{grid-template-columns:1fr}}
+.tk{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tk .lb{font-size:.8rem;color:var(--muted)}
+.tk .big{font-family:var(--mono);font-weight:700;font-size:1.4rem}
+.tk .cmp{font-size:.8rem;color:var(--muted)}
+.tk .bar2{position:relative;height:8px;border-radius:4px;background:var(--chip);overflow:hidden}
+.tk .bar2 i{position:absolute;inset:0 auto 0 0;background:var(--felt);border-radius:4px}
+.tk .bar2 b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
+.hitm{color:var(--felt);font-weight:700}
+.missm{color:var(--muted)}
 /* my slip */
 .guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .glab{font-weight:700;font-size:.9rem}
@@ -192,6 +203,13 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="glab">כל המיקומים של הזוג שנבחר (<span id="preCount"></span> טפסי צ'אנס 2)</div>
     <div class="places" id="places"></div>
     <div class="honest" id="preHonest"></div>
+  </section>
+
+  <section class="panel" id="trackSec">
+    <div class="top"><h2>מעקב השיטה</h2><span class="sub">כמה פעמים הזוג שהשיטה בחרה באמת עלה</span></div>
+    <div class="trk" id="trkSum"></div>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>הזוג שנבחר</th><th>מה עלה</th><th>תוצאה</th></tr></thead><tbody id="trkRows"></tbody></table></div>
+    <p class="honest" id="trkNote"></p>
   </section>
 
   <section class="panel slip">
@@ -463,13 +481,39 @@ function renderPairs(){
     v+=` 20 הזוגות שהיו הכי חמים ב־1,000 ההגרלות שלפני עלו שם בממוצע ${a1.toFixed(1)} פעמים, וב־1,000 האחרונות ${a2.toFixed(1)}, קרוב לממוצע הצפוי (15.6).`;}
   document.getElementById("pverdict").innerHTML=`<b>השורה התחתונה:</b> ${v}`;
 }
+
+// ---- track record of the 5-draw method, recomputed after every draw ----
+function pickTop(win){
+  const cnt=win.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));const list=[];
+  for(let a=0;a<8;a++)for(let b=a;b<8;b++){const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?win[i].n:null).filter(Boolean);if(hit.length>=2)list.push({a,b,hit});}
+  list.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit));return list[0]||null;
+}
+function renderTrack(){
+  const K=["S","H","D","C"],rows=[];
+  for(let i=0;i+6<=DRAWS.length;i++){
+    const p=pickTop(DRAWS.slice(i+1,i+6));if(!p)continue;
+    const d=DRAWS[i],A=RANKS[p.a],B=RANKS[p.b],r=K.map(k=>d[k]);
+    const hit=p.a===p.b?r.filter(x=>x===A).length>=2:(r.includes(A)&&r.includes(B));
+    let pay=0,tix=0;for(let x=0;x<4;x++)for(let y=0;y<4;y++){if(x===y||(p.a===p.b&&y<x))continue;tix++;const h=(d[K[x]]===A)+(d[K[y]]===B);pay+=h===2?30:h===1?0.5:0;}
+    rows.push({n:d.n,date:d.date,time:d.time,A,B,hit,exp:p.a===p.b?0.0789:0.1440,pay,tix,d});
+  }
+  if(rows.length<20){document.getElementById("trackSec").hidden=true;return;}
+  document.getElementById("trackSec").hidden=false;
+  const box=(lbl,R)=>{const h=R.filter(x=>x.hit).length,e=R.reduce((s,x)=>s+x.exp,0),pct=h/R.length*100,ep=e/R.length*100,ret=R.reduce((s,x)=>s+x.pay,0)/R.reduce((s,x)=>s+x.tix,0);
+    return `<div class="tk"><span class="lb">${lbl}</span><span class="big">${pct.toFixed(1)}%</span><div class="bar2"><i style="width:${Math.min(100,pct*3)}%"></i><b style="left:${Math.min(100,ep*3)}%"></b></div><span class="cmp">במקרה: ${ep.toFixed(1)}% · ${h} פגיעות מתוך ${R.length}</span><span class="cmp">החזר על כל שקל (צ'אנס 2): ${Math.round(ret*100)} אגורות</span></div>`;};
+  document.getElementById("trkSum").innerHTML=box("100 ההגרלות האחרונות",rows.slice(0,100))+box("1,000 ההגרלות האחרונות",rows.slice(0,1000))+box(`כל ${rows.length.toLocaleString("he-IL")} ההגרלות`,rows);
+  const c=(k,v)=>{const s=SUITS.find(x=>x[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
+  document.getElementById("trkRows").innerHTML=rows.slice(0,10).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${x.time||""}</small></td><td><span class="pp"><span class="k">${x.A}</span> + <span class="k">${x.B}</span></span></td><td><span class="pp">${K.map(k=>c(k,x.d[k])).join(" ")}</span></td><td class="${x.hit?"hitm":"missm"}">${x.hit?"✓ עלה":"לא עלה"}</td></tr>`).join("");
+  document.getElementById("trkNote").textContent=`הקו השחור בכל פס הוא מה שיוצא בבחירה אקראית. כל הגרלה נבדקת רק לפי 5 ההגרלות שלפניה, בדיוק כמו בזמן אמת. ההחזר הממוצע בצ'אנס 2 בבחירה אקראית הוא 58 אגורות לשקל. ב־100 הגרלות, הפרש של עד 7 נקודות אחוז מהמקרה (לכל כיוון) הוא תנודה רגילה של מזל. ככל שיש יותר הגרלות, המספר אמין יותר.`;
+}
+renderTrack();
 // ---- live refresh: pull new results without reloading ----
 async function refreshDraws(){
   try{
     const r=await fetch("draws.json?t="+Date.now(),{cache:"no-store"});
     if(!r.ok)return;
     const d=await r.json();
-    if(Array.isArray(d)&&d.length&&d[0].n>DRAWS[0].n){DRAWS=d;last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();tick();}
+    if(Array.isArray(d)&&d.length&&d[0].n>DRAWS[0].n){DRAWS=d;last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();renderTrack();tick();}
   }catch(e){}
 }
 refreshDraws(); setInterval(refreshDraws,60000);
