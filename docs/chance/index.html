@@ -211,6 +211,11 @@ table.pairs td.nn{font-family:var(--mono)}
 .res .chip{background:var(--chip);border-radius:999px;padding:3px 10px;font-size:.82rem}
 .res .chip b{font-family:var(--mono)}
 @media (prefers-reduced-motion:no-preference){.tick{transition:opacity .2s}}
+/* ---- template narrowing ---- */
+.tplBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.btn.on{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.tplNote{font-size:.85rem;color:var(--muted);line-height:1.5}
+.tplNote b{color:var(--ink)}
 /* ---- chat assistant ---- */
 .chFab[hidden],.chBox[hidden]{display:none!important}
 .wrap{padding-bottom:56px}
@@ -282,7 +287,9 @@ table.pairs td.nn{font-family:var(--mono)}
     </div>
     <div class="explain" id="preExplain"></div>
     <div class="c3" id="preC3"></div>
-    <div class="glab">כל המיקומים של הזוג שנבחר (<span id="preCount"></span> טפסי צ'אנס 2)</div>
+    <div class="tplBar"><button class="btn" type="button" id="tplBtn" aria-pressed="false">צמצום ל־2 שבלונות</button><span class="tplNote" id="tplShort"></span></div>
+    <div class="tplNote" id="tplNote" hidden></div>
+    <div class="glab"><span id="plLab">כל המיקומים</span> של הזוג שנבחר (<span id="preCount"></span> טפסי צ'אנס 2)</div>
     <div class="places" id="places"></div>
     <div class="honest" id="preHonest"></div>
   </section>
@@ -294,7 +301,7 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>הזוג שפגע</th><th>איפה הוא עלה</th></tr></thead><tbody id="hitRows"></tbody></table></div>
     <h3 class="h3">פגיעות לפי סוג (מהגרלה 53839)</h3>
     <div class="trk" id="trk3"></div>
-    <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>זוגות</th><th>זוג + חם</th><th>זוג + מקושר</th></tr></thead><tbody id="trk3Rows"></tbody></table></div>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>זוגות</th><th>זוג + חם</th><th>זוג + מקושר</th><th>שבלונות</th></tr></thead><tbody id="trk3Rows"></tbody></table></div>
     <h3 class="h3">אחוז פגיעה לעומת המקרה</h3>
     <div class="trk" id="trkSum"></div>
     <h3 class="h3">ההגרלות האחרונות במעקב</h3>
@@ -392,6 +399,7 @@ table.pairs td.nn{font-family:var(--mono)}
     <button type="button">מה הכי טוב לצ'אנס 3?</button>
     <button type="button">צ'אנס 4</button>
     <button type="button">זוגות שעלולים להתחבר</button>
+    <button type="button">צמצום שבלונות</button>
     <button type="button">מה הקלפים החמים?</button>
     <button type="button">מתי ההגרלה הבאה?</button>
     <button type="button">מה יצא בהגרלה האחרונה?</button>
@@ -426,6 +434,28 @@ function thirdLinked(p,last5){ // a card that came out with BOTH pair cards in t
       const k=SK.find(k=>all[0][k]===r);best={k,r,wa,wb,sc};}}
   return best;
 }
+// ---- templates: the 6 position pairs (עלה־לב … יהלום־תלתן) ----
+const TPL_NAME={"SH":"עלה־לב","SD":"עלה־יהלום","SC":"עלה־תלתן","HD":"לב־יהלום","HC":"לב־תלתן","DC":"יהלום־תלתן"};
+function pairTpls(d,A,B){const s=new Set();for(const x of SK)for(const y of SK){if(x!==y&&d[x]===A&&d[y]===B){const k=[x,y].sort((u,v)=>SK.indexOf(u)-SK.indexOf(v)).join("");s.add(k);}}return s;}
+function tplFor(p,hist){ // the 2 templates the pair used most in its last 5 appearances (extends back until 2 different ones are found)
+  const A=RANKS[p.a],B=RANKS[p.b],cnt={},last={},seen=[];
+  for(const d of hist){const s=pairTpls(d,A,B);if(!s.size)continue;
+    seen.push({d,s:[...s]});s.forEach(k=>{cnt[k]=(cnt[k]||0)+1;if(!last[k])last[k]=d.n;});
+    if(seen.length>=5&&Object.keys(cnt).length>=2)break;}
+  const keys=Object.keys(cnt).sort((u,v)=>cnt[v]-cnt[u]||last[v]-last[u]).slice(0,2);
+  return {keys,cnt,last,seen:seen.slice(0,Math.max(5,seen.length))};
+}
+function tplTickets(p,keys){const A=RANKS[p.a],B=RANKS[p.b],out=[];
+  for(const k of keys){const x=k[0],y=k[1];out.push([[x,A],[y,B]]);if(A!==B)out.push([[y,A],[x,B]]);}return out;}
+function tplHit(d,p,keys){const s=pairTpls(d,RANKS[p.a],RANKS[p.b]);return keys.some(k=>s.has(k));}
+const _tplCache=new Map();
+function chanceTpl(list){ // exact chance that at least one pair comes out in one of its chosen templates
+  const key=JSON.stringify(list);if(_tplCache.has(key))return _tplCache.get(key);
+  let ok=0;for(let m=0;m<4096;m++){const d={S:RANKS[m&7],H:RANKS[(m>>3)&7],D:RANKS[(m>>6)&7],C:RANKS[(m>>9)&7]};
+    if(list.some(([p,keys])=>tplHit(d,p,keys)))ok++;}
+  const v=ok/4096;_tplCache.set(key,v);return v;
+}
+let tplOn=false;try{tplOn=localStorage.getItem("chance-tpl")==="1";}catch(e){}
 function tripHit(d,A,B,c){return c&&d[c.k]===c.r&&pairIn(d,A,B,c.k);}
 const _c3Cache=new Map();
 function chanceTrip(list){ // exact chance that at least one (pair+third) combo comes out
@@ -679,10 +709,21 @@ function showPlaces(){
   const p=preList[preSel];if(!p){document.getElementById("preExplain").innerHTML="";chance3(null);return;}explainPair(p,preSel);chance3(p);const A=RANKS[p.a],B=RANKS[p.b];const pl=[];
   if(A===B){for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)pl.push([SUITS[i],A,SUITS[j],B]);}
   else{for(let i=0;i<4;i++)for(let j=0;j<4;j++)if(i!==j)pl.push([SUITS[i],A,SUITS[j],B]);}
+  const tf=tplFor(p,DRAWS),tb=document.getElementById("tplBtn"),tn=document.getElementById("tplNote");
+  tb.classList.toggle("on",tplOn);tb.setAttribute("aria-pressed",tplOn);
+  document.getElementById("tplShort").textContent=tf.keys.length?`לזוג הזה: ${tf.keys.map(k=>TPL_NAME[k]).join(" ו־")}`:"";
+  if(tplOn&&tf.keys.length){
+    const keep=pl.filter(([s1,,s2])=>tf.keys.includes([s1[0],s2[0]].sort((u,v)=>SK.indexOf(u)-SK.indexOf(v)).join("")));
+    pl.length=0;pl.push(...keep);
+    const ex=tf.seen.slice(0,5).map(x=>`${x.d.n} (${x.s.map(k=>TPL_NAME[k]).join(", ")})`).join(" · ");
+    tn.innerHTML=`<b>הצמצום לפי סטטיסטיקה:</b> השבלונות שבהן <bdi dir="ltr">${A}+${B}</bdi> עלה הכי הרבה ב־${Math.min(5,tf.seen.length)} ההופעות האחרונות שלו: ${tf.keys.map(k=>`<b>${TPL_NAME[k]}</b> (${tf.cnt[k]})`).join(", ")}. בתיקו קובעת ההופעה המאוחרת יותר.<br>ההופעות: ${ex}.<br>${pl.length} טפסים במקום ${A===B?6:12}. הזוג עולה בשתי השבלונות האלה בכ־${A===B?"37":"41"}% מהפעמים שהוא עולה, בדיוק כמו 2 שבלונות אקראיות: הצמצום חוסך טפסים ולא מגדיל סיכוי. המעקב למטה סופר אותו בנפרד.`;
+    tn.hidden=false;document.getElementById("plLab").textContent="המיקומים בצמצום";
+  }else{tn.hidden=true;document.getElementById("plLab").textContent="כל המיקומים";}
   document.getElementById("preCount").textContent=pl.length;
   const k=(s,r)=>`<span class="k${s[3]?" r":""}">${r}${s[1]}</span>`;
   document.getElementById("places").innerHTML=pl.map(([s1,r1,s2,r2],i)=>`<button type="button" class="pl" id="pl-${i}" data-a="${s1[0]}:${r1}" data-b="${s2[0]}:${r2}"><span>${k(s1,r1)} ${s1[2]} · ${k(s2,r2)} ${s2[2]}</span><small>לטופס</small></button>`).join("");
 }
+document.getElementById("tplBtn").addEventListener("click",()=>{tplOn=!tplOn;try{localStorage.setItem("chance-tpl",tplOn?"1":"0");}catch(e){}showPlaces();});
 document.getElementById("prePair").addEventListener("click",e=>{
   const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;
   document.querySelectorAll(".pchip").forEach((x,i)=>x.classList.toggle("on",i===preSel));showPlaces();
@@ -740,8 +781,8 @@ function renderTrack3(){
   for(let i=0;i+6<=DRAWS.length&&DRAWS[i].n>=FROM;i++){
     const win=DRAWS.slice(i+1,i+6),L=pickAll(win);if(!L.length)continue;const d=DRAWS[i];
     const P=L.map(p=>[RANKS[p.a],RANKS[p.b]]),H=L.map(p=>thirdHot(p,win)),K=L.map(p=>thirdLinked(p,win));
-    const LP=linkPairs(win,L);
-    R3.push({d,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),
+    const LP=linkPairs(win,L);const TK=L.map(p=>tplFor(p,DRAWS.slice(i+1)).keys);
+    R3.push({d,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),tpl:L.some((p,j)=>tplHit(d,p,TK[j])),et:chanceTpl(L.map((p,j)=>[{a:p.a,b:p.b},TK[j]])),
       ep:chanceAny(L),eh:chanceTrip(P.map(([A,B],j)=>[A,B,H[j]]).filter(x=>x[2])),el:chanceTrip(P.map(([A,B],j)=>[A,B,K[j]]).filter(x=>x[2]))});
   }
   lastR3=R3;
@@ -755,9 +796,9 @@ function renderTrack3(){
     mineBox=`<div class="tk"><span class="lb">הזוגות שלי (${myPairs.map(m=>RANKS[m.a]+"+"+RANKS[m.b]).join(", ")})</span><span class="big">${h} / ${n}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;}
   const LR=R3.filter(x=>x.hasLp),lh=LR.filter(x=>x.lp).length,le=LR.reduce((s,x)=>s+x.elp,0);
   const lbox=`<div class="tk"><span class="lb">זוגות שעלולים להתחבר</span><span class="big">${lh} / ${LR.length}</span><span class="cmp">${LR.length?`פגיעה ${(lh/LR.length*100).toFixed(1)}% · במקרה ${(le/LR.length*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;
-  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+mineBox;
+  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+mineBox;
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
-  document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td></tr>`).join(""):`<tr><td colspan="4" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
+  document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td><td>${m(x.tpl)}</td></tr>`).join(""):`<tr><td colspan="5" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
 }
 
 // ---- complete my slip with cards that came with mine / are hot (last 5 draws) ----
@@ -932,7 +973,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="cf50674ad5";
+const BUILD="7a5185885b";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1049,7 +1090,13 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const verdict=inM?"<b>חזק לפי השיטה</b>: הוא בין 4 הזוגות שהשיטה בוחרת.":isL?"<b>עלול להתחבר</b>: הוא אחד הזוגות של רעיון העוגן.":pos<=10?"<b>בינוני לפי השיטה</b>: קרוב לארבעת המובילים.":"<b>חלש לפי השיטה</b>: הוא לא בולט ב־5 ההגרלות האחרונות.";
     return `<b>הזוג ${pn(p)}</b><ul><li>${verdict}</li><li>עלו יחד ב־${hd.length} מתוך 5 ההגרלות האחרונות${hd.length?` (${hd.map(d=>d.n).join(", ")})`:""}. מקום ${pos} מתוך 36 זוגות.</li><li>ב־1,000 ההגרלות האחרונות: ${n1k} פעמים, לעומת ${Math.round(e1k)} בממוצע.</li><li>${lastI<0?"לא עלו יחד ב־2,000 ההגרלות האחרונות.":lastI===0?"עלו יחד בהגרלה האחרונה.":lastI===1?`עלו יחד בהגרלה שלפני האחרונה (${DRAWS[1].n}).`:`עלו יחד לאחרונה לפני ${lastI} הגרלות (${DRAWS[lastI].n}).`}</li><li>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li></ul>${mine?`<span class="sm">הזוג כבר ברשימת "הזוגות שלי" ונספר במעקב.</span>`:`<button type="button" class="chT" data-add="${p.a}-${p.b}">הוסף לזוגות שלי</button>`}<span class="sm">לצ'אנס 3 על הזוג הזה כתוב "צ'אנס 3 ל־${A}+${B}".</span>`;
   }
-  const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים</li><li>מתי ההגרלה הבאה, מה יצא באחרונה</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
+  function aTpl(p){
+    p=p||pickAll(L5())[0];if(!p)return `אין כרגע זוג חזק לצמצם לו שבלונות.${basis()}`;
+    const tf=tplFor(p,DRAWS);if(!tf.keys.length)return `לזוג ${pn(p)} אין מספיק הופעות.`;
+    const tk=tplTickets(p,tf.keys);
+    return `<b>צמצום ל־2 שבלונות: ${pn(p)}</b><br>בהופעות האחרונות שלו הזוג עלה הכי הרבה ב${tf.keys.map(k=>`<b>${TPL_NAME[k]}</b> (${tf.cnt[k]})`).join(" וב")}.<ul>${tk.map(cs=>`<li>${hand(cs)}${tBtn(cs)}</li>`).join("")}</ul><span class="sm">${tk.length} טפסים במקום ${p.a===p.b?6:12}. הזוג עולה בשתי השבלונות האלה בכ־${p.a===p.b?37:41}% מהפעמים שהוא עולה, כמו בכל 2 שבלונות: חוסך טפסים, לא מגדיל סיכוי. לזוג אחר כתוב למשל "שבלונות ל־7+7".</span>`;
+  }
+  const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים, צמצום לשבלונות</li><li>מתי ההגרלה הבאה, מה יצא באחרונה</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
 
   // ---- understanding the question ----
   const WORD={"נסיך":"J","נסיכים":"J","גק":"J","ג׳ק":"J","מלכה":"Q","מלכות":"Q","דמה":"Q","דמות":"Q","קווין":"Q","מלך":"K","מלכים":"K","קינג":"K","קינגים":"K","אס":"A","אסים":"A"};
@@ -1067,12 +1114,13 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const c2=has(/צאנס\s*2/)||(!lk&&has(/זוג/))||(!c3&&!c4&&!lk&&has(/חזק|הכי טוב|מה לשחק|מה לשים|תמליץ|המלצ|ניחוש|תנחש|מה כדאי/));
     if(cs.length>=2){
       let a=RANKS.indexOf(cs[0]),b=RANKS.indexOf(cs[1]);if(a>b)[a,b]=[b,a];const p={a,b};
-      return c3?aC3(p):aPair(p);
+      return has(/שבלונ|צמצ/)?aTpl(p):c3?aC3(p):aPair(p);
     }
     if(cs.length===1&&!c3&&!c4){const r=cs[0];
       const L50=DRAWS.slice(0,50);const rows=SUITS.map(([k,sym,name])=>`${ck(r,k)} ${L50.filter(d=>d[k]===r).length}`).join(" · ");
       const partner=RANKS.map((x,i)=>{let a=RANKS.indexOf(r),b=i;if(a>b)[a,b]=[b,a];return {p:{a,b},n:DRAWS.slice(0,1000).filter(d=>pairIn(d,RANKS[a],RANKS[b])).length,e:a===b?78.9:144};}).sort((u,v)=>v.n/v.e-u.n/u.e)[0];
       return `<b>הקלף ${r}</b> ב־50 ההגרלות האחרונות, לפי צורה: ${rows}.<br>השותף שעלה איתו הכי הרבה ב־1,000 ההגרלות האחרונות: ${pn(partner.p)} (${partner.n} פעמים).<span class="sm">כתוב שני קלפים, למשל "${r} ו־K", כדי לבדוק זוג.</span>`;}
+    if(has(/שבלונ|צמצ/))return aTpl();
     const parts=[];
     if(has(/שלום|היי|הי |אהלן|מה אתה יודע|עזרה|מה אפשר|איך זה עובד/)&&!c2&&!c3&&!c4)return HELP;
     if(c2)parts.push(aPairs());
