@@ -277,6 +277,14 @@ table.pairs td.nn{font-family:var(--mono)}
       </div>
       <div class="gnote" id="gnote">שלוש השיטות נותנות בדיוק אותו סיכוי: 1 ל־4,096 לצ'אנס 4.</div>
     </div>
+    <div class="guess">
+      <div class="glab">השלם את הקלפים שסימנתי</div>
+      <div class="acts">
+        <button class="btn pri" type="button" id="fill3">חפש והשלם לשלישייה</button>
+        <button class="btn" type="button" id="fill4">חפש והשלם לרביעייה</button>
+      </div>
+      <div class="gnote" id="fillNote">סמן קלף אחד או יותר, והאתר ימצא את הקלפים שעלו איתם או שחמים במיקומים הפנויים ב־5 ההגרלות האחרונות.</div>
+    </div>
     <div class="acts">
       <button class="btn" id="checkBtn" type="button">בדוק מול 50 ההגרלות</button>
       <button class="btn" id="clearBtn" type="button">נקה טופס</button>
@@ -636,6 +644,33 @@ function renderTrack3(){
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
   document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td></tr>`).join(""):`<tr><td colspan="4" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
 }
+
+// ---- complete my slip with cards that came with mine / are hot (last 5 draws) ----
+function fillSlip(target){
+  const note=document.getElementById("fillNote"),last5=DRAWS.slice(0,5),L50=DRAWS.slice(0,50);
+  const chosen=SK.filter(k=>mine[k]);
+  if(!chosen.length){note.textContent="קודם סמן לפחות קלף אחד בטופס.";return;}
+  if(chosen.length>=target){note.textContent=`כבר סימנת ${chosen.length} קלפים. נקה קלף כדי להשלים.`;return;}
+  const withMine=last5.filter(d=>chosen.some(k=>d[k]===mine[k]));
+  const cands=[];
+  for(const k of SK){if(mine[k])continue;
+    for(const r of RANKS){const hot=last5.filter(d=>d[k]===r),co=withMine.filter(d=>d[k]===r);
+      const long=L50.filter(d=>d[k]===r).length;
+      cands.push({k,r,hot,co,sc:[co.length*2+hot.length,hot.length?Math.max(...hot.map(d=>d.n)):0,long]});}}
+  const cmp=(a,b)=>b.sc[0]-a.sc[0]||b.sc[1]-a.sc[1]||b.sc[2]-a.sc[2];
+  const need=target-chosen.length,added=[];
+  for(let i=0;i<need;i++){
+    const free=cands.filter(c=>!mine[c.k]).sort(cmp);if(!free.length)break;
+    const c=free[0];mine[c.k]=c.r;added.push(c);
+  }
+  save();renderSlip();document.getElementById("res").hidden=true;
+  const h=document.getElementById("myHand");h.classList.remove("flip");void h.offsetWidth;h.classList.add("flip");
+  const sn=k=>SUITS.find(s=>s[0]===k);
+  note.innerHTML=added.map(c=>{const why=c.co.length?`עלה במיקום הזה יחד עם הקלפים שלך ב־${c.co.map(d=>d.n).join(", ")}`:c.hot.length?`הכי חם במיקום הזה ב־5 ההגרלות האחרונות (${c.hot.map(d=>d.n).join(", ")})`:`לא עלה ב־5 האחרונות; נבחר כי הוא החם ביותר במיקום הזה ב־50 ההגרלות האחרונות`;
+    return `<b><span class="cg"><span class="ck${sn(c.k)[3]?" r":""}">${c.r}${sn(c.k)[1]}</span></span> ${sn(c.k)[2]}</b>: ${why}.`;}).join("<br>")+`<br>${target===3?"צ'אנס 3: סיכוי 1 ל־512, פרס פי 300.":"צ'אנס 4: סיכוי 1 ל־4,096, פרס פי 2,000."} הקלפים שנוספו מתארים את ההגרלות האחרונות ולא משנים את הסיכוי.`;
+}
+document.getElementById("fill3").addEventListener("click",()=>fillSlip(3));
+document.getElementById("fill4").addEventListener("click",()=>fillSlip(4));
 // ---- 1,000-draw pair tables, recomputed after every new draw ----
 function renderPairs(){
   const W=DRAWS.slice(0,1000),P=DRAWS.slice(1000,2000),K=["S","H","D","C"];
@@ -739,7 +774,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="1f08b39c4d";
+const BUILD="ed2b4cfe75";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
