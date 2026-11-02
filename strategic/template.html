@@ -519,6 +519,16 @@ async function refreshDraws(){
     if(Array.isArray(d)&&d.length&&d[0].n>DRAWS[0].n){DRAWS=d;last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();renderTrack();tick();}
   }catch(e){}
 }
-refreshDraws(); setInterval(refreshDraws,60000);
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshDraws();});
+// ---- page version: reload once when a newer version of the site is published ----
+const BUILD="__BUILD__";
+async function checkVersion(){
+  try{
+    const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
+    const v=(await r.json()).build;
+    if(v&&v!==BUILD&&!location.search.includes("v="+v))location.replace(location.pathname+"?v="+v);
+  }catch(e){}
+}
+checkVersion();
+refreshDraws(); setInterval(()=>{refreshDraws();checkVersion();},60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDraws();checkVersion();}});
 </script>

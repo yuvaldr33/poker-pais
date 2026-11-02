@@ -77,7 +77,10 @@ def main():
     os.makedirs(OUT, exist_ok=True)
     tpl = open(os.path.join(SRC, "template.html"), encoding="utf-8").read()
     head = open(os.path.join(SRC, "head.html"), encoding="utf-8").read()
-    html = head + tpl.replace("__DATA__", data) + "\n</body>\n</html>\n"
+    import hashlib
+    build = hashlib.sha1((head + tpl).encode("utf-8")).hexdigest()[:10]   # משתנה רק כשהעיצוב/הקוד משתנה
+    html = head + tpl.replace("__DATA__", data).replace("__BUILD__", build) + "\n</body>\n</html>\n"
+    open(os.path.join(OUT, "version.json"), "w", encoding="utf-8").write(json.dumps({"build": build}))
     open(os.path.join(OUT, "index.html"), "w", encoding="utf-8").write(html)
     open(os.path.join(OUT, "draws.json"), "w", encoding="utf-8").write(data)
     for f in ("manifest.webmanifest", "icon.svg"):
