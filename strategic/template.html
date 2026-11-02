@@ -153,6 +153,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .c3 .tk3{border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.85rem}
 .c3 .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
 .c3 .tk3 small{font-size:.7rem;color:var(--muted)}
+.c3b{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
 .c3 .odds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .c3 .odds div{background:var(--chip);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .c3 .odds b{font-family:var(--mono);font-size:1.1rem}
@@ -228,6 +229,9 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="hitbox" id="hitBox"></div>
     <h3 class="h3">הפגיעות האחרונות של השיטה</h3>
     <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>הזוג שפגע</th><th>איפה הוא עלה</th></tr></thead><tbody id="hitRows"></tbody></table></div>
+    <h3 class="h3">פגיעות לפי סוג (מהגרלה 53839)</h3>
+    <div class="trk" id="trk3"></div>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>זוגות</th><th>זוג + חם</th><th>זוג + מקושר</th></tr></thead><tbody id="trk3Rows"></tbody></table></div>
     <h3 class="h3">אחוז פגיעה לעומת המקרה</h3>
     <div class="trk" id="trkSum"></div>
     <h3 class="h3">ההגרלות האחרונות במעקב</h3>
@@ -301,6 +305,37 @@ table.pairs td.nn{font-family:var(--mono)}
 let DRAWS = __DATA__;
 const SUITS=[["S","♠","עלה",0],["H","♥","לב",1],["D","♦","יהלום",1],["C","♣","תלתן",0]];
 const RANKS=["7","8","9","10","J","Q","K","A"];
+// ---- third-card rules ----
+const SK=["S","H","D","C"];
+function pairIn(d,A,B,skip){const r=SK.filter(k=>k!==skip).map(k=>d[k]);if(A===B)return r.filter(x=>x===A).length>=2;const i=r.indexOf(A);if(i<0)return false;r.splice(i,1);return r.includes(B);}
+function thirdHot(p,last5){
+  const A=RANKS[p.a],B=RANKS[p.b],pd=last5.filter(d=>pairIn(d,A,B));let best=null;
+  for(const k of SK)for(const r of RANKS){if(r===A||r===B)continue;
+    const hot=last5.filter(d=>d[k]===r),co=pd.filter(d=>d[k]===r);if(!hot.length)continue;
+    const sc=[co.length*2+hot.length,Math.max(...hot.map(d=>d.n))];
+    if(!best||sc[0]>best.sc[0]||(sc[0]===best.sc[0]&&sc[1]>best.sc[1]))best={k,r,hot,co,sc};}
+  return best;
+}
+function thirdLinked(p,last5){ // a card that came out with BOTH pair cards in the last 5 draws
+  const A=RANKS[p.a],B=RANKS[p.b],has=(d,x)=>SK.some(k=>d[k]===x);let best=null;
+  for(const r of RANKS){if(r===A||r===B)continue;
+    const wa=last5.filter(d=>has(d,r)&&has(d,A)),wb=last5.filter(d=>has(d,r)&&has(d,B));
+    if(!wa.length||!wb.length)continue;
+    const all=[...new Set([...wa,...wb])].sort((x,y)=>y.n-x.n);
+    const sc=[wa.length+wb.length,all[0].n];
+    if(!best||sc[0]>best.sc[0]||(sc[0]===best.sc[0]&&sc[1]>best.sc[1])){
+      const k=SK.find(k=>all[0][k]===r);best={k,r,wa,wb,sc};}}
+  return best;
+}
+function tripHit(d,A,B,c){return c&&d[c.k]===c.r&&pairIn(d,A,B,c.k);}
+const _c3Cache=new Map();
+function chanceTrip(list){ // exact chance that at least one (pair+third) combo comes out
+  const key=JSON.stringify(list);if(_c3Cache.has(key))return _c3Cache.get(key);
+  let ok=0;for(let m=0;m<4096;m++){const d={S:RANKS[m&7],H:RANKS[(m>>3)&7],D:RANKS[(m>>6)&7],C:RANKS[(m>>9)&7]};
+    if(list.some(([A,B,c])=>tripHit(d,A,B,c)))ok++;}
+  const v=ok/4096;_c3Cache.set(key,v);return v;
+}
+
 const DAYS=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
 const TZ="Asia/Jerusalem";
 const pad=n=>String(n).padStart(2,"0");
@@ -501,47 +536,54 @@ renderStatic(); tick(); setInterval(tick,1000);
 renderPairs();
 
 
+
 // ---- Chance 3: method pair + a third card from the last 5 draws ----
 function chance3(p){
   const el=document.getElementById("preC3");if(!p){el.innerHTML="";return;}
-  const K=["S","H","D","C"],last5=DRAWS.slice(0,5),A=RANKS[p.a],B=RANKS[p.b];
+  const last5=DRAWS.slice(0,5),A=RANKS[p.a],B=RANKS[p.b];
   const sn=k=>SUITS.find(s=>s[0]===k);
   const chip=(v,k)=>`<span class="ck${sn(k)[3]?" r":""}">${v}${sn(k)[1]}</span>`;
-  const hasPair=d=>{const r=K.map(k=>d[k]);return p.a===p.b?r.filter(x=>x===A).length>=2:(r.includes(A)&&r.includes(B));};
-  const pairDraws=last5.filter(hasPair);
-  // score every card (position + value) that is not part of the pair
-  let best=null;
-  for(const k of K)for(const r of RANKS){if(r===A||r===B)continue;
-    const hot=last5.filter(d=>d[k]===r),co=pairDraws.filter(d=>d[k]===r);if(!hot.length)continue;
-    const sc=[co.length*2+hot.length,Math.max(...hot.map(d=>d.n))];
-    if(!best||sc[0]>best.sc[0]||(sc[0]===best.sc[0]&&sc[1]>best.sc[1]))best={k,r,hot,co,sc};}
-  if(!best){el.innerHTML="";return;}
-  const free=K.filter(k=>k!==best.k);
   const hotAt=(k,r)=>last5.filter(d=>d[k]===r).length;
-  const tix=[];
-  for(const x of free)for(const y of free){if(x===y||(A===B&&y<x))continue;tix.push({x,y,score:hotAt(x,A)+hotAt(y,B)});}
-  const top=Math.max(...tix.map(t=>t.score));
-  // exact odds for covering all tickets (4 independent positions, 8 values each)
-  let any=0,ret=0;const N=4096;
-  for(let m=0;m<N;m++){const d={S:RANKS[m&7],H:RANKS[(m>>3)&7],D:RANKS[(m>>6)&7],C:RANKS[(m>>9)&7]};let full=false;
-    for(const t of tix){const h=(d[t.x]===A)+(d[t.y]===B)+(d[best.k]===best.r);ret+=h===3?300:h===2?0.7:h===1?0.3:0;if(h===3)full=true;}
-    if(full)any++;}
-  const pAny=any/N*100,roi=ret/N/tix.length;
-  const items=[];
-  items.push(`הקלף השלישי: ${chip(best.r,best.k)} ${sn(best.k)[2]}. הוא עלה במיקום הזה ב־${best.hot.length} מתוך 5 ההגרלות האחרונות (${best.hot.map(d=>d.n).join(", ")}).`);
-  if(best.co.length)items.push(`הוא גם עלה יחד עם ${A}+${B}: ${best.co.length===pairDraws.length?"בכל ההגרלות שבהן הזוג עלה":`ב־${best.co.length} מתוך ${pairDraws.length} ההגרלות שבהן הזוג עלה`} (${best.co.map(d=>d.n).join(", ")}).`);
-  else items.push(`הוא לא עלה יחד עם הזוג, אבל הוא הקלף הכי חם מחוץ לזוג ב־5 ההגרלות האחרונות.`);
-  items.push(`${A} ו־${B} נכנסים לשלושת המיקומים האחרים, ולכן יש ${tix.length} טפסי צ'אנס 3. הטופס המסומן משתמש במיקומים שבהם ${A} ו־${B} עלו לאחרונה הכי הרבה.`);
-  el.innerHTML=`<h3>צ'אנס 3: <span class="cg">${A}+${B}</span> + קלף שלישי</h3><ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul>
-  <div class="tix">${tix.map((t,i)=>`<button type="button" class="tk3${t.score===top?" best":""}" data-t="${t.x}:${A}|${t.y}:${B}|${best.k}:${best.r}"><span class="cg">${[[t.x,A],[t.y,B],[best.k,best.r]].sort((a,b)=>K.indexOf(a[0])-K.indexOf(b[0])).map(c=>chip(c[1],c[0])).join("")}</span><small>${t.score===top?"הכי חם · ":""}לטופס</small></button>`).join("")}</div>
-  <div class="odds"><div><b>1 ל־512</b><span>סיכוי לכל טופס · פרס פי 300</span></div><div><b>${pAny.toFixed(1)}%</b><span>שאחד מ־${tix.length} הטפסים יזכה</span></div><div><b>${Math.round(roi*100)} אג׳</b><span>החזר ממוצע על כל שקל</span></div></div>
-  <div class="reality">בצ'אנס 3 שניים נכונים מחזירים פי 0.7 ואחד נכון פי 0.3. ההחזר הממוצע זהה לכל בחירה של קלפים, גם אקראית. החום של הקלף מתאר את 5 ההגרלות האחרונות ולא משנה את הסיכוי בהגרלה הבאה.</div>`;
+  const block=(title,c,items)=>{
+    if(!c)return `<h3>${title}</h3><div class="reality">אין כרגע קלף שמתאים לכלל הזה.</div>`;
+    const free=SK.filter(k=>k!==c.k),tix=[];
+    for(const x of free)for(const y of free){if(x===y||(A===B&&y<x))continue;tix.push({x,y,score:hotAt(x,A)+hotAt(y,B)});}
+    const top=Math.max(...tix.map(t=>t.score));
+    let any=0,ret=0;for(let m=0;m<4096;m++){const d={S:RANKS[m&7],H:RANKS[(m>>3)&7],D:RANKS[(m>>6)&7],C:RANKS[(m>>9)&7]};let full=false;
+      for(const t of tix){const h=(d[t.x]===A)+(d[t.y]===B)+(d[c.k]===c.r);ret+=h===3?300:h===2?0.7:h===1?0.3:0;if(h===3)full=true;}if(full)any++;}
+    return `<h3>${title}: ${chip(c.r,c.k)} ${sn(c.k)[2]}</h3><ul>${items.map(x=>`<li>${x}</li>`).join("")}</ul>
+    <div class="tix">${tix.map(t=>`<button type="button" class="tk3${t.score===top?" best":""}" data-t="${t.x}:${A}|${t.y}:${B}|${c.k}:${c.r}"><span class="cg">${[[t.x,A],[t.y,B],[c.k,c.r]].sort((a,b)=>SK.indexOf(a[0])-SK.indexOf(b[0])).map(q=>chip(q[1],q[0])).join("")}</span><small>${t.score===top?"הכי חם · ":""}לטופס</small></button>`).join("")}</div>
+    <div class="odds"><div><b>1 ל־512</b><span>סיכוי לכל טופס · פרס פי 300</span></div><div><b>${(any/40.96).toFixed(1)}%</b><span>שאחד מ־${tix.length} הטפסים יזכה</span></div><div><b>${Math.round(ret/4096/tix.length*100)} אג׳</b><span>החזר ממוצע על כל שקל</span></div></div>`;};
+  const h=thirdHot(p,last5),l=thirdLinked(p,last5);
+  const hi=h?[`עלה במיקום הזה ב־${h.hot.length} מתוך 5 ההגרלות האחרונות (${h.hot.map(d=>d.n).join(", ")}).`,
+    h.co.length?`עלה יחד עם ${A}+${B} ב־${h.co.map(d=>d.n).join(", ")}.`:`לא עלה יחד עם הזוג, אבל הוא הקלף הכי חם מחוץ לזוג.`]:[];
+  const li=l?[`עלה עם ${A} ב־${l.wa.map(d=>d.n).join(", ")}, ועם ${B} ב־${l.wb.map(d=>d.n).join(", ")}.`,
+    `המיקום הוא איפה שהוא עלה איתם לאחרונה.`]:[];
+  el.innerHTML=`<h3>צ'אנס 3: <span class="cg">${A}+${B}</span> + קלף שלישי</h3>`+
+    `<div class="c3b">${block("הקלף החם",h,hi)}</div><div class="c3b">${block("הקלף המקושר",l,li)}</div>`+
+    `<div class="reality">בצ'אנס 3 שניים נכונים מחזירים פי 0.7 ואחד נכון פי 0.3. ההחזר הממוצע זהה לכל בחירה של קלפים. המעקב למטה סופר כל שיטה בנפרד.</div>`;
 }
 document.getElementById("preC3").addEventListener("click",e=>{
   const b=e.target.closest("button.tk3");if(!b)return;
   mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
   save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
 });
+
+// ---- tracking by type: pairs / pair+hot / pair+linked, counted separately ----
+function renderTrack3(){
+  const FROM=53839,R3=[];
+  for(let i=0;i+6<=DRAWS.length&&DRAWS[i].n>=FROM;i++){
+    const win=DRAWS.slice(i+1,i+6),L=pickAll(win);if(!L.length)continue;const d=DRAWS[i];
+    const P=L.map(p=>[RANKS[p.a],RANKS[p.b]]),H=L.map(p=>thirdHot(p,win)),K=L.map(p=>thirdLinked(p,win));
+    R3.push({d,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),
+      ep:chanceAny(L),eh:chanceTrip(P.map(([A,B],j)=>[A,B,H[j]]).filter(x=>x[2])),el:chanceTrip(P.map(([A,B],j)=>[A,B,K[j]]).filter(x=>x[2]))});
+  }
+  const box=(lbl,key,ek)=>{const n=R3.length,h=R3.filter(x=>x[key]).length,e=R3.reduce((s,x)=>s+x[ek],0);
+    return `<div class="tk"><span class="lb">${lbl}</span><span class="big">${n?h+" / "+n:"0 / 0"}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;};
+  document.getElementById("trk3").innerHTML=box("זוגות","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el");
+  const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
+  document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td></tr>`).join(""):`<tr><td colspan="4" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
+}
 // ---- 1,000-draw pair tables, recomputed after every new draw ----
 function renderPairs(){
   const W=DRAWS.slice(0,1000),P=DRAWS.slice(1000,2000),K=["S","H","D","C"];
@@ -634,14 +676,14 @@ function renderTrack(){
   const c=(k,v)=>{const s=SUITS.find(x=>x[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
   document.getElementById("trkRows").innerHTML=live.slice(0,10).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${x.time||""}</small></td><td>${x.cands.map(c=>pairTxt(c)).join("<br>")}</td><td><span class="pp">${K.map(k=>c(k,x.d[k])).join(" ")}</span></td><td class="${x.hit?"hitm":"missm"}">${x.hit?"✓ עלה: "+x.hits.map(h=>h.A+"+"+h.B).join(", "):"לא עלה"}</td></tr>`).join("");
 }
-renderTrack();
+renderTrack();renderTrack3();
 // ---- live refresh: pull new results without reloading ----
 async function refreshDraws(){
   try{
     const r=await fetch("draws.json?t="+Date.now(),{cache:"no-store"});
     if(!r.ok)return;
     const d=await r.json();
-    if(Array.isArray(d)&&d.length&&d[0].n>DRAWS[0].n){DRAWS=d;last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();renderTrack();tick();}
+    if(Array.isArray(d)&&d.length&&d[0].n>DRAWS[0].n){DRAWS=d;last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();tick();}
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
