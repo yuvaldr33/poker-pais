@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="he">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f5a3e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="צ'אנס">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}[hidden]{display:none!important}img{max-width:100%}</style>
+</head>
+<body>
+<title>צ'אנס אסטרטגי</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column, like a betting slip — next draw on top, then last draw, stats, archive */
+:root{
+  --bg:#eef0ec; --surface:#ffffff; --ink:#18221d; --muted:#5d6b63; --line:#d5dbd5;
+  --felt:#0f5a3e; --felt-ink:#f3f7f2; --red:#c8253a; --blk:#18221d;
+  --card:#fffdf8; --card-edge:#d9d3c4; --hot:#c8253a; --cold:#2d6aa8; --chip:#e3ece6;
+  --display:"Secular One","Assistant",system-ui,sans-serif;
+  --body:"Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1411; --surface:#16201b; --ink:#e7eee9; --muted:#9aaba1; --line:#2a3a31;
+  --felt:#13704d; --felt-ink:#f3f7f2; --red:#ff6b7c; --blk:#e7eee9;
+  --card:#f4f0e6; --card-edge:#bdb6a5; --hot:#ff6b7c; --cold:#6fa8e6; --chip:#1f2d26; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1411; --surface:#16201b; --ink:#e7eee9; --muted:#9aaba1; --line:#2a3a31;
+  --felt:#13704d; --felt-ink:#f3f7f2; --red:#ff6b7c; --blk:#e7eee9;
+  --card:#f4f0e6; --card-edge:#bdb6a5; --hot:#ff6b7c; --cold:#6fa8e6; --chip:#1f2d26; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+h2{font-size:1.3rem}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font-size:1.9rem}
+.sub{color:var(--muted);font-size:.9rem}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+/* next draw */
+.next{background:var(--felt);color:var(--felt-ink);border-radius:18px;padding:22px 20px;display:flex;flex-direction:column;gap:14px}
+.next .lab{font-size:.85rem;letter-spacing:.06em;opacity:.85}
+.next .row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.next .dn{font-family:var(--display);font-size:1.5rem}
+.clock{display:flex;gap:8px;direction:ltr}
+.clock div{background:rgba(0,0,0,.22);border-radius:10px;padding:8px 10px;min-width:64px;text-align:center}
+.clock b{display:block;font-family:var(--mono);font-size:2rem;font-weight:700;line-height:1.1}
+.clock span{font-size:.72rem;opacity:.8}
+.next .when{font-size:1rem}
+.upc{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.upc .u{flex:0 0 auto;background:rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;font-size:.85rem;line-height:1.35}
+.upc .u b{font-family:var(--mono);font-size:1rem;display:block}
+.note-light{font-size:.78rem;opacity:.8}
+/* cards */
+.hand{display:flex;gap:10px;flex-wrap:wrap}
+.pc{width:64px;height:88px;background:var(--card);border:1px solid var(--card-edge);border-radius:8px;position:relative;
+  color:#1b1b1b;font-family:var(--mono);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.pc.r{color:#c8253a}
+.pc .c1{position:absolute;top:5px;right:7px;font-size:.95rem;font-weight:700;line-height:1;text-align:center}
+.pc .c1 i{display:block;font-style:normal;font-size:.85rem}
+.pc .mid{position:absolute;inset:0;display:grid;place-items:center;font-size:1.9rem}
+.pc .nm{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-family:var(--body);font-size:.75rem;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.last .hand{padding-bottom:20px}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.stats{grid-template-columns:1fr}}
+.suit{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.suit h3{margin:0;font-size:1rem;display:flex;gap:6px;align-items:center}
+.suit h3 .s{font-size:1.2rem}
+.suit h3 .s.r{color:var(--red)}
+.bars{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;align-items:end;height:84px}
+.bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;min-width:0}
+.bar i{display:block;width:100%;background:var(--muted);opacity:.45;border-radius:3px 3px 0 0}
+.bar.hot i{background:var(--hot);opacity:1}
+.bar.cold i{background:var(--cold);opacity:1}
+.bar small{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.ranks{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;text-align:center;font-family:var(--mono);font-size:.82rem;font-weight:700}
+.since{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;text-align:center;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:5px;vertical-align:-1px}
+.legend .h::before{background:var(--hot)} .legend .c::before{background:var(--cold)}
+.honest{font-size:.85rem;color:var(--muted);background:var(--chip);border-radius:10px;padding:10px 12px}
+/* table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:420px}
+th,td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:.8rem;background:var(--surface);position:sticky;top:0}
+td.n,td.d{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.85rem}
+td.d{color:var(--muted)}
+td.k{font-family:var(--mono);font-weight:700}
+td.k.r{color:var(--red)}
+tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface) 70%,var(--bg))}
+tbody tr:last-child td{border-bottom:0}
+.dayrow td{background:var(--chip);font-size:.78rem;color:var(--muted);text-align:start;padding:4px 10px;font-weight:600}
+.foot{font-size:.8rem;color:var(--muted)}
+.foot a{color:inherit}
+.verdict{background:var(--chip);border-radius:10px;padding:12px;font-size:.95rem}
+.h3{margin:4px 0 0;font-size:1.05rem}
+table.pairs{min-width:0}
+table.pairs td .k{font-family:var(--mono);font-weight:700}
+table.pairs td .k.r{color:var(--red)}
+table.pairs td.nn{font-family:var(--mono)}
+.pairbig{display:flex;gap:8px;flex-wrap:wrap}
+.pchip{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:6px 12px;cursor:pointer;font-family:var(--body)}
+.pchip .rk{font-family:var(--mono);font-weight:700;font-size:1.3rem}
+.pchip small{font-size:.7rem;color:var(--muted)}
+.pchip.on{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.pchip.on small{color:var(--felt-ink);opacity:.85}
+.places{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pl{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--surface);color:var(--ink);font-family:var(--body);font-size:.88rem;cursor:pointer;text-align:start}
+.pl:hover{border-color:var(--felt)}
+.pl .k{font-family:var(--mono);font-weight:700}
+.pl .k.r{color:var(--red)}
+.pl small{color:var(--muted);font-size:.72rem}
+/* cards read left to right: ♠ ♥ ♦ ♣ */
+.hand,.stats,.bars,.ranks,.since,.tbl table,.places,.pl>span,.upc{direction:ltr}
+.suit,.pl,.tbl th{direction:rtl}
+.pl>span{unicode-bidi:isolate}
+/* my slip */
+.guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.glab{font-weight:700;font-size:.9rem}
+.gnote{font-size:.8rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.flip .pc{animation:flip .35s ease both}.flip .pc:nth-child(2){animation-delay:.08s}.flip .pc:nth-child(3){animation-delay:.16s}.flip .pc:nth-child(4){animation-delay:.24s}}
+@keyframes flip{from{transform:rotateY(90deg)}to{transform:none}}
+
+.slip .hand{padding-bottom:20px}
+.pc.empty{background:transparent;border:1.5px dashed var(--line);box-shadow:none;color:var(--muted)}
+.pc.empty .mid{font-size:1.5rem;opacity:.5}
+.pick{display:flex;flex-direction:column;gap:10px}
+.prow{display:flex;align-items:center;gap:8px;min-width:0}
+.prow .ps{width:56px;flex:0 0 auto;font-weight:700;display:flex;gap:4px;align-items:center;font-size:.9rem}
+.prow .ps .s.r{color:var(--red)}
+.opts{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;flex:1;min-width:0;direction:ltr}
+.opts button{font-family:var(--mono);font-weight:700;font-size:.9rem;padding:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-width:0}
+.opts button.r{color:var(--red)}
+.opts button[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.opts button:focus-visible,.btn:focus-visible{outline:2px solid var(--cold);outline-offset:2px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--body);font-weight:600;font-size:.9rem;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.pri{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.res{font-size:.9rem;display:flex;flex-direction:column;gap:6px}
+.res .chips{display:flex;gap:6px;flex-wrap:wrap}
+.res .chip{background:var(--chip);border-radius:999px;padding:3px 10px;font-size:.82rem}
+.res .chip b{font-family:var(--mono)}
+@media (prefers-reduced-motion:no-preference){.tick{transition:opacity .2s}}
+</style>
+
+<div class="wrap" dir="rtl">
+  <header class="top">
+    <h1>צ'אנס אסטרטגי</h1>
+    <div class="sub" id="upd"></div>
+  </header>
+
+  <section class="next" aria-live="polite">
+    <div class="row">
+      <div>
+        <div class="lab">ההגרלה הבאה</div>
+        <div class="dn">הגרלה <span class="num" id="nNum"></span></div>
+        <div class="when" id="nWhen"></div>
+      </div>
+      <div class="clock" id="clock">
+        <div><b id="cH">00</b><span>שעות</span></div>
+        <div><b id="cM">00</b><span>דקות</span></div>
+        <div><b id="cS">00</b><span>שניות</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="lab" style="margin-bottom:6px">ההגרלות הבאות</div>
+      <div class="upc" id="upc"></div>
+    </div>
+    <div class="note-light">השעות הן שעות סגירת המכירה לפי לוח ההגרלות הקבוע של מפעל הפיס. בחגים ובערבי חג הלוח משתנה.</div>
+  </section>
+
+  <section class="panel pre">
+    <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
+    <p class="sub" id="preWhy"></p>
+    <div class="pairbig" id="prePair"></div>
+    <div class="glab">כל המיקומים של הזוג שנבחר (<span id="preCount"></span> טפסי צ'אנס 2)</div>
+    <div class="places" id="places"></div>
+    <div class="honest" id="preHonest"></div>
+  </section>
+
+  <section class="panel slip">
+    <div class="top"><h2>הטופס שלי</h2><span class="sub" id="slipType">בחר קלף מכל סדרה</span></div>
+    <div class="hand" id="myHand"></div>
+    <div class="pick" id="pick"></div>
+    <div class="guess">
+      <div class="glab">שהמחשב ינחש לי</div>
+      <div class="acts" id="guess">
+        <button class="btn pri" type="button" data-m="rand">ניחוש אקראי</button>
+        <button class="btn" type="button" data-m="hot">לפי הקלפים החמים</button>
+        <button class="btn" type="button" data-m="cold">לפי הקלפים הקרים</button>
+      </div>
+      <div class="gnote" id="gnote">שלוש השיטות נותנות בדיוק אותו סיכוי: 1 ל־4,096 לצ'אנס 4.</div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="checkBtn" type="button">בדוק מול 50 ההגרלות</button>
+      <button class="btn" id="clearBtn" type="button">נקה טופס</button>
+    </div>
+    <div class="res" id="res" hidden></div>
+  </section>
+
+  <section class="panel last">
+    <div class="top"><h2>ההגרלה האחרונה</h2><span class="sub" id="lMeta"></span></div>
+    <div class="hand" id="lHand"></div>
+    <div class="sub" id="stale" hidden></div>
+  </section>
+
+  <section class="panel">
+    <div class="top"><h2>מה עלה ב־50 ההגרלות האחרונות</h2></div>
+    <div class="legend"><span class="h">עלה הכי הרבה</span><span class="c">עלה הכי מעט</span><span>המספר מתחת: לפני כמה הגרלות עלה לאחרונה</span></div>
+    <div class="stats" id="stats"></div>
+    <div class="honest">כל הגרלה עצמאית: לכל קלף בכל סדרה יש סיכוי של 1 ל־8 בכל הגרלה, בלי קשר למה שעלה קודם. "חם" ו"קר" מתארים את העבר בלבד ולא מנבאים את ההגרלה הבאה.</div>
+  </section>
+
+  <section class="panel">
+    <div class="top"><h2>צירופים חוזרים ב־1,000 הגרלות</h2><span class="sub num">52837–53836 · 05/05/2026–01/11/2026</span></div>
+    <div class="verdict">
+      <b>השורה התחתונה:</b> יש צירופים שעלו יותר מהממוצע, אבל בדיוק באותה מידה שזה קורה בהגרלות אקראיות לגמרי. והצירופים שהיו הכי חמים ב־1,000 ההגרלות הקודמות לא המשיכו להיות חמים: הם ירדו מממוצע של 24.1 פעמים ל־16.2, כמעט בדיוק הממוצע הצפוי (15.6).
+    </div>
+    <h3 class="h3">זוגות קלפים באותה הגרלה, לפי צורה</h3>
+    <p class="sub">כל זוג צפוי לעלות בערך 16 פעמים ב־1,000 הגרלות. בהגרלות אקראיות, הזוג הכי חזק מגיע בדרך כלל ל־28 פעמים. אצלנו הוא הגיע ל־30.</p>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>1,000 אחרונות</th><th>1,000 שלפני</th></tr></thead><tbody><tr><td><span class="k">8♠</span> + <span class="k">8♣</span></td><td class="nn"><b>30</b></td><td class="nn">10</td></tr><tr><td><span class="k r">7♦</span> + <span class="k">10♣</span></td><td class="nn"><b>27</b></td><td class="nn">13</td></tr><tr><td><span class="k">8♠</span> + <span class="k r">K♥</span></td><td class="nn"><b>26</b></td><td class="nn">14</td></tr><tr><td><span class="k r">10♥</span> + <span class="k r">9♦</span></td><td class="nn"><b>26</b></td><td class="nn">14</td></tr><tr><td><span class="k r">J♥</span> + <span class="k r">10♦</span></td><td class="nn"><b>26</b></td><td class="nn">19</td></tr><tr><td><span class="k">7♠</span> + <span class="k">7♣</span></td><td class="nn"><b>25</b></td><td class="nn">11</td></tr><tr><td><span class="k">9♠</span> + <span class="k r">8♥</span></td><td class="nn"><b>24</b></td><td class="nn">18</td></tr><tr><td><span class="k">8♠</span> + <span class="k r">7♦</span></td><td class="nn"><b>24</b></td><td class="nn">13</td></tr><tr><td><span class="k r">9♥</span> + <span class="k">8♣</span></td><td class="nn"><b>24</b></td><td class="nn">22</td></tr><tr><td><span class="k">7♠</span> + <span class="k r">9♥</span></td><td class="nn"><b>23</b></td><td class="nn">28</td></tr><tr><td><span class="k">9♠</span> + <span class="k r">A♥</span></td><td class="nn"><b>23</b></td><td class="nn">21</td></tr><tr><td><span class="k">10♠</span> + <span class="k r">10♥</span></td><td class="nn"><b>23</b></td><td class="nn">10</td></tr><tr><td><span class="k">8♠</span> + <span class="k r">J♦</span></td><td class="nn"><b>23</b></td><td class="nn">12</td></tr><tr><td><span class="k">10♠</span> + <span class="k r">7♦</span></td><td class="nn"><b>23</b></td><td class="nn">13</td></tr><tr><td><span class="k">10♠</span> + <span class="k r">J♦</span></td><td class="nn"><b>23</b></td><td class="nn">14</td></tr></tbody></table></div>
+    <h3 class="h3">זוגות בלי קשר לצורה (גם כשהם מחליפים מקומות)</h3>
+    <p class="sub">כמה הגרלות כללו את שני הקלפים, בכל סדרה שהיא, לעומת המספר הצפוי בהגרלה אקראית.</p>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>עלו יחד</th><th>צפוי</th></tr></thead><tbody><tr><td><span class="k">8</span> + <span class="k">8</span></td><td class="nn"><b>90</b></td><td class="nn">79</td></tr><tr><td><span class="k">A</span> + <span class="k">A</span></td><td class="nn"><b>89</b></td><td class="nn">79</td></tr><tr><td><span class="k">8</span> + <span class="k">9</span></td><td class="nn"><b>162</b></td><td class="nn">144</td></tr><tr><td><span class="k">9</span> + <span class="k">Q</span></td><td class="nn"><b>160</b></td><td class="nn">144</td></tr><tr><td><span class="k">Q</span> + <span class="k">A</span></td><td class="nn"><b>159</b></td><td class="nn">144</td></tr><tr><td><span class="k">8</span> + <span class="k">10</span></td><td class="nn"><b>157</b></td><td class="nn">144</td></tr><tr><td><span class="k">7</span> + <span class="k">8</span></td><td class="nn"><b>157</b></td><td class="nn">145</td></tr><tr><td><span class="k">8</span> + <span class="k">K</span></td><td class="nn"><b>155</b></td><td class="nn">144</td></tr><tr><td><span class="k">8</span> + <span class="k">Q</span></td><td class="nn"><b>155</b></td><td class="nn">145</td></tr><tr><td><span class="k">8</span> + <span class="k">A</span></td><td class="nn"><b>154</b></td><td class="nn">144</td></tr></tbody></table></div>
+    <h3 class="h3">זוגות שחוזרים מהר</h3>
+    <p class="sub">כמה פעמים זוג עלה יחד ואז חזר שוב תוך 3 הגרלות לכל היותר.</p>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>חזרות</th><th>צפוי</th></tr></thead><tbody><tr><td><span class="k">8</span> + <span class="k">9</span></td><td class="nn"><b>69</b></td><td class="nn">54</td></tr><tr><td><span class="k">Q</span> + <span class="k">A</span></td><td class="nn"><b>69</b></td><td class="nn">54</td></tr><tr><td><span class="k">9</span> + <span class="k">Q</span></td><td class="nn"><b>69</b></td><td class="nn">54</td></tr><tr><td><span class="k">7</span> + <span class="k">Q</span></td><td class="nn"><b>67</b></td><td class="nn">53</td></tr><tr><td><span class="k">7</span> + <span class="k">8</span></td><td class="nn"><b>66</b></td><td class="nn">54</td></tr><tr><td><span class="k">8</span> + <span class="k">8</span></td><td class="nn"><b>21</b></td><td class="nn">17</td></tr><tr><td><span class="k">7</span> + <span class="k">10</span></td><td class="nn"><b>64</b></td><td class="nn">53</td></tr><tr><td><span class="k">8</span> + <span class="k">K</span></td><td class="nn"><b>63</b></td><td class="nn">54</td></tr></tbody></table></div>
+    <p class="honest">איך בדקתי: הרצתי אלף פעמים 1,000 הגרלות אקראיות במחשב והשוויתי. בכל שלוש הבדיקות, החריגות שיצאו בתוצאות האמיתיות קטנות או שוות למה שיוצא סתם במקרה. על פני כל 50,837 ההגרלות מאז 1994, כל זוג עלה בטווח של עד 12% מהמספר הצפוי.</p>
+  </section>
+
+  <section class="panel">
+    <div class="top"><h2>היסטוריית 50 ההגרלות האחרונות</h2></div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>הגרלה</th><th>שעה</th><th>♠ עלה</th><th>♥ לב</th><th>♦ יהלום</th><th>♣ תלתן</th></tr></thead>
+        <tbody id="hist"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">התוצאות נאספו מאתרי תוצאות שמפרסמים את תוצאות מפעל הפיס ונבדקו מול כמה מקורות. התוצאות המחייבות הן של מפעל הפיס בלבד. משחק אחראי, מגיל 18.</p>
+</div>
+
+<script>
+const DRAWS = [{"n":53836,"date":"2026-11-01","time":"21:00","S":"8","H":"7","D":"7","C":"8"},{"n":53835,"date":"2026-11-01","time":"19:00","S":"Q","H":"A","D":"8","C":"8"},{"n":53834,"date":"2026-11-01","time":"17:00","S":"10","H":"K","D":"J","C":"9"},{"n":53833,"date":"2026-11-01","time":"15:00","S":"10","H":"Q","D":"8","C":"A"},{"n":53832,"date":"2026-11-01","time":"13:00","S":"10","H":"8","D":"8","C":"10"},{"n":53831,"date":"2026-11-01","time":"11:00","S":"K","H":"9","D":"K","C":"Q"},{"n":53830,"date":"2026-11-01","time":"09:00","S":"9","H":"7","D":"K","C":"7"},{"n":53829,"date":"2026-10-31","time":"23:30","S":"10","H":"J","D":"J","C":"8"},{"n":53828,"date":"2026-10-31","time":"21:30","S":"8","H":"J","D":"J","C":"10"},{"n":53827,"date":"2026-10-30","time":"14:00","S":"Q","H":"J","D":"A","C":"A"},{"n":53826,"date":"2026-10-30","time":"12:00","S":"K","H":"A","D":"7","C":"7"},{"n":53825,"date":"2026-10-30","time":"10:00","S":"K","H":"8","D":"7","C":"J"},{"n":53824,"date":"2026-10-29","time":"21:00","S":"10","H":"J","D":"Q","C":"7"},{"n":53823,"date":"2026-10-29","time":"19:00","S":"7","H":"9","D":"10","C":"9"},{"n":53822,"date":"2026-10-29","time":"17:00","S":"J","H":"K","D":"Q","C":"A"},{"n":53821,"date":"2026-10-29","time":"15:00","S":"K","H":"K","D":"9","C":"A"},{"n":53820,"date":"2026-10-29","time":"13:00","S":"Q","H":"8","D":"8","C":"9"},{"n":53819,"date":"2026-10-29","time":"11:00","S":"J","H":"9","D":"8","C":"A"},{"n":53818,"date":"2026-10-29","time":"09:00","S":"A","H":"Q","D":"Q","C":"8"},{"n":53817,"date":"2026-10-28","time":"21:00","S":"A","H":"A","D":"10","C":"Q"},{"n":53816,"date":"2026-10-28","time":"19:00","S":"7","H":"Q","D":"7","C":"7"},{"n":53815,"date":"2026-10-28","time":"17:00","S":"10","H":"K","D":"8","C":"7"},{"n":53814,"date":"2026-10-28","time":"15:00","S":"K","H":"8","D":"K","C":"A"},{"n":53813,"date":"2026-10-28","time":"13:00","S":"8","H":"10","D":"9","C":"10"},{"n":53812,"date":"2026-10-28","time":"11:00","S":"8","H":"8","D":"8","C":"A"},{"n":53811,"date":"2026-10-28","time":"09:00","S":"8","H":"Q","D":"Q","C":"K"},{"n":53810,"date":"2026-10-27","time":"21:00","S":"10","H":"7","D":"J","C":"7"},{"n":53809,"date":"2026-10-27","time":"19:00","S":"8","H":"7","D":"A","C":"10"},{"n":53808,"date":"2026-10-27","time":"17:00","S":"7","H":"8","D":"9","C":"9"},{"n":53807,"date":"2026-10-27","time":"15:00","S":"8","H":"K","D":"K","C":"7"},{"n":53806,"date":"2026-10-27","time":"13:00","S":"A","H":"8","D":"Q","C":"J"},{"n":53805,"date":"2026-10-27","time":"11:00","S":"8","H":"10","D":"9","C":"K"},{"n":53804,"date":"2026-10-27","time":"09:00","S":"10","H":"7","D":"A","C":"A"},{"n":53803,"date":"2026-10-26","time":"21:00","S":"10","H":"J","D":"J","C":"Q"},{"n":53802,"date":"2026-10-26","time":"19:00","S":"7","H":"10","D":"J","C":"K"},{"n":53801,"date":"2026-10-26","time":"17:00","S":"8","H":"9","D":"A","C":"8"},{"n":53800,"date":"2026-10-26","time":"15:00","S":"A","H":"10","D":"8","C":"9"},{"n":53799,"date":"2026-10-26","time":"13:00","S":"J","H":"Q","D":"7","C":"Q"},{"n":53798,"date":"2026-10-26","time":"11:00","S":"A","H":"9","D":"A","C":"8"},{"n":53797,"date":"2026-10-26","time":"09:00","S":"8","H":"Q","D":"7","C":"9"},{"n":53796,"date":"2026-10-25","time":"21:00","S":"J","H":"Q","D":"10","C":"J"},{"n":53795,"date":"2026-10-25","time":"19:00","S":"9","H":"9","D":"8","C":"10"},{"n":53794,"date":"2026-10-25","time":"17:00","S":"10","H":"K","D":"A","C":"7"},{"n":53793,"date":"2026-10-25","time":"15:00","S":"Q","H":"J","D":"9","C":"Q"},{"n":53792,"date":"2026-10-25","time":"13:00","S":"7","H":"J","D":"A","C":"Q"},{"n":53791,"date":"2026-10-25","time":"11:00","S":"Q","H":"7","D":"10","C":"8"},{"n":53790,"date":"2026-10-25","time":"09:00","S":"10","H":"8","D":"10","C":"A"},{"n":53789,"date":"2026-10-24","time":"23:30","S":"9","H":"J","D":"K","C":"9"},{"n":53788,"date":"2026-10-24","time":"21:30","S":"9","H":"K","D":"7","C":"7"},{"n":53787,"date":"2026-10-23","time":"14:00","S":"K","H":"8","D":"Q","C":"K"},{"n":53786,"date":"2026-10-23","time":"12:00","S":"7","H":"10","D":"Q","C":"9"},{"n":53785,"date":"2026-10-23","time":"10:00","S":"10","H":"Q","D":"7","C":"Q"},{"n":53784,"date":"2026-10-22","time":"21:00","S":"A","H":"7","D":"8","C":"9"},{"n":53783,"date":"2026-10-22","time":"19:00","S":"K","H":"10","D":"7","C":"9"},{"n":53782,"date":"2026-10-22","time":"17:00","S":"A","H":"8","D":"Q","C":"7"},{"n":53781,"date":"2026-10-22","time":"15:00","S":"J","H":"Q","D":"10","C":"K"},{"n":53780,"date":"2026-10-22","time":"13:00","S":"9","H":"J","D":"10","C":"9"},{"n":53779,"date":"2026-10-22","time":"11:00","S":"Q","H":"10","D":"8","C":"9"},{"n":53778,"date":"2026-10-22","time":"09:00","S":"8","H":"10","D":"9","C":"8"},{"n":53777,"date":"2026-10-21","time":"21:00","S":"K","H":"7","D":"J","C":"K"},{"n":53776,"date":"2026-10-21","time":"19:00","S":"A","H":"8","D":"J","C":"7"},{"n":53775,"date":"2026-10-21","time":"17:00","S":"A","H":"7","D":"Q","C":"K"},{"n":53774,"date":"2026-10-21","time":"15:00","S":"J","H":"9","D":"A","C":"J"},{"n":53773,"date":"2026-10-21","time":"13:00","S":"10","H":"9","D":"Q","C":"9"},{"n":53772,"date":"2026-10-21","time":"11:00","S":"A","H":"K","D":"K","C":"Q"},{"n":53771,"date":"2026-10-21","time":"09:00","S":"A","H":"A","D":"J","C":"J"},{"n":53770,"date":"2026-10-20","time":"21:00","S":"K","H":"Q","D":"7","C":"10"},{"n":53769,"date":"2026-10-20","time":"19:00","S":"10","H":"K","D":"K","C":"10"},{"n":53768,"date":"2026-10-20","time":"17:00","S":"J","H":"Q","D":"A","C":"K"},{"n":53767,"date":"2026-10-20","time":"15:00","S":"7","H":"8","D":"7","C":"J"},{"n":53766,"date":"2026-10-20","time":"13:00","S":"7","H":"10","D":"10","C":"Q"},{"n":53765,"date":"2026-10-20","time":"11:00","S":"10","H":"A","D":"J","C":"Q"},{"n":53764,"date":"2026-10-20","time":"09:00","S":"7","H":"10","D":"Q","C":"7"},{"n":53763,"date":"2026-10-19","time":"21:00","S":"Q","H":"Q","D":"10","C":"8"},{"n":53762,"date":"2026-10-19","time":"19:00","S":"Q","H":"7","D":"Q","C":"Q"},{"n":53761,"date":"2026-10-19","time":"17:00","S":"8","H":"8","D":"10","C":"8"},{"n":53760,"date":"2026-10-19","time":"15:00","S":"7","H":"A","D":"A","C":"7"},{"n":53759,"date":"2026-10-19","time":"13:00","S":"A","H":"10","D":"8","C":"K"},{"n":53758,"date":"2026-10-19","time":"11:00","S":"K","H":"7","D":"K","C":"10"},{"n":53757,"date":"2026-10-19","time":"09:00","S":"7","H":"Q","D":"9","C":"J"},{"n":53756,"date":"2026-10-18","time":"21:00","S":"7","H":"J","D":"Q","C":"K"},{"n":53755,"date":"2026-10-18","time":"19:00","S":"8","H":"K","D":"10","C":"8"},{"n":53754,"date":"2026-10-18","time":"17:00","S":"A","H":"Q","D":"8","C":"J"},{"n":53753,"date":"2026-10-18","time":"15:00","S":"A","H":"J","D":"10","C":"K"},{"n":53752,"date":"2026-10-18","time":"13:00","S":"7","H":"9","D":"J","C":"9"},{"n":53751,"date":"2026-10-18","time":"11:00","S":"9","H":"10","D":"K","C":"A"},{"n":53750,"date":"2026-10-18","time":"09:00","S":"10","H":"K","D":"10","C":"K"},{"n":53749,"date":"2026-10-17","time":"23:30","S":"A","H":"K","D":"9","C":"9"},{"n":53748,"date":"2026-10-17","time":"21:30","S":"8","H":"A","D":"Q","C":"J"},{"n":53747,"date":"2026-10-16","time":"14:00","S":"10","H":"A","D":"Q","C":"10"},{"n":53746,"date":"2026-10-16","time":"12:00","S":"Q","H":"9","D":"8","C":"8"},{"n":53745,"date":"2026-10-16","time":"10:00","S":"A","H":"J","D":"Q","C":"8"},{"n":53744,"date":"2026-10-15","time":"21:00","S":"A","H":"Q","D":"8","C":"K"},{"n":53743,"date":"2026-10-15","time":"19:00","S":"K","H":"10","D":"9","C":"A"},{"n":53742,"date":"2026-10-15","time":"17:00","S":"Q","H":"7","D":"K","C":"Q"},{"n":53741,"date":"2026-10-15","time":"15:00","S":"8","H":"Q","D":"7","C":"9"},{"n":53740,"date":"2026-10-15","time":"13:00","S":"9","H":"K","D":"A","C":"9"},{"n":53739,"date":"2026-10-15","time":"11:00","S":"A","H":"A","D":"7","C":"Q"},{"n":53738,"date":"2026-10-15","time":"09:00","S":"A","H":"10","D":"A","C":"K"},{"n":53737,"date":"2026-10-14","time":"21:00","S":"10","H":"A","D":"7","C":"7"},{"n":53736,"date":"2026-10-14","time":"19:00","S":"K","H":"K","D":"7","C":"8"},{"n":53735,"date":"2026-10-14","time":"17:00","S":"J","H":"J","D":"Q","C":"9"},{"n":53734,"date":"2026-10-14","time":"15:00","S":"K","H":"J","D":"8","C":"Q"},{"n":53733,"date":"2026-10-14","time":"13:00","S":"J","H":"8","D":"K","C":"A"},{"n":53732,"date":"2026-10-14","time":"11:00","S":"Q","H":"9","D":"J","C":"J"},{"n":53731,"date":"2026-10-14","time":"09:00","S":"9","H":"7","D":"Q","C":"A"},{"n":53730,"date":"2026-10-13","time":"21:00","S":"8","H":"8","D":"K","C":"7"},{"n":53729,"date":"2026-10-13","time":"19:00","S":"J","H":"J","D":"10","C":"9"},{"n":53728,"date":"2026-10-13","time":"17:00","S":"Q","H":"A","D":"9","C":"J"},{"n":53727,"date":"2026-10-13","time":"15:00","S":"A","H":"J","D":"A","C":"8"},{"n":53726,"date":"2026-10-13","time":"13:00","S":"A","H":"8","D":"8","C":"9"},{"n":53725,"date":"2026-10-13","time":"11:00","S":"10","H":"A","D":"8","C":"8"},{"n":53724,"date":"2026-10-13","time":"09:00","S":"J","H":"8","D":"9","C":"A"},{"n":53723,"date":"2026-10-12","time":"21:00","S":"A","H":"J","D":"9","C":"9"},{"n":53722,"date":"2026-10-12","time":"19:00","S":"J","H":"8","D":"10","C":"J"},{"n":53721,"date":"2026-10-12","time":"17:00","S":"J","H":"9","D":"Q","C":"K"},{"n":53720,"date":"2026-10-12","time":"15:00","S":"7","H":"8","D":"8","C":"A"},{"n":53719,"date":"2026-10-12","time":"13:00","S":"Q","H":"8","D":"8","C":"7"},{"n":53718,"date":"2026-10-12","time":"11:00","S":"7","H":"10","D":"Q","C":"7"},{"n":53717,"date":"2026-10-12","time":"09:00","S":"7","H":"Q","D":"Q","C":"A"},{"n":53716,"date":"2026-10-11","time":"21:00","S":"9","H":"7","D":"8","C":"9"},{"n":53715,"date":"2026-10-11","time":"19:00","S":"A","H":"7","D":"A","C":"10"},{"n":53714,"date":"2026-10-11","time":"17:00","S":"A","H":"7","D":"J","C":"8"},{"n":53713,"date":"2026-10-11","time":"15:00","S":"A","H":"J","D":"A","C":"A"},{"n":53712,"date":"2026-10-11","time":"13:00","S":"K","H":"8","D":"9","C":"Q"},{"n":53711,"date":"2026-10-11","time":"11:00","S":"7","H":"9","D":"Q","C":"J"},{"n":53710,"date":"2026-10-11","time":"09:00","S":"9","H":"7","D":"K","C":"10"},{"n":53709,"date":"2026-10-10","time":"23:30","S":"9","H":"10","D":"K","C":"J"},{"n":53708,"date":"2026-10-10","time":"21:30","S":"Q","H":"9","D":"A","C":"10"},{"n":53707,"date":"2026-10-09","time":"14:00","S":"10","H":"9","D":"A","C":"A"},{"n":53706,"date":"2026-10-09","time":"12:00","S":"9","H":"7","D":"J","C":"7"},{"n":53705,"date":"2026-10-09","time":"10:00","S":"Q","H":"A","D":"A","C":"7"},{"n":53704,"date":"2026-10-08","time":"21:00","S":"Q","H":"7","D":"Q","C":"Q"},{"n":53703,"date":"2026-10-08","time":"19:00","S":"K","H":"Q","D":"J","C":"7"},{"n":53702,"date":"2026-10-08","time":"17:00","S":"J","H":"9","D":"K","C":"Q"},{"n":53701,"date":"2026-10-08","time":"15:00","S":"Q","H":"A","D":"8","C":"8"},{"n":53700,"date":"2026-10-08","time":"13:00","S":"9","H":"7","D":"8","C":"Q"},{"n":53699,"date":"2026-10-08","time":"11:00","S":"9","H":"7","D":"A","C":"K"},{"n":53698,"date":"2026-10-08","time":"09:00","S":"K","H":"7","D":"8","C":"J"},{"n":53697,"date":"2026-10-07","time":"21:00","S":"A","H":"9","D":"7","C":"9"},{"n":53696,"date":"2026-10-07","time":"19:00","S":"J","H":"K","D":"10","C":"9"},{"n":53695,"date":"2026-10-07","time":"17:00","S":"J","H":"K","D":"K","C":"A"},{"n":53694,"date":"2026-10-07","time":"15:00","S":"9","H":"8","D":"10","C":"K"},{"n":53693,"date":"2026-10-07","time":"13:00","S":"8","H":"K","D":"9","C":"10"},{"n":53692,"date":"2026-10-07","time":"11:00","S":"10","H":"A","D":"9","C":"7"},{"n":53691,"date":"2026-10-07","time":"09:00","S":"A","H":"10","D":"8","C":"10"},{"n":53690,"date":"2026-10-06","time":"21:00","S":"7","H":"A","D":"8","C":"10"},{"n":53689,"date":"2026-10-06","time":"19:00","S":"K","H":"8","D":"7","C":"8"},{"n":53688,"date":"2026-10-06","time":"17:00","S":"K","H":"J","D":"A","C":"Q"},{"n":53687,"date":"2026-10-06","time":"15:00","S":"8","H":"Q","D":"A","C":"9"},{"n":53686,"date":"2026-10-06","time":"13:00","S":"K","H":"7","D":"7","C":"10"},{"n":53685,"date":"2026-10-06","time":"11:00","S":"10","H":"J","D":"J","C":"8"},{"n":53684,"date":"2026-10-06","time":"09:00","S":"7","H":"10","D":"J","C":"10"},{"n":53683,"date":"2026-10-05","time":"21:00","S":"A","H":"8","D":"K","C":"Q"},{"n":53682,"date":"2026-10-05","time":"19:00","S":"K","H":"9","D":"J","C":"8"},{"n":53681,"date":"2026-10-05","time":"17:00","S":"8","H":"A","D":"9","C":"A"},{"n":53680,"date":"2026-10-05","time":"15:00","S":"A","H":"Q","D":"J","C":"Q"},{"n":53679,"date":"2026-10-05","time":"13:00","S":"10","H":"A","D":"8","C":"10"},{"n":53678,"date":"2026-10-05","time":"11:00","S":"Q","H":"K","D":"8","C":"A"},{"n":53677,"date":"2026-10-05","time":"09:00","S":"Q","H":"7","D":"7","C":"A"},{"n":53676,"date":"2026-10-04","time":"21:00","S":"J","H":"J","D":"7","C":"K"},{"n":53675,"date":"2026-10-04","time":"19:00","S":"A","H":"Q","D":"7","C":"Q"},{"n":53674,"date":"2026-10-04","time":"17:00","S":"10","H":"10","D":"9","C":"K"},{"n":53673,"date":"2026-10-04","time":"15:00","S":"8","H":"8","D":"9","C":"Q"},{"n":53672,"date":"2026-10-04","time":"13:00","S":"J","H":"8","D":"J","C":"K"},{"n":53671,"date":"2026-10-04","time":"11:00","S":"Q","H":"8","D":"Q","C":"10"},{"n":53670,"date":"2026-10-04","time":"09:00","S":"A","H":"A","D":"A","C":"K"},{"n":53669,"date":"2026-10-03","time":"23:30","S":"Q","H":"10","D":"9","C":"K"},{"n":53668,"date":"2026-10-03","time":"21:30","S":"9","H":"K","D":"7","C":"7"},{"n":53667,"date":"2026-10-02","time":"14:00","S":"K","H":"7","D":"A","C":"10"},{"n":53666,"date":"2026-10-02","time":"12:00","S":"9","H":"K","D":"7","C":"10"},{"n":53665,"date":"2026-10-02","time":"10:00","S":"K","H":"10","D":"8","C":"Q"},{"n":53664,"date":"2026-10-01","time":"21:00","S":"9","H":"A","D":"7","C":"10"},{"n":53663,"date":"2026-10-01","time":"19:00","S":"9","H":"J","D":"K","C":"8"},{"n":53662,"date":"2026-10-01","time":"17:00","S":"7","H":"7","D":"K","C":"7"},{"n":53661,"date":"2026-10-01","time":"15:00","S":"8","H":"K","D":"8","C":"9"},{"n":53660,"date":"2026-10-01","time":"13:00","S":"J","H":"10","D":"Q","C":"Q"},{"n":53659,"date":"2026-10-01","time":"11:00","S":"7","H":"A","D":"A","C":"Q"},{"n":53658,"date":"2026-10-01","time":"09:00","S":"Q","H":"Q","D":"Q","C":"8"},{"n":53657,"date":"2026-09-30","time":"21:00","S":"8","H":"K","D":"7","C":"8"},{"n":53656,"date":"2026-09-30","time":"19:00","S":"J","H":"10","D":"10","C":"10"},{"n":53655,"date":"2026-09-30","time":"17:00","S":"7","H":"10","D":"J","C":"8"},{"n":53654,"date":"2026-09-30","time":"15:00","S":"J","H":"A","D":"7","C":"10"},{"n":53653,"date":"2026-09-30","time":"13:00","S":"7","H":"9","D":"8","C":"8"},{"n":53652,"date":"2026-09-30","time":"11:00","S":"9","H":"9","D":"9","C":"Q"},{"n":53651,"date":"2026-09-30","time":"09:00","S":"8","H":"Q","D":"K","C":"K"},{"n":53650,"date":"2026-09-29","time":"21:00","S":"8","H":"K","D":"K","C":"9"},{"n":53649,"date":"2026-09-29","time":"19:00","S":"Q","H":"A","D":"9","C":"8"},{"n":53648,"date":"2026-09-29","time":"17:00","S":"J","H":"Q","D":"J","C":"8"},{"n":53647,"date":"2026-09-29","time":"15:00","S":"Q","H":"9","D":"J","C":"A"},{"n":53646,"date":"2026-09-29","time":"13:00","S":"7","H":"9","D":"J","C":"8"},{"n":53645,"date":"2026-09-29","time":"11:00","S":"Q","H":"7","D":"J","C":"K"},{"n":53644,"date":"2026-09-29","time":"09:00","S":"10","H":"10","D":"8","C":"9"},{"n":53643,"date":"2026-09-28","time":"21:00","S":"K","H":"7","D":"10","C":"10"},{"n":53642,"date":"2026-09-28","time":"19:00","S":"8","H":"A","D":"J","C":"K"},{"n":53641,"date":"2026-09-28","time":"17:00","S":"Q","H":"A","D":"10","C":"J"},{"n":53640,"date":"2026-09-28","time":"15:00","S":"Q","H":"9","D":"J","C":"9"},{"n":53639,"date":"2026-09-28","time":"13:00","S":"Q","H":"K","D":"A","C":"8"},{"n":53638,"date":"2026-09-28","time":"11:00","S":"10","H":"K","D":"Q","C":"8"},{"n":53637,"date":"2026-09-28","time":"09:00","S":"8","H":"K","D":"J","C":"7"},{"n":53636,"date":"2026-09-27","time":"21:00","S":"8","H":"Q","D":"A","C":"A"},{"n":53635,"date":"2026-09-27","time":"19:00","S":"10","H":"8","D":"10","C":"A"},{"n":53634,"date":"2026-09-27","time":"17:00","S":"9","H":"7","D":"A","C":"7"},{"n":53633,"date":"2026-09-27","time":"15:00","S":"A","H":"8","D":"7","C":"Q"},{"n":53632,"date":"2026-09-27","time":"13:00","S":"K","H":"J","D":"10","C":"K"},{"n":53631,"date":"2026-09-27","time":"11:00","S":"J","H":"9","D":"J","C":"K"},{"n":53630,"date":"2026-09-27","time":"09:00","S":"8","H":"K","D":"8","C":"7"},{"n":53629,"date":"2026-09-26","time":"23:30","S":"J","H":"K","D":"10","C":"9"},{"n":53628,"date":"2026-09-26","time":"21:30","S":"K","H":"7","D":"7","C":"9"},{"n":53627,"date":"2026-09-25","time":"14:00","S":"A","H":"Q","D":"Q","C":"A"},{"n":53626,"date":"2026-09-25","time":"12:00","S":"A","H":"7","D":"Q","C":"A"},{"n":53625,"date":"2026-09-25","time":"10:00","S":"10","H":"8","D":"7","C":"A"},{"n":53624,"date":"2026-09-24","time":"21:00","S":"J","H":"10","D":"Q","C":"A"},{"n":53623,"date":"2026-09-24","time":"19:00","S":"8","H":"8","D":"8","C":"J"},{"n":53622,"date":"2026-09-24","time":"17:00","S":"9","H":"K","D":"8","C":"8"},{"n":53621,"date":"2026-09-24","time":"15:00","S":"9","H":"8","D":"9","C":"A"},{"n":53620,"date":"2026-09-24","time":"13:00","S":"K","H":"10","D":"10","C":"J"},{"n":53619,"date":"2026-09-24","time":"11:00","S":"K","H":"7","D":"K","C":"10"},{"n":53618,"date":"2026-09-24","time":"09:00","S":"Q","H":"J","D":"A","C":"A"},{"n":53617,"date":"2026-09-23","time":"21:00","S":"K","H":"J","D":"7","C":"A"},{"n":53616,"date":"2026-09-23","time":"19:00","S":"9","H":"J","D":"J","C":"Q"},{"n":53615,"date":"2026-09-23","time":"17:00","S":"9","H":"8","D":"K","C":"K"},{"n":53614,"date":"2026-09-23","time":"15:00","S":"9","H":"9","D":"10","C":"8"},{"n":53613,"date":"2026-09-23","time":"13:00","S":"K","H":"Q","D":"J","C":"K"},{"n":53612,"date":"2026-09-23","time":"11:00","S":"J","H":"J","D":"10","C":"K"},{"n":53611,"date":"2026-09-23","time":"09:00","S":"A","H":"8","D":"10","C":"K"},{"n":53610,"date":"2026-09-22","time":"21:00","S":"10","H":"7","D":"8","C":"10"},{"n":53609,"date":"2026-09-22","time":"19:00","S":"9","H":"7","D":"J","C":"Q"},{"n":53608,"date":"2026-09-22","time":"17:00","S":"8","H":"7","D":"8","C":"K"},{"n":53607,"date":"2026-09-22","time":"15:00","S":"8","H":"10","D":"Q","C":"J"},{"n":53606,"date":"2026-09-22","time":"13:00","S":"10","H":"J","D":"10","C":"A"},{"n":53605,"date":"2026-09-22","time":"11:00","S":"10","H":"10","D":"Q","C":"J"},{"n":53604,"date":"2026-09-22","time":"09:00","S":"Q","H":"K","D":"K","C":"Q"},{"n":53603,"date":"2026-09-21","time":"","S":"J","H":"8","D":"7","C":"7"},{"n":53602,"date":"2026-09-20","time":"","S":"8","H":"J","D":"8","C":"J"},{"n":53601,"date":"2026-09-20","time":"","S":"10","H":"9","D":"8","C":"Q"},{"n":53600,"date":"2026-09-20","time":"","S":"K","H":"8","D":"7","C":"A"},{"n":53599,"date":"2026-09-19","time":"23:30","S":"9","H":"9","D":"Q","C":"A"},{"n":53598,"date":"2026-09-19","time":"21:30","S":"10","H":"9","D":"7","C":"7"},{"n":53597,"date":"2026-09-18","time":"14:00","S":"10","H":"9","D":"Q","C":"J"},{"n":53596,"date":"2026-09-18","time":"12:00","S":"8","H":"8","D":"Q","C":"9"},{"n":53595,"date":"2026-09-18","time":"10:00","S":"J","H":"J","D":"10","C":"Q"},{"n":53594,"date":"2026-09-17","time":"21:00","S":"7","H":"9","D":"7","C":"10"},{"n":53593,"date":"2026-09-17","time":"19:00","S":"Q","H":"7","D":"Q","C":"7"},{"n":53592,"date":"2026-09-17","time":"17:00","S":"8","H":"K","D":"10","C":"J"},{"n":53591,"date":"2026-09-17","time":"15:00","S":"9","H":"10","D":"K","C":"K"},{"n":53590,"date":"2026-09-17","time":"13:00","S":"8","H":"7","D":"A","C":"8"},{"n":53589,"date":"2026-09-17","time":"11:00","S":"J","H":"10","D":"9","C":"Q"},{"n":53588,"date":"2026-09-17","time":"09:00","S":"K","H":"10","D":"J","C":"8"},{"n":53587,"date":"2026-09-16","time":"21:00","S":"9","H":"9","D":"Q","C":"Q"},{"n":53586,"date":"2026-09-16","time":"19:00","S":"8","H":"J","D":"10","C":"A"},{"n":53585,"date":"2026-09-16","time":"17:00","S":"Q","H":"9","D":"8","C":"8"},{"n":53584,"date":"2026-09-16","time":"15:00","S":"10","H":"8","D":"7","C":"8"},{"n":53583,"date":"2026-09-16","time":"13:00","S":"10","H":"Q","D":"10","C":"K"},{"n":53582,"date":"2026-09-16","time":"11:00","S":"7","H":"10","D":"J","C":"Q"},{"n":53581,"date":"2026-09-16","time":"09:00","S":"J","H":"10","D":"10","C":"A"},{"n":53580,"date":"2026-09-15","time":"21:00","S":"10","H":"7","D":"K","C":"8"},{"n":53579,"date":"2026-09-15","time":"19:00","S":"A","H":"10","D":"8","C":"A"},{"n":53578,"date":"2026-09-15","time":"17:00","S":"A","H":"J","D":"A","C":"7"},{"n":53577,"date":"2026-09-15","time":"15:00","S":"A","H":"J","D":"7","C":"J"},{"n":53576,"date":"2026-09-15","time":"13:00","S":"Q","H":"K","D":"10","C":"10"},{"n":53575,"date":"2026-09-15","time":"11:00","S":"J","H":"10","D":"8","C":"8"},{"n":53574,"date":"2026-09-15","time":"09:00","S":"K","H":"J","D":"J","C":"7"},{"n":53573,"date":"2026-09-14","time":"21:00","S":"A","H":"J","D":"J","C":"Q"},{"n":53572,"date":"2026-09-14","time":"19:00","S":"10","H":"10","D":"7","C":"K"},{"n":53571,"date":"2026-09-14","time":"17:00","S":"Q","H":"8","D":"9","C":"J"},{"n":53570,"date":"2026-09-14","time":"15:00","S":"J","H":"K","D":"8","C":"9"},{"n":53569,"date":"2026-09-14","time":"13:00","S":"J","H":"7","D":"K","C":"J"},{"n":53568,"date":"2026-09-14","time":"11:00","S":"9","H":"10","D":"9","C":"7"},{"n":53567,"date":"2026-09-14","time":"09:00","S":"Q","H":"K","D":"A","C":"Q"},{"n":53566,"date":"2026-09-13","time":"","S":"Q","H":"J","D":"10","C":"J"},{"n":53565,"date":"2026-09-11","time":"14:00","S":"8","H":"J","D":"10","C":"7"},{"n":53564,"date":"2026-09-11","time":"12:00","S":"8","H":"Q","D":"9","C":"10"},{"n":53563,"date":"2026-09-11","time":"10:00","S":"9","H":"9","D":"K","C":"K"},{"n":53562,"date":"2026-09-10","time":"21:00","S":"8","H":"J","D":"J","C":"Q"},{"n":53561,"date":"2026-09-10","time":"19:00","S":"J","H":"8","D":"8","C":"9"},{"n":53560,"date":"2026-09-10","time":"17:00","S":"8","H":"8","D":"J","C":"A"},{"n":53559,"date":"2026-09-10","time":"15:00","S":"9","H":"Q","D":"10","C":"9"},{"n":53558,"date":"2026-09-10","time":"13:00","S":"A","H":"J","D":"J","C":"J"},{"n":53557,"date":"2026-09-10","time":"11:00","S":"Q","H":"10","D":"7","C":"J"},{"n":53556,"date":"2026-09-10","time":"09:00","S":"7","H":"J","D":"8","C":"9"},{"n":53555,"date":"2026-09-09","time":"21:00","S":"7","H":"9","D":"9","C":"8"},{"n":53554,"date":"2026-09-09","time":"19:00","S":"10","H":"8","D":"A","C":"Q"},{"n":53553,"date":"2026-09-09","time":"17:00","S":"9","H":"Q","D":"10","C":"K"},{"n":53552,"date":"2026-09-09","time":"15:00","S":"7","H":"A","D":"10","C":"K"},{"n":53551,"date":"2026-09-09","time":"13:00","S":"8","H":"7","D":"A","C":"8"},{"n":53550,"date":"2026-09-09","time":"11:00","S":"8","H":"J","D":"10","C":"J"},{"n":53549,"date":"2026-09-09","time":"09:00","S":"8","H":"A","D":"7","C":"8"},{"n":53548,"date":"2026-09-08","time":"21:00","S":"Q","H":"Q","D":"Q","C":"8"},{"n":53547,"date":"2026-09-08","time":"19:00","S":"A","H":"7","D":"K","C":"8"},{"n":53546,"date":"2026-09-08","time":"17:00","S":"Q","H":"10","D":"9","C":"7"},{"n":53545,"date":"2026-09-08","time":"15:00","S":"10","H":"7","D":"10","C":"J"},{"n":53544,"date":"2026-09-08","time":"13:00","S":"10","H":"A","D":"K","C":"K"},{"n":53543,"date":"2026-09-08","time":"11:00","S":"K","H":"Q","D":"9","C":"K"},{"n":53542,"date":"2026-09-08","time":"09:00","S":"K","H":"7","D":"7","C":"10"},{"n":53541,"date":"2026-09-07","time":"21:00","S":"A","H":"Q","D":"K","C":"9"},{"n":53540,"date":"2026-09-07","time":"19:00","S":"8","H":"J","D":"9","C":"8"},{"n":53539,"date":"2026-09-07","time":"17:00","S":"J","H":"9","D":"7","C":"J"},{"n":53538,"date":"2026-09-07","time":"15:00","S":"7","H":"8","D":"8","C":"7"},{"n":53537,"date":"2026-09-07","time":"13:00","S":"7","H":"A","D":"10","C":"8"}];
+const SUITS=[["S","♠","עלה",0],["H","♥","לב",1],["D","♦","יהלום",1],["C","♣","תלתן",0]];
+const RANKS=["7","8","9","10","J","Q","K","A"];
+const DAYS=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+const TZ="Asia/Jerusalem";
+const pad=n=>String(n).padStart(2,"0");
+
+// Israel wall clock <-> epoch
+function tzParts(ms){
+  const p=new Intl.DateTimeFormat("en-US",{timeZone:TZ,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date(ms));
+  const o={};p.forEach(x=>o[x.type]=+x.value);return o;
+}
+function zoned(y,m,d,h,mi){
+  let g=Date.UTC(y,m-1,d,h,mi);
+  for(let i=0;i<2;i++){const p=tzParts(g);const asUtc=Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute);g+=Date.UTC(y,m-1,d,h,mi)-asUtc;}
+  return g;
+}
+function slotsFor(y,m,d){
+  const wd=new Date(Date.UTC(y,m-1,d)).getUTCDay();
+  if(wd===5) return ["10:00","12:00","14:00"];
+  if(wd===6) return ["21:30","23:30"];
+  return ["09:00","11:00","13:00","15:00","17:00","19:00","21:00"];
+}
+// generate slots after the last known draw
+function* slotsAfter(last){
+  let [y,m,d]=last.date.split("-").map(Number);
+  let list=slotsFor(y,m,d), i=list.indexOf(last.time)+1, n=last.n;
+  while(true){
+    if(i>=list.length){const t=new Date(Date.UTC(y,m-1,d+1));y=t.getUTCFullYear();m=t.getUTCMonth()+1;d=t.getUTCDate();list=slotsFor(y,m,d);i=0;}
+    const [h,mi]=list[i].split(":").map(Number); n++;
+    yield {n, y,m,d, time:list[i], ms:zoned(y,m,d,h,mi), wd:new Date(Date.UTC(y,m-1,d)).getUTCDay()};
+    i++;
+  }
+}
+const last=DRAWS[0];
+function dayLabel(s,nowP){
+  const today=Date.UTC(nowP.year,nowP.month-1,nowP.day), that=Date.UTC(s.y,s.m-1,s.d);
+  const diff=Math.round((that-today)/864e5);
+  if(diff===0) return "היום";
+  if(diff===1) return "מחר";
+  return "יום "+DAYS[s.wd];
+}
+function fmtDate(iso){const [y,m,d]=iso.split("-");return `${d}/${m}`;}
+
+function card(rank,suit){
+  const s=SUITS.find(x=>x[0]===suit);
+  return `<div class="pc${s[3]?" r":""}" aria-label="${s[2]} ${rank}"><div class="c1">${rank}<i>${s[1]}</i></div><div class="mid">${s[1]}</div><div class="nm">${s[2]}</div></div>`;
+}
+
+function renderStatic(){
+  const lw=new Date(Date.UTC(...last.date.split("-").map((v,i)=>i===1?v-1:+v))).getUTCDay();
+  document.getElementById("lMeta").innerHTML=`הגרלה <span class="num">${last.n}</span> · יום ${DAYS[lw]} ${fmtDate(last.date)} · ${last.time}`;
+  document.getElementById("lHand").innerHTML=SUITS.map(s=>card(last[s[0]],s[0])).join("");
+  document.getElementById("upd").textContent=`התוצאות מעודכנות עד הגרלה ${last.n}`;
+
+  // stats over last 50, "since" over everything we have
+  const L=DRAWS.slice(0,50);
+  document.getElementById("stats").innerHTML=SUITS.map(([k,sym,name,red])=>{
+    const cnt=RANKS.map(r=>L.filter(x=>x[k]===r).length);
+    const since=RANKS.map(r=>{const i=DRAWS.findIndex(x=>x[k]===r);return i<0?`${DRAWS.length}+`:i;});
+    const mx=Math.max(...cnt), mn=Math.min(...cnt);
+    const bars=cnt.map(c=>`<div class="bar${c===mx?" hot":c===mn?" cold":""}"><small>${c}</small><i style="height:${Math.max(6,c/mx*64)}px"></i></div>`).join("");
+    return `<div class="suit"><h3><span class="s${red?" r":""}">${sym}</span>${name}</h3>
+      <div class="bars" role="img" aria-label="כמה פעמים עלה כל קלף ב${name}">${bars}</div>
+      <div class="ranks">${RANKS.map(r=>`<span>${r}</span>`).join("")}</div>
+      <div class="since">${since.map(v=>`<span>${v}</span>`).join("")}</div></div>`;
+  }).join("");
+
+  // history grouped by day
+  let html="",cur="";
+  L.forEach(x=>{
+    if(x.date!==cur){cur=x.date;const wd=new Date(x.date+"T12:00:00Z").getUTCDay();html+=`<tr class="dayrow"><td colspan="6">יום ${DAYS[wd]} ${fmtDate(x.date)}</td></tr>`;}
+    html+=`<tr><td class="n">${x.n}</td><td class="d">${x.time}</td>${SUITS.map(s=>`<td class="k${s[3]?" r":""}">${x[s[0]]}</td>`).join("")}</tr>`;
+  });
+  document.getElementById("hist").innerHTML=html;
+}
+
+function tick(){
+  const now=Date.now(), nowP=tzParts(now);
+  const gen=slotsAfter(last); let s, missed=0;
+  while((s=gen.next().value).ms<=now) missed++;
+  const next=s, ups=[next];
+  for(let i=0;i<7;i++) ups.push(gen.next().value);
+  let diff=Math.max(0,Math.floor((next.ms-now)/1000));
+  const h=Math.floor(diff/3600), m=Math.floor(diff%3600/60), sec=diff%60;
+  document.getElementById("cH").textContent=pad(h);
+  document.getElementById("cM").textContent=pad(m);
+  document.getElementById("cS").textContent=pad(sec);
+  document.getElementById("nNum").textContent=next.n;
+  document.getElementById("nWhen").textContent=`${dayLabel(next,nowP)} בשעה ${next.time}`;
+  document.getElementById("upc").innerHTML=ups.slice(1).map(u=>`<div class="u"><b>${u.time}</b>${dayLabel(u,nowP)}<br><span class="num">${u.n}</span></div>`).join("");
+  const st=document.getElementById("stale");
+  if(missed>0){st.hidden=false;st.textContent=`מאז נערכו עוד ${missed} הגרלות שהתוצאות שלהן עוד לא נכנסו לעמוד.`;} else st.hidden=true;
+}
+
+// ---- my slip ----
+let mine={S:null,H:null,D:null,C:null};
+try{const v=JSON.parse(localStorage.getItem("chance-slip")||"null");if(v)mine=Object.assign(mine,v);}catch(e){}
+function save(){try{localStorage.setItem("chance-slip",JSON.stringify(mine));}catch(e){}}
+function emptyCard(s){return `<div class="pc empty" aria-label="${s[2]} לא נבחר"><div class="mid">${s[1]}</div><div class="nm">${s[2]}</div></div>`;}
+function renderSlip(){
+  document.getElementById("myHand").innerHTML=SUITS.map(s=>mine[s[0]]?card(mine[s[0]],s[0]):emptyCard(s)).join("");
+  document.getElementById("pick").innerHTML=SUITS.map(([k,sym,name,red])=>`<div class="prow"><div class="ps"><span class="s${red?" r":""}">${sym}</span>${name}</div><div class="opts">${RANKS.map(r=>`<button type="button" id="p-${k}-${r}" class="${red?"r":""}" data-s="${k}" data-r="${r}" aria-pressed="${mine[k]===r}" aria-label="${name} ${r}">${r}</button>`).join("")}</div></div>`).join("");
+  const n=SUITS.filter(s=>mine[s[0]]).length;
+  document.getElementById("slipType").textContent=n?`צ'אנס ${n}`:"בחר קלף מכל סדרה";
+}
+document.getElementById("pick").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-s]");if(!b)return;
+  const k=b.dataset.s,r=b.dataset.r;mine[k]=mine[k]===r?null:r;save();renderSlip();
+  document.getElementById("res").hidden=true;
+  const f=document.getElementById(`p-${k}-${r}`);if(f)f.focus();
+});
+document.getElementById("clearBtn").addEventListener("click",()=>{mine={S:null,H:null,D:null,C:null};save();renderSlip();document.getElementById("res").hidden=true;});
+document.getElementById("checkBtn").addEventListener("click",()=>{
+  const res=document.getElementById("res");const picked=SUITS.filter(s=>mine[s[0]]);
+  res.hidden=false;
+  if(!picked.length){res.innerHTML="בחר לפחות קלף אחד כדי לבדוק.";return;}
+  const L=DRAWS.slice(0,50);const tally={};let full=[];
+  L.forEach(x=>{const h=picked.filter(s=>x[s[0]]===mine[s[0]]).length;tally[h]=(tally[h]||0)+1;if(h===picked.length)full.push(x.n);});
+  const chips=[];for(let h=picked.length;h>=1;h--)if(tally[h])chips.push(`<span class="chip">${h} פגיעות: <b>${tally[h]}</b></span>`);
+  const fullTxt=full.length?`הצירוף המלא עלה ב־${full.length} הגרלות: ${full.join(", ")}.`:`הצירוף המלא לא עלה ב־50 ההגרלות האחרונות.`;
+  res.innerHTML=`<div>${fullTxt}</div><div class="chips">${chips.join("")||'<span class="chip">אף קלף לא עלה</span>'}</div>`;
+});
+document.getElementById("guess").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-m]");if(!b)return;const m=b.dataset.m;
+  const L=DRAWS.slice(0,50);const pickFrom=a=>a[(crypto.getRandomValues(new Uint32Array(1))[0])%a.length];
+  SUITS.forEach(([k])=>{
+    if(m==="rand"){mine[k]=pickFrom(RANKS);return;}
+    const cnt=RANKS.map(r=>L.filter(x=>x[k]===r).length);
+    const target=m==="hot"?Math.max(...cnt):Math.min(...cnt);
+    mine[k]=pickFrom(RANKS.filter((r,i)=>cnt[i]===target));
+  });
+  save();renderSlip();document.getElementById("res").hidden=true;
+  const h=document.getElementById("myHand");h.classList.remove("flip");void h.offsetWidth;h.classList.add("flip");
+  const lab={rand:"ניחוש אקראי",hot:"הקלף שעלה הכי הרבה בכל סדרה",cold:"הקלף שעלה הכי מעט בכל סדרה"}[m];
+  document.getElementById("gnote").textContent=`${lab}. הסיכוי זהה בכל השיטות: 1 ל־4,096 לצ'אנס 4.`;
+});
+
+// ---- pre-draw analysis: pairs that keep coming back in the last 5 draws ----
+let preSel=0,preList=[];
+function preDraw(){
+  const last5=DRAWS.slice(0,5);
+  const cnt=last5.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));
+  preList=[];
+  for(let a=0;a<8;a++)for(let b=a;b<8;b++){
+    const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?last5[i].n:null).filter(Boolean);
+    if(hit.length>=2)preList.push({a,b,hit});
+  }
+  preList.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit));
+  document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
+  if(!preList.length){document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
+  document.getElementById("preWhy").textContent=`זוגות קלפים שעלו יחד בשתיים או יותר מ־5 ההגרלות האחרונות, בכל צורה שהיא. בחר זוג כדי לראות את כל המיקומים שלו בהגרלה הבאה.`;
+  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.hit.length} מתוך 5 · ${p.hit.map(n=>String(n).slice(-3)).join(", ")}</small></button>`).join("");
+  showPlaces();
+  document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
+}
+function showPlaces(){
+  const p=preList[preSel];if(!p)return;const A=RANKS[p.a],B=RANKS[p.b];const pl=[];
+  if(A===B){for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)pl.push([SUITS[i],A,SUITS[j],B]);}
+  else{for(let i=0;i<4;i++)for(let j=0;j<4;j++)if(i!==j)pl.push([SUITS[i],A,SUITS[j],B]);}
+  document.getElementById("preCount").textContent=pl.length;
+  const k=(s,r)=>`<span class="k${s[3]?" r":""}">${r}${s[1]}</span>`;
+  document.getElementById("places").innerHTML=pl.map(([s1,r1,s2,r2],i)=>`<button type="button" class="pl" id="pl-${i}" data-a="${s1[0]}:${r1}" data-b="${s2[0]}:${r2}"><span>${k(s1,r1)} ${s1[2]} · ${k(s2,r2)} ${s2[2]}</span><small>לטופס</small></button>`).join("");
+}
+document.getElementById("prePair").addEventListener("click",e=>{
+  const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;
+  document.querySelectorAll(".pchip").forEach((x,i)=>x.classList.toggle("on",i===preSel));showPlaces();
+});
+document.getElementById("places").addEventListener("click",e=>{
+  const b=e.target.closest("button.pl");if(!b)return;
+  mine={S:null,H:null,D:null,C:null};
+  [b.dataset.a,b.dataset.b].forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
+  save();renderSlip();document.getElementById("res").hidden=true;
+  document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
+});
+preDraw();
+renderSlip();
+renderStatic(); tick(); setInterval(tick,1000);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,419 @@
+<title>צ'אנס אסטרטגי</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Secular+One&family=Assistant:wght@400;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: one narrow column, like a betting slip — next draw on top, then last draw, stats, archive */
+:root{
+  --bg:#eef0ec; --surface:#ffffff; --ink:#18221d; --muted:#5d6b63; --line:#d5dbd5;
+  --felt:#0f5a3e; --felt-ink:#f3f7f2; --red:#c8253a; --blk:#18221d;
+  --card:#fffdf8; --card-edge:#d9d3c4; --hot:#c8253a; --cold:#2d6aa8; --chip:#e3ece6;
+  --display:"Secular One","Assistant",system-ui,sans-serif;
+  --body:"Assistant",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0e1411; --surface:#16201b; --ink:#e7eee9; --muted:#9aaba1; --line:#2a3a31;
+  --felt:#13704d; --felt-ink:#f3f7f2; --red:#ff6b7c; --blk:#e7eee9;
+  --card:#f4f0e6; --card-edge:#bdb6a5; --hot:#ff6b7c; --cold:#6fa8e6; --chip:#1f2d26; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0e1411; --surface:#16201b; --ink:#e7eee9; --muted:#9aaba1; --line:#2a3a31;
+  --felt:#13704d; --felt-ink:#f3f7f2; --red:#ff6b7c; --blk:#e7eee9;
+  --card:#f4f0e6; --card-edge:#bdb6a5; --hot:#ff6b7c; --cold:#6fa8e6; --chip:#1f2d26; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 48px}
+.wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+h2{font-size:1.3rem}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap}
+.top h1{font-size:1.9rem}
+.sub{color:var(--muted);font-size:.9rem}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+/* next draw */
+.next{background:var(--felt);color:var(--felt-ink);border-radius:18px;padding:22px 20px;display:flex;flex-direction:column;gap:14px}
+.next .lab{font-size:.85rem;letter-spacing:.06em;opacity:.85}
+.next .row{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.next .dn{font-family:var(--display);font-size:1.5rem}
+.clock{display:flex;gap:8px;direction:ltr}
+.clock div{background:rgba(0,0,0,.22);border-radius:10px;padding:8px 10px;min-width:64px;text-align:center}
+.clock b{display:block;font-family:var(--mono);font-size:2rem;font-weight:700;line-height:1.1}
+.clock span{font-size:.72rem;opacity:.8}
+.next .when{font-size:1rem}
+.upc{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.upc .u{flex:0 0 auto;background:rgba(255,255,255,.1);border-radius:10px;padding:8px 12px;font-size:.85rem;line-height:1.35}
+.upc .u b{font-family:var(--mono);font-size:1rem;display:block}
+.note-light{font-size:.78rem;opacity:.8}
+/* cards */
+.hand{display:flex;gap:10px;flex-wrap:wrap}
+.pc{width:64px;height:88px;background:var(--card);border:1px solid var(--card-edge);border-radius:8px;position:relative;
+  color:#1b1b1b;font-family:var(--mono);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.pc.r{color:#c8253a}
+.pc .c1{position:absolute;top:5px;right:7px;font-size:.95rem;font-weight:700;line-height:1;text-align:center}
+.pc .c1 i{display:block;font-style:normal;font-size:.85rem}
+.pc .mid{position:absolute;inset:0;display:grid;place-items:center;font-size:1.9rem}
+.pc .nm{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font-family:var(--body);font-size:.75rem;color:var(--muted)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.last .hand{padding-bottom:20px}
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:560px){.stats{grid-template-columns:1fr}}
+.suit{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.suit h3{margin:0;font-size:1rem;display:flex;gap:6px;align-items:center}
+.suit h3 .s{font-size:1.2rem}
+.suit h3 .s.r{color:var(--red)}
+.bars{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;align-items:end;height:84px}
+.bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;min-width:0}
+.bar i{display:block;width:100%;background:var(--muted);opacity:.45;border-radius:3px 3px 0 0}
+.bar.hot i{background:var(--hot);opacity:1}
+.bar.cold i{background:var(--cold);opacity:1}
+.bar small{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.ranks{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;text-align:center;font-family:var(--mono);font-size:.82rem;font-weight:700}
+.since{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;text-align:center;font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem;color:var(--muted)}
+.legend span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-inline-end:5px;vertical-align:-1px}
+.legend .h::before{background:var(--hot)} .legend .c::before{background:var(--cold)}
+.honest{font-size:.85rem;color:var(--muted);background:var(--chip);border-radius:10px;padding:10px 12px}
+/* table */
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:420px}
+th,td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:.8rem;background:var(--surface);position:sticky;top:0}
+td.n,td.d{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.85rem}
+td.d{color:var(--muted)}
+td.k{font-family:var(--mono);font-weight:700}
+td.k.r{color:var(--red)}
+tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface) 70%,var(--bg))}
+tbody tr:last-child td{border-bottom:0}
+.dayrow td{background:var(--chip);font-size:.78rem;color:var(--muted);text-align:start;padding:4px 10px;font-weight:600}
+.foot{font-size:.8rem;color:var(--muted)}
+.foot a{color:inherit}
+.verdict{background:var(--chip);border-radius:10px;padding:12px;font-size:.95rem}
+.h3{margin:4px 0 0;font-size:1.05rem}
+table.pairs{min-width:0}
+table.pairs td .k{font-family:var(--mono);font-weight:700}
+table.pairs td .k.r{color:var(--red)}
+table.pairs td.nn{font-family:var(--mono)}
+.pairbig{display:flex;gap:8px;flex-wrap:wrap}
+.pchip{display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:6px 12px;cursor:pointer;font-family:var(--body)}
+.pchip .rk{font-family:var(--mono);font-weight:700;font-size:1.3rem}
+.pchip small{font-size:.7rem;color:var(--muted)}
+.pchip.on{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.pchip.on small{color:var(--felt-ink);opacity:.85}
+.places{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.pl{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--surface);color:var(--ink);font-family:var(--body);font-size:.88rem;cursor:pointer;text-align:start}
+.pl:hover{border-color:var(--felt)}
+.pl .k{font-family:var(--mono);font-weight:700}
+.pl .k.r{color:var(--red)}
+.pl small{color:var(--muted);font-size:.72rem}
+/* cards read left to right: ♠ ♥ ♦ ♣ */
+.hand,.stats,.bars,.ranks,.since,.tbl table,.places,.pl>span,.upc{direction:ltr}
+.suit,.pl,.tbl th{direction:rtl}
+.pl>span{unicode-bidi:isolate}
+/* my slip */
+.guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.glab{font-weight:700;font-size:.9rem}
+.gnote{font-size:.8rem;color:var(--muted)}
+@media (prefers-reduced-motion:no-preference){.flip .pc{animation:flip .35s ease both}.flip .pc:nth-child(2){animation-delay:.08s}.flip .pc:nth-child(3){animation-delay:.16s}.flip .pc:nth-child(4){animation-delay:.24s}}
+@keyframes flip{from{transform:rotateY(90deg)}to{transform:none}}
+
+.slip .hand{padding-bottom:20px}
+.pc.empty{background:transparent;border:1.5px dashed var(--line);box-shadow:none;color:var(--muted)}
+.pc.empty .mid{font-size:1.5rem;opacity:.5}
+.pick{display:flex;flex-direction:column;gap:10px}
+.prow{display:flex;align-items:center;gap:8px;min-width:0}
+.prow .ps{width:56px;flex:0 0 auto;font-weight:700;display:flex;gap:4px;align-items:center;font-size:.9rem}
+.prow .ps .s.r{color:var(--red)}
+.opts{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px;flex:1;min-width:0;direction:ltr}
+.opts button{font-family:var(--mono);font-weight:700;font-size:.9rem;padding:8px 0;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer;min-width:0}
+.opts button.r{color:var(--red)}
+.opts button[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.opts button:focus-visible,.btn:focus-visible{outline:2px solid var(--cold);outline-offset:2px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{font-family:var(--body);font-weight:600;font-size:.9rem;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.btn.pri{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
+.res{font-size:.9rem;display:flex;flex-direction:column;gap:6px}
+.res .chips{display:flex;gap:6px;flex-wrap:wrap}
+.res .chip{background:var(--chip);border-radius:999px;padding:3px 10px;font-size:.82rem}
+.res .chip b{font-family:var(--mono)}
+@media (prefers-reduced-motion:no-preference){.tick{transition:opacity .2s}}
+</style>
+
+<div class="wrap" dir="rtl">
+  <header class="top">
+    <h1>צ'אנס אסטרטגי</h1>
+    <div class="sub" id="upd"></div>
+  </header>
+
+  <section class="next" aria-live="polite">
+    <div class="row">
+      <div>
+        <div class="lab">ההגרלה הבאה</div>
+        <div class="dn">הגרלה <span class="num" id="nNum"></span></div>
+        <div class="when" id="nWhen"></div>
+      </div>
+      <div class="clock" id="clock">
+        <div><b id="cH">00</b><span>שעות</span></div>
+        <div><b id="cM">00</b><span>דקות</span></div>
+        <div><b id="cS">00</b><span>שניות</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="lab" style="margin-bottom:6px">ההגרלות הבאות</div>
+      <div class="upc" id="upc"></div>
+    </div>
+    <div class="note-light">השעות הן שעות סגירת המכירה לפי לוח ההגרלות הקבוע של מפעל הפיס. בחגים ובערבי חג הלוח משתנה.</div>
+  </section>
+
+  <section class="panel pre">
+    <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
+    <p class="sub" id="preWhy"></p>
+    <div class="pairbig" id="prePair"></div>
+    <div class="glab">כל המיקומים של הזוג שנבחר (<span id="preCount"></span> טפסי צ'אנס 2)</div>
+    <div class="places" id="places"></div>
+    <div class="honest" id="preHonest"></div>
+  </section>
+
+  <section class="panel slip">
+    <div class="top"><h2>הטופס שלי</h2><span class="sub" id="slipType">בחר קלף מכל סדרה</span></div>
+    <div class="hand" id="myHand"></div>
+    <div class="pick" id="pick"></div>
+    <div class="guess">
+      <div class="glab">שהמחשב ינחש לי</div>
+      <div class="acts" id="guess">
+        <button class="btn pri" type="button" data-m="rand">ניחוש אקראי</button>
+        <button class="btn" type="button" data-m="hot">לפי הקלפים החמים</button>
+        <button class="btn" type="button" data-m="cold">לפי הקלפים הקרים</button>
+      </div>
+      <div class="gnote" id="gnote">שלוש השיטות נותנות בדיוק אותו סיכוי: 1 ל־4,096 לצ'אנס 4.</div>
+    </div>
+    <div class="acts">
+      <button class="btn" id="checkBtn" type="button">בדוק מול 50 ההגרלות</button>
+      <button class="btn" id="clearBtn" type="button">נקה טופס</button>
+    </div>
+    <div class="res" id="res" hidden></div>
+  </section>
+
+  <section class="panel last">
+    <div class="top"><h2>ההגרלה האחרונה</h2><span class="sub" id="lMeta"></span></div>
+    <div class="hand" id="lHand"></div>
+    <div class="sub" id="stale" hidden></div>
+  </section>
+
+  <section class="panel">
+    <div class="top"><h2>מה עלה ב־50 ההגרלות האחרונות</h2></div>
+    <div class="legend"><span class="h">עלה הכי הרבה</span><span class="c">עלה הכי מעט</span><span>המספר מתחת: לפני כמה הגרלות עלה לאחרונה</span></div>
+    <div class="stats" id="stats"></div>
+    <div class="honest">כל הגרלה עצמאית: לכל קלף בכל סדרה יש סיכוי של 1 ל־8 בכל הגרלה, בלי קשר למה שעלה קודם. "חם" ו"קר" מתארים את העבר בלבד ולא מנבאים את ההגרלה הבאה.</div>
+  </section>
+
+  <section class="panel">
+    <div class="top"><h2>צירופים חוזרים ב־1,000 הגרלות</h2><span class="sub num">52837–53836 · 05/05/2026–01/11/2026</span></div>
+    <div class="verdict">
+      <b>השורה התחתונה:</b> יש צירופים שעלו יותר מהממוצע, אבל בדיוק באותה מידה שזה קורה בהגרלות אקראיות לגמרי. והצירופים שהיו הכי חמים ב־1,000 ההגרלות הקודמות לא המשיכו להיות חמים: הם ירדו מממוצע של 24.1 פעמים ל־16.2, כמעט בדיוק הממוצע הצפוי (15.6).
+    </div>
+    <h3 class="h3">זוגות קלפים באותה הגרלה, לפי צורה</h3>
+    <p class="sub">כל זוג צפוי לעלות בערך 16 פעמים ב־1,000 הגרלות. בהגרלות אקראיות, הזוג הכי חזק מגיע בדרך כלל ל־28 פעמים. אצלנו הוא הגיע ל־30.</p>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>1,000 אחרונות</th><th>1,000 שלפני</th></tr></thead><tbody><tr><td><span class="k">8♠</span> + <span class="k">8♣</span></td><td class="nn"><b>30</b></td><td class="nn">10</td></tr><tr><td><span class="k r">7♦</span> + <span class="k">10♣</span></td><td class="nn"><b>27</b></td><td class="nn">13</td></tr><tr><td><span class="k">8♠</span> + <span class="k r">K♥</span></td><td class="nn"><b>26</b></td><td class="nn">14</td></tr><tr><td><span class="k r">10♥</span> + <span class="k r">9♦</span></td><td class="nn"><b>26</b></td><td class="nn">14</td></tr><tr><td><span class="k r">J♥</span> + <span class="k r">10♦</span></td><td class="nn"><b>26</b></td><td class="nn">19</td></tr><tr><td><span class="k">7♠</span> + <span class="k">7♣</span></td><td class="nn"><b>25</b></td><td class="nn">11</td></tr><tr><td><span class="k">9♠</span> + <span class="k r">8♥</span></td><td class="nn"><b>24</b></td><td class="nn">18</td></tr><tr><td><span class="k">8♠</span> + <span class="k r">7♦</span></td><td class="nn"><b>24</b></td><td class="nn">13</td></tr><tr><td><span class="k r">9♥</span> + <span class="k">8♣</span></td><td class="nn"><b>24</b></td><td class="nn">22</td></tr><tr><td><span class="k">7♠</span> + <span class="k r">9♥</span></td><td class="nn"><b>23</b></td><td class="nn">28</td></tr><tr><td><span class="k">9♠</span> + <span class="k r">A♥</span></td><td class="nn"><b>23</b></td><td class="nn">21</td></tr><tr><td><span class="k">10♠</span> + <span class="k r">10♥</span></td><td class="nn"><b>23</b></td><td class="nn">10</td></tr><tr><td><span class="k">8♠</span> + <span class="k r">J♦</span></td><td class="nn"><b>23</b></td><td class="nn">12</td></tr><tr><td><span class="k">10♠</span> + <span class="k r">7♦</span></td><td class="nn"><b>23</b></td><td class="nn">13</td></tr><tr><td><span class="k">10♠</span> + <span class="k r">J♦</span></td><td class="nn"><b>23</b></td><td class="nn">14</td></tr></tbody></table></div>
+    <h3 class="h3">זוגות בלי קשר לצורה (גם כשהם מחליפים מקומות)</h3>
+    <p class="sub">כמה הגרלות כללו את שני הקלפים, בכל סדרה שהיא, לעומת המספר הצפוי בהגרלה אקראית.</p>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>עלו יחד</th><th>צפוי</th></tr></thead><tbody><tr><td><span class="k">8</span> + <span class="k">8</span></td><td class="nn"><b>90</b></td><td class="nn">79</td></tr><tr><td><span class="k">A</span> + <span class="k">A</span></td><td class="nn"><b>89</b></td><td class="nn">79</td></tr><tr><td><span class="k">8</span> + <span class="k">9</span></td><td class="nn"><b>162</b></td><td class="nn">144</td></tr><tr><td><span class="k">9</span> + <span class="k">Q</span></td><td class="nn"><b>160</b></td><td class="nn">144</td></tr><tr><td><span class="k">Q</span> + <span class="k">A</span></td><td class="nn"><b>159</b></td><td class="nn">144</td></tr><tr><td><span class="k">8</span> + <span class="k">10</span></td><td class="nn"><b>157</b></td><td class="nn">144</td></tr><tr><td><span class="k">7</span> + <span class="k">8</span></td><td class="nn"><b>157</b></td><td class="nn">145</td></tr><tr><td><span class="k">8</span> + <span class="k">K</span></td><td class="nn"><b>155</b></td><td class="nn">144</td></tr><tr><td><span class="k">8</span> + <span class="k">Q</span></td><td class="nn"><b>155</b></td><td class="nn">145</td></tr><tr><td><span class="k">8</span> + <span class="k">A</span></td><td class="nn"><b>154</b></td><td class="nn">144</td></tr></tbody></table></div>
+    <h3 class="h3">זוגות שחוזרים מהר</h3>
+    <p class="sub">כמה פעמים זוג עלה יחד ואז חזר שוב תוך 3 הגרלות לכל היותר.</p>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>חזרות</th><th>צפוי</th></tr></thead><tbody><tr><td><span class="k">8</span> + <span class="k">9</span></td><td class="nn"><b>69</b></td><td class="nn">54</td></tr><tr><td><span class="k">Q</span> + <span class="k">A</span></td><td class="nn"><b>69</b></td><td class="nn">54</td></tr><tr><td><span class="k">9</span> + <span class="k">Q</span></td><td class="nn"><b>69</b></td><td class="nn">54</td></tr><tr><td><span class="k">7</span> + <span class="k">Q</span></td><td class="nn"><b>67</b></td><td class="nn">53</td></tr><tr><td><span class="k">7</span> + <span class="k">8</span></td><td class="nn"><b>66</b></td><td class="nn">54</td></tr><tr><td><span class="k">8</span> + <span class="k">8</span></td><td class="nn"><b>21</b></td><td class="nn">17</td></tr><tr><td><span class="k">7</span> + <span class="k">10</span></td><td class="nn"><b>64</b></td><td class="nn">53</td></tr><tr><td><span class="k">8</span> + <span class="k">K</span></td><td class="nn"><b>63</b></td><td class="nn">54</td></tr></tbody></table></div>
+    <p class="honest">איך בדקתי: הרצתי אלף פעמים 1,000 הגרלות אקראיות במחשב והשוויתי. בכל שלוש הבדיקות, החריגות שיצאו בתוצאות האמיתיות קטנות או שוות למה שיוצא סתם במקרה. על פני כל 50,837 ההגרלות מאז 1994, כל זוג עלה בטווח של עד 12% מהמספר הצפוי.</p>
+  </section>
+
+  <section class="panel">
+    <div class="top"><h2>היסטוריית 50 ההגרלות האחרונות</h2></div>
+    <div class="tbl">
+      <table>
+        <thead><tr><th>הגרלה</th><th>שעה</th><th>♠ עלה</th><th>♥ לב</th><th>♦ יהלום</th><th>♣ תלתן</th></tr></thead>
+        <tbody id="hist"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <p class="foot">התוצאות נאספו מאתרי תוצאות שמפרסמים את תוצאות מפעל הפיס ונבדקו מול כמה מקורות. התוצאות המחייבות הן של מפעל הפיס בלבד. משחק אחראי, מגיל 18.</p>
+</div>
+
+<script>
+const DRAWS = __DATA__;
+const SUITS=[["S","♠","עלה",0],["H","♥","לב",1],["D","♦","יהלום",1],["C","♣","תלתן",0]];
+const RANKS=["7","8","9","10","J","Q","K","A"];
+const DAYS=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
+const TZ="Asia/Jerusalem";
+const pad=n=>String(n).padStart(2,"0");
+
+// Israel wall clock <-> epoch
+function tzParts(ms){
+  const p=new Intl.DateTimeFormat("en-US",{timeZone:TZ,hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",second:"2-digit"}).formatToParts(new Date(ms));
+  const o={};p.forEach(x=>o[x.type]=+x.value);return o;
+}
+function zoned(y,m,d,h,mi){
+  let g=Date.UTC(y,m-1,d,h,mi);
+  for(let i=0;i<2;i++){const p=tzParts(g);const asUtc=Date.UTC(p.year,p.month-1,p.day,p.hour,p.minute);g+=Date.UTC(y,m-1,d,h,mi)-asUtc;}
+  return g;
+}
+function slotsFor(y,m,d){
+  const wd=new Date(Date.UTC(y,m-1,d)).getUTCDay();
+  if(wd===5) return ["10:00","12:00","14:00"];
+  if(wd===6) return ["21:30","23:30"];
+  return ["09:00","11:00","13:00","15:00","17:00","19:00","21:00"];
+}
+// generate slots after the last known draw
+function* slotsAfter(last){
+  let [y,m,d]=last.date.split("-").map(Number);
+  let list=slotsFor(y,m,d), i=list.indexOf(last.time)+1, n=last.n;
+  while(true){
+    if(i>=list.length){const t=new Date(Date.UTC(y,m-1,d+1));y=t.getUTCFullYear();m=t.getUTCMonth()+1;d=t.getUTCDate();list=slotsFor(y,m,d);i=0;}
+    const [h,mi]=list[i].split(":").map(Number); n++;
+    yield {n, y,m,d, time:list[i], ms:zoned(y,m,d,h,mi), wd:new Date(Date.UTC(y,m-1,d)).getUTCDay()};
+    i++;
+  }
+}
+const last=DRAWS[0];
+function dayLabel(s,nowP){
+  const today=Date.UTC(nowP.year,nowP.month-1,nowP.day), that=Date.UTC(s.y,s.m-1,s.d);
+  const diff=Math.round((that-today)/864e5);
+  if(diff===0) return "היום";
+  if(diff===1) return "מחר";
+  return "יום "+DAYS[s.wd];
+}
+function fmtDate(iso){const [y,m,d]=iso.split("-");return `${d}/${m}`;}
+
+function card(rank,suit){
+  const s=SUITS.find(x=>x[0]===suit);
+  return `<div class="pc${s[3]?" r":""}" aria-label="${s[2]} ${rank}"><div class="c1">${rank}<i>${s[1]}</i></div><div class="mid">${s[1]}</div><div class="nm">${s[2]}</div></div>`;
+}
+
+function renderStatic(){
+  const lw=new Date(Date.UTC(...last.date.split("-").map((v,i)=>i===1?v-1:+v))).getUTCDay();
+  document.getElementById("lMeta").innerHTML=`הגרלה <span class="num">${last.n}</span> · יום ${DAYS[lw]} ${fmtDate(last.date)} · ${last.time}`;
+  document.getElementById("lHand").innerHTML=SUITS.map(s=>card(last[s[0]],s[0])).join("");
+  document.getElementById("upd").textContent=`התוצאות מעודכנות עד הגרלה ${last.n}`;
+
+  // stats over last 50, "since" over everything we have
+  const L=DRAWS.slice(0,50);
+  document.getElementById("stats").innerHTML=SUITS.map(([k,sym,name,red])=>{
+    const cnt=RANKS.map(r=>L.filter(x=>x[k]===r).length);
+    const since=RANKS.map(r=>{const i=DRAWS.findIndex(x=>x[k]===r);return i<0?`${DRAWS.length}+`:i;});
+    const mx=Math.max(...cnt), mn=Math.min(...cnt);
+    const bars=cnt.map(c=>`<div class="bar${c===mx?" hot":c===mn?" cold":""}"><small>${c}</small><i style="height:${Math.max(6,c/mx*64)}px"></i></div>`).join("");
+    return `<div class="suit"><h3><span class="s${red?" r":""}">${sym}</span>${name}</h3>
+      <div class="bars" role="img" aria-label="כמה פעמים עלה כל קלף ב${name}">${bars}</div>
+      <div class="ranks">${RANKS.map(r=>`<span>${r}</span>`).join("")}</div>
+      <div class="since">${since.map(v=>`<span>${v}</span>`).join("")}</div></div>`;
+  }).join("");
+
+  // history grouped by day
+  let html="",cur="";
+  L.forEach(x=>{
+    if(x.date!==cur){cur=x.date;const wd=new Date(x.date+"T12:00:00Z").getUTCDay();html+=`<tr class="dayrow"><td colspan="6">יום ${DAYS[wd]} ${fmtDate(x.date)}</td></tr>`;}
+    html+=`<tr><td class="n">${x.n}</td><td class="d">${x.time}</td>${SUITS.map(s=>`<td class="k${s[3]?" r":""}">${x[s[0]]}</td>`).join("")}</tr>`;
+  });
+  document.getElementById("hist").innerHTML=html;
+}
+
+function tick(){
+  const now=Date.now(), nowP=tzParts(now);
+  const gen=slotsAfter(last); let s, missed=0;
+  while((s=gen.next().value).ms<=now) missed++;
+  const next=s, ups=[next];
+  for(let i=0;i<7;i++) ups.push(gen.next().value);
+  let diff=Math.max(0,Math.floor((next.ms-now)/1000));
+  const h=Math.floor(diff/3600), m=Math.floor(diff%3600/60), sec=diff%60;
+  document.getElementById("cH").textContent=pad(h);
+  document.getElementById("cM").textContent=pad(m);
+  document.getElementById("cS").textContent=pad(sec);
+  document.getElementById("nNum").textContent=next.n;
+  document.getElementById("nWhen").textContent=`${dayLabel(next,nowP)} בשעה ${next.time}`;
+  document.getElementById("upc").innerHTML=ups.slice(1).map(u=>`<div class="u"><b>${u.time}</b>${dayLabel(u,nowP)}<br><span class="num">${u.n}</span></div>`).join("");
+  const st=document.getElementById("stale");
+  if(missed>0){st.hidden=false;st.textContent=`מאז נערכו עוד ${missed} הגרלות שהתוצאות שלהן עוד לא נכנסו לעמוד.`;} else st.hidden=true;
+}
+
+// ---- my slip ----
+let mine={S:null,H:null,D:null,C:null};
+try{const v=JSON.parse(localStorage.getItem("chance-slip")||"null");if(v)mine=Object.assign(mine,v);}catch(e){}
+function save(){try{localStorage.setItem("chance-slip",JSON.stringify(mine));}catch(e){}}
+function emptyCard(s){return `<div class="pc empty" aria-label="${s[2]} לא נבחר"><div class="mid">${s[1]}</div><div class="nm">${s[2]}</div></div>`;}
+function renderSlip(){
+  document.getElementById("myHand").innerHTML=SUITS.map(s=>mine[s[0]]?card(mine[s[0]],s[0]):emptyCard(s)).join("");
+  document.getElementById("pick").innerHTML=SUITS.map(([k,sym,name,red])=>`<div class="prow"><div class="ps"><span class="s${red?" r":""}">${sym}</span>${name}</div><div class="opts">${RANKS.map(r=>`<button type="button" id="p-${k}-${r}" class="${red?"r":""}" data-s="${k}" data-r="${r}" aria-pressed="${mine[k]===r}" aria-label="${name} ${r}">${r}</button>`).join("")}</div></div>`).join("");
+  const n=SUITS.filter(s=>mine[s[0]]).length;
+  document.getElementById("slipType").textContent=n?`צ'אנס ${n}`:"בחר קלף מכל סדרה";
+}
+document.getElementById("pick").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-s]");if(!b)return;
+  const k=b.dataset.s,r=b.dataset.r;mine[k]=mine[k]===r?null:r;save();renderSlip();
+  document.getElementById("res").hidden=true;
+  const f=document.getElementById(`p-${k}-${r}`);if(f)f.focus();
+});
+document.getElementById("clearBtn").addEventListener("click",()=>{mine={S:null,H:null,D:null,C:null};save();renderSlip();document.getElementById("res").hidden=true;});
+document.getElementById("checkBtn").addEventListener("click",()=>{
+  const res=document.getElementById("res");const picked=SUITS.filter(s=>mine[s[0]]);
+  res.hidden=false;
+  if(!picked.length){res.innerHTML="בחר לפחות קלף אחד כדי לבדוק.";return;}
+  const L=DRAWS.slice(0,50);const tally={};let full=[];
+  L.forEach(x=>{const h=picked.filter(s=>x[s[0]]===mine[s[0]]).length;tally[h]=(tally[h]||0)+1;if(h===picked.length)full.push(x.n);});
+  const chips=[];for(let h=picked.length;h>=1;h--)if(tally[h])chips.push(`<span class="chip">${h} פגיעות: <b>${tally[h]}</b></span>`);
+  const fullTxt=full.length?`הצירוף המלא עלה ב־${full.length} הגרלות: ${full.join(", ")}.`:`הצירוף המלא לא עלה ב־50 ההגרלות האחרונות.`;
+  res.innerHTML=`<div>${fullTxt}</div><div class="chips">${chips.join("")||'<span class="chip">אף קלף לא עלה</span>'}</div>`;
+});
+document.getElementById("guess").addEventListener("click",e=>{
+  const b=e.target.closest("button[data-m]");if(!b)return;const m=b.dataset.m;
+  const L=DRAWS.slice(0,50);const pickFrom=a=>a[(crypto.getRandomValues(new Uint32Array(1))[0])%a.length];
+  SUITS.forEach(([k])=>{
+    if(m==="rand"){mine[k]=pickFrom(RANKS);return;}
+    const cnt=RANKS.map(r=>L.filter(x=>x[k]===r).length);
+    const target=m==="hot"?Math.max(...cnt):Math.min(...cnt);
+    mine[k]=pickFrom(RANKS.filter((r,i)=>cnt[i]===target));
+  });
+  save();renderSlip();document.getElementById("res").hidden=true;
+  const h=document.getElementById("myHand");h.classList.remove("flip");void h.offsetWidth;h.classList.add("flip");
+  const lab={rand:"ניחוש אקראי",hot:"הקלף שעלה הכי הרבה בכל סדרה",cold:"הקלף שעלה הכי מעט בכל סדרה"}[m];
+  document.getElementById("gnote").textContent=`${lab}. הסיכוי זהה בכל השיטות: 1 ל־4,096 לצ'אנס 4.`;
+});
+
+// ---- pre-draw analysis: pairs that keep coming back in the last 5 draws ----
+let preSel=0,preList=[];
+function preDraw(){
+  const last5=DRAWS.slice(0,5);
+  const cnt=last5.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));
+  preList=[];
+  for(let a=0;a<8;a++)for(let b=a;b<8;b++){
+    const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?last5[i].n:null).filter(Boolean);
+    if(hit.length>=2)preList.push({a,b,hit});
+  }
+  preList.sort((x,y)=>y.hit.length-x.hit.length||Math.max(...y.hit)-Math.max(...x.hit));
+  document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
+  if(!preList.length){document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
+  document.getElementById("preWhy").textContent=`זוגות קלפים שעלו יחד בשתיים או יותר מ־5 ההגרלות האחרונות, בכל צורה שהיא. בחר זוג כדי לראות את כל המיקומים שלו בהגרלה הבאה.`;
+  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.hit.length} מתוך 5 · ${p.hit.map(n=>String(n).slice(-3)).join(", ")}</small></button>`).join("");
+  showPlaces();
+  document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
+}
+function showPlaces(){
+  const p=preList[preSel];if(!p)return;const A=RANKS[p.a],B=RANKS[p.b];const pl=[];
+  if(A===B){for(let i=0;i<4;i++)for(let j=i+1;j<4;j++)pl.push([SUITS[i],A,SUITS[j],B]);}
+  else{for(let i=0;i<4;i++)for(let j=0;j<4;j++)if(i!==j)pl.push([SUITS[i],A,SUITS[j],B]);}
+  document.getElementById("preCount").textContent=pl.length;
+  const k=(s,r)=>`<span class="k${s[3]?" r":""}">${r}${s[1]}</span>`;
+  document.getElementById("places").innerHTML=pl.map(([s1,r1,s2,r2],i)=>`<button type="button" class="pl" id="pl-${i}" data-a="${s1[0]}:${r1}" data-b="${s2[0]}:${r2}"><span>${k(s1,r1)} ${s1[2]} · ${k(s2,r2)} ${s2[2]}</span><small>לטופס</small></button>`).join("");
+}
+document.getElementById("prePair").addEventListener("click",e=>{
+  const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;
+  document.querySelectorAll(".pchip").forEach((x,i)=>x.classList.toggle("on",i===preSel));showPlaces();
+});
+document.getElementById("places").addEventListener("click",e=>{
+  const b=e.target.closest("button.pl");if(!b)return;
+  mine={S:null,H:null,D:null,C:null};
+  [b.dataset.a,b.dataset.b].forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
+  save();renderSlip();document.getElementById("res").hidden=true;
+  document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
+});
+preDraw();
+renderSlip();
+renderStatic(); tick(); setInterval(tick,1000);
+</script>
