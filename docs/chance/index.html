@@ -183,6 +183,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .mansel label{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.85rem;direction:rtl}
 .mansel label .s.r{color:var(--red)}
 .mansel select{font-family:var(--mono);font-weight:700;font-size:1.05rem;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%}
+.pchip.link{border-style:dotted;border-width:2px}
 /* my slip */
 .guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .glab{font-weight:700;font-size:.9rem}
@@ -567,6 +568,7 @@ document.getElementById("myPairClr").addEventListener("click",()=>{
 function preDraw(){
   const last5=DRAWS.slice(0,5);
   preList=pickAll(last5);
+  linkPairs(last5,preList).forEach(p=>{p.hit=last5.filter(d=>pairIn(d,RANKS[p.a],RANKS[p.b])).map(d=>d.n);preList.push(p);});
   myPairs.forEach((m,mi)=>{const hit=last5.filter(d=>pairIn(d,RANKS[m.a],RANKS[m.b])).map(d=>d.n);
     let dup=preList.findIndex(p=>p.a===m.a&&p.b===m.b);
     if(dup<0){preList.push({a:m.a,b:m.b,hit,mine:true});dup=preList.length-1;}else preList[dup].mine=true;
@@ -575,8 +577,8 @@ function preDraw(){
   if(preSel>=preList.length)preSel=0;
   document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
   if(!preList.length){document.getElementById("preExplain").innerHTML="";chance3(null);document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
-  document.getElementById("preWhy").textContent=`ארבעת הזוגות החזקים ביותר לפי השיטה (ועד 4 זוגות שלך, מסומנים במסגרת מקווקוות): עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
-  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":""}${p.hit.length} מתוך 5${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}</small></button>`).join("");
+  document.getElementById("preWhy").textContent=`ארבעת הזוגות החזקים ביותר לפי השיטה, עד 2 זוגות שעלולים להתחבר (מסגרת מנוקדת) ועד 4 זוגות שלך (מסגרת מקווקוות): עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
+  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}${p.link?" link":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":p.link?"עלולים להתחבר · ":""}${p.hit.length} מתוך 5${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}</small></button>`).join("");
   showPlaces();
   document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
 }
@@ -590,6 +592,7 @@ function explainPair(p,idx){
   const cardTxt=(d)=>`<span class="cg">${where(d).map(k=>chip(d[k],k)).join("")}</span>`;
   const items=[];
   if(p.mine)items.push("זה הזוג שבחרת. הניתוח מראה מה קרה איתו ב־5 ההגרלות האחרונות.");
+  if(p.link)items.push(`<b>זוג שעלול להתחבר:</b> בהגרלה ${p.from.x} עלה ${p.from.xa} עם ${p.anchors.join(" ו־")}, ובהגרלה ${p.from.y} עלה ${p.from.yb} עם אותם קלפים (${p.anchors.join(", ")}). לפי הרעיון, ${p.from.xa} ו־${p.from.yb} "אוהבים" את אותם קלפים ועלולים לעלות יחד.`);
   items.push(hitD.length?`עלו יחד ב־${hitD.length} מתוך 5 ההגרלות האחרונות: ${hitD.map(d=>`בהגרלה ${d.n} ${cardTxt(d)}`).join("; ")}.`:"לא עלו יחד ב־5 ההגרלות האחרונות.");
   if(appears(last5[0]))items.push(`עלו בהגרלה האחרונה (${last5[0].n}), כלומר הזוג "חם" עכשיו.`);
   const nums=hitD.map(d=>d.n),consec=nums.some(n=>nums.includes(n-1));
@@ -599,7 +602,7 @@ function explainPair(p,idx){
   if(hitD.length<2){}
   else if(common.length)items.push(`${common.map(x=>`<span class="cg">${chip(x.slice(1),x[0])}</span> ${sn(x[0])[2]}`).join(" ו־")} עלה באותו מיקום בכל הפעמים.`);
   else items.push("בכל פעם הזוג עלה במיקומים אחרים, לכן כדאי לכסות את כל המיקומים.");
-  if(!p.mine&&preList.filter(x=>!x.mine).length>1){const o=preList[idx===0?1:0],oA=RANKS[o.a],oB=RANKS[o.b];
+  if(!p.mine&&!p.link&&preList.filter(x=>!x.mine&&!x.link).length>1){const o=preList[idx===0?1:0],oA=RANKS[o.a],oB=RANKS[o.b];
     if(idx===0){
       if(p.hit.length>o.hit.length)items.push(`דורג ראשון כי עלה יותר פעמים מ־${oA}+${oB}.`);
       else if(Math.max(...p.hit)>Math.max(...o.hit))items.push(`דורג ראשון כי עלה מאוחר יותר מ־${oA}+${oB}.`);
@@ -689,7 +692,8 @@ function renderTrack3(){
   for(let i=0;i+6<=DRAWS.length&&DRAWS[i].n>=FROM;i++){
     const win=DRAWS.slice(i+1,i+6),L=pickAll(win);if(!L.length)continue;const d=DRAWS[i];
     const P=L.map(p=>[RANKS[p.a],RANKS[p.b]]),H=L.map(p=>thirdHot(p,win)),K=L.map(p=>thirdLinked(p,win));
-    R3.push({d,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),
+    const LP=linkPairs(win,L);
+    R3.push({d,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),
       ep:chanceAny(L),eh:chanceTrip(P.map(([A,B],j)=>[A,B,H[j]]).filter(x=>x[2])),el:chanceTrip(P.map(([A,B],j)=>[A,B,K[j]]).filter(x=>x[2]))});
   }
   const box=(lbl,key,ek)=>{const n=R3.length,h=R3.filter(x=>x[key]).length,e=R3.reduce((s,x)=>s+x[ek],0);
@@ -700,7 +704,9 @@ function renderTrack3(){
       MR.push({hit:act.some(m=>pairIn(d,RANKS[m.a],RANKS[m.b])),e:chanceAny(act.map(m=>({a:m.a,b:m.b})))});}
     const n=MR.length,h=MR.filter(x=>x.hit).length,e=MR.reduce((s,x)=>s+x.e,0);
     mineBox=`<div class="tk"><span class="lb">הזוגות שלי (${myPairs.map(m=>RANKS[m.a]+"+"+RANKS[m.b]).join(", ")})</span><span class="big">${h} / ${n}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;}
-  document.getElementById("trk3").innerHTML=box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+mineBox;
+  const LR=R3.filter(x=>x.hasLp),lh=LR.filter(x=>x.lp).length,le=LR.reduce((s,x)=>s+x.elp,0);
+  const lbox=`<div class="tk"><span class="lb">זוגות שעלולים להתחבר</span><span class="big">${lh} / ${LR.length}</span><span class="cmp">${LR.length?`פגיעה ${(lh/LR.length*100).toFixed(1)}% · במקרה ${(le/LR.length*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;
+  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+mineBox;
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
   document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td></tr>`).join(""):`<tr><td colspan="4" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
 }
@@ -769,6 +775,18 @@ function rankAllPairs(win){ // every pair, ranked by the same rules (also pairs 
   for(let a=0;a<8;a++)for(let b=a;b<8;b++){const hit=cnt.map((c,i)=>(a===b?c[a]>=2:(c[a]>=1&&c[b]>=1))?win[i].n:null).filter(Boolean);list.push({a,b,hit});}
   const consec=h=>h.some(n=>h.includes(n-1))?1:0,sum=h=>h.reduce((s,n)=>s+n,0),mx=h=>h.length?Math.max(...h):0;
   list.sort((x,y)=>y.hit.length-x.hit.length||mx(y.hit)-mx(x.hit)||consec(y.hit)-consec(x.hit)||sum(y.hit)-sum(x.hit));return list;
+}
+function linkPairs(win,exclude){ // pairs whose cards came out with the same "anchor" cards in two consecutive draws
+  const out=[];const seen=new Set((exclude||[]).map(p=>p.a+"-"+p.b));
+  for(let s=0;s+1<win.length;s++){const y=win[s],x=win[s+1];
+    const cy=RANKS.map(r=>SK.filter(k=>y[k]===r).length),cx=RANKS.map(r=>SK.filter(k=>x[k]===r).length);
+    const shared=RANKS.map((r,i)=>Math.min(cx[i],cy[i]));const nsh=shared.reduce((a,b)=>a+b,0);if(nsh<2)continue;
+    const rx=[],ry=[];RANKS.forEach((r,i)=>{for(let j=0;j<cx[i]-shared[i];j++)rx.push(i);for(let j=0;j<cy[i]-shared[i];j++)ry.push(i);});
+    const anchors=RANKS.filter((r,i)=>shared[i]>0);
+    for(const i of rx)for(const j of ry){if(i===j||shared[i]>0||shared[j]>0)continue;const a=Math.min(i,j),b=Math.max(i,j),key=a+"-"+b;if(seen.has(key))continue;seen.add(key);
+      out.push({a,b,hit:[],link:true,anchors,from:{x:x.n,y:y.n,xa:RANKS[i],yb:RANKS[j]},score:[nsh,-s]});}}
+  out.sort((p,q)=>q.score[0]-p.score[0]||q.score[1]-p.score[1]);
+  return out.slice(0,2);
 }
 function pickAll(win){
   const cnt=win.map(d=>RANKS.map(r=>SUITS.filter(s=>d[s[0]]===r).length));const list=[];
@@ -865,7 +883,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="cde628e36e";
+const BUILD="ec04d13e23";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
