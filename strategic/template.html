@@ -158,6 +158,9 @@ table.pairs td.nn{font-family:var(--mono)}
 .c3 .odds div{background:var(--chip);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0}
 .c3 .odds b{font-family:var(--mono);font-size:1.1rem}
 .c3 .odds span{font-size:.72rem;color:var(--muted)}
+.mypair{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.mypair select{font-family:var(--mono);font-weight:700;font-size:1rem;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.pchip.mine{border-style:dashed}
 /* my slip */
 .guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .glab{font-weight:700;font-size:.9rem}
@@ -217,6 +220,12 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
+    <div class="mypair">
+      <span class="glab">הזוג שלי:</span>
+      <select id="myA" aria-label="קלף ראשון"></select><span>+</span><select id="myB" aria-label="קלף שני"></select>
+      <button class="btn pri" type="button" id="myPairBtn">נתח את הזוג</button>
+      <button class="btn" type="button" id="myPairClr" hidden>הסר</button>
+    </div>
     <div class="explain" id="preExplain"></div>
     <div class="c3" id="preC3"></div>
     <div class="glab">כל המיקומים של הזוג שנבחר (<span id="preCount"></span> טפסי צ'אנס 2)</div>
@@ -478,13 +487,34 @@ document.getElementById("guess").addEventListener("click",e=>{
 
 // ---- pre-draw analysis: pairs that keep coming back in the last 5 draws ----
 let preSel=0,preList=[];
+
+// ---- user's own pair ----
+let myPair=null;
+try{const v=JSON.parse(localStorage.getItem("chance-mypair")||"null");if(v&&v.a<=v.b)myPair=v;}catch(e){}
+(function(){const o=RANKS.map((r,i)=>`<option value="${i}">${r}</option>`).join("");
+  const a=document.getElementById("myA"),b=document.getElementById("myB");a.innerHTML=o;b.innerHTML=o;
+  if(myPair){a.value=myPair.a;b.value=myPair.b;document.getElementById("myPairClr").hidden=false;}})();
+document.getElementById("myPairBtn").addEventListener("click",()=>{
+  let a=+document.getElementById("myA").value,b=+document.getElementById("myB").value;if(a>b)[a,b]=[b,a];
+  myPair={a,b,sel:true};try{localStorage.setItem("chance-mypair",JSON.stringify(myPair));}catch(e){}
+  document.getElementById("myPairClr").hidden=false;preDraw();
+  document.getElementById("preExplain").scrollIntoView({behavior:"smooth",block:"start"});
+});
+document.getElementById("myPairClr").addEventListener("click",()=>{
+  myPair=null;try{localStorage.removeItem("chance-mypair");}catch(e){}preSel=0;document.getElementById("myPairClr").hidden=true;preDraw();
+});
 function preDraw(){
   const last5=DRAWS.slice(0,5);
   preList=pickAll(last5);
+  if(myPair){const hit=last5.filter(d=>pairIn(d,RANKS[myPair.a],RANKS[myPair.b])).map(d=>d.n);
+    const dup=preList.findIndex(p=>p.a===myPair.a&&p.b===myPair.b);
+    if(dup<0)preList.push({a:myPair.a,b:myPair.b,hit,mine:true});else preList[dup].mine=true;
+    if(myPair.sel)preSel=dup<0?preList.length-1:dup;}
+  if(preSel>=preList.length)preSel=0;
   document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
   if(!preList.length){document.getElementById("preExplain").innerHTML="";chance3(null);document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
   document.getElementById("preWhy").textContent=`שני הזוגות החזקים ביותר לפי השיטה: עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
-  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.hit.length} מתוך 5 · ${p.hit.map(n=>String(n).slice(-3)).join(", ")}</small></button>`).join("");
+  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":""}${p.hit.length} מתוך 5${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}</small></button>`).join("");
   showPlaces();
   document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
 }
@@ -497,15 +527,17 @@ function explainPair(p,idx){
   const chip=(v,k)=>`<span class="ck${sn(k)[3]?" r":""}">${v}${sn(k)[1]}</span>`;
   const cardTxt=(d)=>`<span class="cg">${where(d).map(k=>chip(d[k],k)).join("")}</span>`;
   const items=[];
-  items.push(`עלו יחד ב־${hitD.length} מתוך 5 ההגרלות האחרונות: ${hitD.map(d=>`בהגרלה ${d.n} ${cardTxt(d)}`).join("; ")}.`);
+  if(p.mine)items.push("זה הזוג שבחרת. הניתוח מראה מה קרה איתו ב־5 ההגרלות האחרונות.");
+  items.push(hitD.length?`עלו יחד ב־${hitD.length} מתוך 5 ההגרלות האחרונות: ${hitD.map(d=>`בהגרלה ${d.n} ${cardTxt(d)}`).join("; ")}.`:"לא עלו יחד ב־5 ההגרלות האחרונות.");
   if(appears(last5[0]))items.push(`עלו בהגרלה האחרונה (${last5[0].n}), כלומר הזוג "חם" עכשיו.`);
   const nums=hitD.map(d=>d.n),consec=nums.some(n=>nums.includes(n-1));
   if(consec)items.push("עלו בשתי הגרלות ברצף, בדיוק הדפוס של קלפים שחוזרים אחד אחרי השני.");
   const suitSets=hitD.map(d=>new Set(where(d).map(k=>k+d[k])));
-  const common=[...suitSets[0]].filter(x=>suitSets.every(s=>s.has(x)));
-  if(common.length)items.push(`${common.map(x=>`<span class="cg">${chip(x.slice(1),x[0])}</span> ${sn(x[0])[2]}`).join(" ו־")} עלה באותו מיקום בכל הפעמים.`);
+  const common=suitSets.length>1?[...suitSets[0]].filter(x=>suitSets.every(s=>s.has(x))):[];
+  if(hitD.length<2){}
+  else if(common.length)items.push(`${common.map(x=>`<span class="cg">${chip(x.slice(1),x[0])}</span> ${sn(x[0])[2]}`).join(" ו־")} עלה באותו מיקום בכל הפעמים.`);
   else items.push("בכל פעם הזוג עלה במיקומים אחרים, לכן כדאי לכסות את כל המיקומים.");
-  if(preList.length>1){const o=preList[idx===0?1:0],oA=RANKS[o.a],oB=RANKS[o.b];
+  if(!p.mine&&preList.filter(x=>!x.mine).length>1){const o=preList[idx===0?1:0],oA=RANKS[o.a],oB=RANKS[o.b];
     if(idx===0){
       if(p.hit.length>o.hit.length)items.push(`דורג ראשון כי עלה יותר פעמים מ־${oA}+${oB}.`);
       else if(Math.max(...p.hit)>Math.max(...o.hit))items.push(`דורג ראשון כי עלה מאוחר יותר מ־${oA}+${oB}.`);
@@ -525,7 +557,7 @@ function showPlaces(){
   document.getElementById("places").innerHTML=pl.map(([s1,r1,s2,r2],i)=>`<button type="button" class="pl" id="pl-${i}" data-a="${s1[0]}:${r1}" data-b="${s2[0]}:${r2}"><span>${k(s1,r1)} ${s1[2]} · ${k(s2,r2)} ${s2[2]}</span><small>לטופס</small></button>`).join("");
 }
 document.getElementById("prePair").addEventListener("click",e=>{
-  const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;
+  const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;if(myPair){myPair.sel=!!(preList[preSel]&&preList[preSel].mine);try{localStorage.setItem("chance-mypair",JSON.stringify(myPair));}catch(e){}}
   document.querySelectorAll(".pchip").forEach((x,i)=>x.classList.toggle("on",i===preSel));showPlaces();
 });
 document.getElementById("places").addEventListener("click",e=>{
