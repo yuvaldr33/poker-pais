@@ -196,6 +196,37 @@ table.pairs td.nn{font-family:var(--mono)}
 .res .chip{background:var(--chip);border-radius:999px;padding:3px 10px;font-size:.82rem}
 .res .chip b{font-family:var(--mono)}
 @media (prefers-reduced-motion:no-preference){.tick{transition:opacity .2s}}
+/* ---- chat assistant ---- */
+.chFab[hidden],.chBox[hidden]{display:none!important}
+.wrap{padding-bottom:56px}
+.chFab{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;
+  display:flex;align-items:center;gap:8px;background:var(--felt);color:var(--felt-ink);border:0;border-radius:999px;padding:12px 18px;
+  font-family:var(--body);font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.chFab .dot{width:10px;height:10px;border-radius:50%;background:#7fe0a8;box-shadow:0 0 0 3px rgba(127,224,168,.3)}
+.chBox{position:fixed;z-index:41;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));
+  width:min(420px,calc(100vw - 24px));height:min(640px,calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
+  background:var(--surface);border:1px solid var(--line);border-radius:18px;box-shadow:0 12px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.chHead{background:var(--felt);color:var(--felt-ink);padding:12px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.chHead b{font-family:var(--display);font-weight:400;font-size:1.15rem}
+.chHead small{display:block;font-size:.75rem;opacity:.8}
+.chHead button{background:rgba(0,0,0,.2);color:inherit;border:0;border-radius:999px;width:34px;height:34px;font-size:1.1rem;cursor:pointer}
+.chLog{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;min-height:0}
+.chM{max-width:88%;padding:9px 12px;border-radius:14px;font-size:.95rem;line-height:1.5;min-width:0;overflow-wrap:anywhere}
+.chM.u{align-self:flex-start;background:var(--felt);color:var(--felt-ink);border-bottom-right-radius:4px}
+.chM.b{align-self:flex-end;background:var(--chip);color:var(--ink);border-bottom-left-radius:4px}
+.chM ul{margin:4px 0;padding-inline-start:18px}
+.chM .sm{display:block;color:var(--muted);font-size:.8rem;margin-top:4px}
+.chM .cg{display:inline-flex;gap:3px;direction:ltr;unicode-bidi:isolate}
+.chM .ck{font-family:var(--mono);font-weight:700;background:var(--card);color:#1b1b1b;border:1px solid var(--card-edge);border-radius:5px;padding:0 4px}
+.chM .ck.r{color:#c8253a}
+.chT{font-family:var(--body);font-size:.78rem;font-weight:700;border:1px solid var(--felt);color:var(--felt);background:transparent;border-radius:999px;padding:1px 9px;margin-inline-start:6px;cursor:pointer}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .chT{color:#7fe0a8;border-color:#7fe0a8}}
+:root[data-theme="dark"] .chT{color:#7fe0a8;border-color:#7fe0a8}
+.chQ{display:flex;gap:6px;overflow-x:auto;padding:8px 12px 0;scrollbar-width:none}
+.chQ button{flex:0 0 auto;font-family:var(--body);font-size:.82rem;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 11px;cursor:pointer}
+.chIn{display:flex;gap:8px;padding:10px 12px 12px}
+.chIn input{flex:1;min-width:0;font-family:var(--body);font-size:16px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:10px 14px}
+.chIn button{border:0;background:var(--felt);color:var(--felt-ink);border-radius:999px;padding:0 16px;font-family:var(--body);font-weight:700;cursor:pointer}
 </style>
 
 <div class="wrap" dir="rtl">
@@ -336,6 +367,22 @@ table.pairs td.nn{font-family:var(--mono)}
   </section>
 
   <p class="foot">התוצאות נאספו מאתרי תוצאות שמפרסמים את תוצאות מפעל הפיס ונבדקו מול כמה מקורות. התוצאות המחייבות הן של מפעל הפיס בלבד. משחק אחראי, מגיל 18.</p>
+</div>
+<button class="chFab" id="chFab" type="button" aria-label="פתח צ'אט"><span class="dot"></span>שאל את העוזר</button>
+<div class="chBox" id="chBox" dir="rtl" hidden role="dialog" aria-label="העוזר של צ'אנס">
+  <div class="chHead"><div><b>העוזר של צ'אנס</b><small>עונה לפי הניתוח החי של האתר</small></div><button type="button" id="chClose" aria-label="סגור">✕</button></div>
+  <div class="chLog" id="chLog" aria-live="polite"></div>
+  <div class="chQ" id="chQ">
+    <button type="button">מה הזוג הכי חזק?</button>
+    <button type="button">מה הכי טוב לצ'אנס 3?</button>
+    <button type="button">צ'אנס 4</button>
+    <button type="button">זוגות שעלולים להתחבר</button>
+    <button type="button">מה הקלפים החמים?</button>
+    <button type="button">מתי ההגרלה הבאה?</button>
+    <button type="button">מה יצא בהגרלה האחרונה?</button>
+    <button type="button">איך השיטה מצליחה?</button>
+  </div>
+  <form class="chIn" id="chForm" autocomplete="off"><input id="chText" placeholder="למשל: מה עם 8 ו־K?" enterkeyhint="send"><button type="submit">שלח</button></form>
 </div>
 
 <script>
@@ -671,6 +718,7 @@ document.getElementById("preC3").addEventListener("click",e=>{
   save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
 });
 
+var lastR3;
 // ---- tracking by type: pairs / pair+hot / pair+linked, counted separately ----
 function renderTrack3(){
   const FROM=53839,R3=[];
@@ -681,6 +729,7 @@ function renderTrack3(){
     R3.push({d,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),
       ep:chanceAny(L),eh:chanceTrip(P.map(([A,B],j)=>[A,B,H[j]]).filter(x=>x[2])),el:chanceTrip(P.map(([A,B],j)=>[A,B,K[j]]).filter(x=>x[2]))});
   }
+  lastR3=R3;
   const box=(lbl,key,ek)=>{const n=R3.length,h=R3.filter(x=>x[key]).length,e=R3.reduce((s,x)=>s+x[ek],0);
     return `<div class="tk"><span class="lb">${lbl}</span><span class="big">${n?h+" / "+n:"0 / 0"}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;};
   let mineBox="";
@@ -879,4 +928,176 @@ async function checkVersion(){
 checkVersion();
 refreshDraws(); setInterval(()=>{refreshDraws();checkVersion();},60000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDraws();checkVersion();}});
+// ---- chat assistant: answers questions from the same live analysis the page shows ----
+(function(){
+  const box=document.getElementById("chBox"),log=document.getElementById("chLog"),inp=document.getElementById("chText");
+  const sn=k=>SUITS.find(s=>s[0]===k);
+  const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
+  const hand=cs=>`<span class="cg">${cs.slice().sort((a,b)=>SK.indexOf(a[0])-SK.indexOf(b[0])).map(([k,r])=>ck(r,k)).join("")}</span>`;
+  const tBtn=cs=>`<button type="button" class="chT" data-t="${cs.map(([k,r])=>k+":"+r).join("|")}">לטופס</button>`;
+  const pn=p=>`<bdi dir="ltr">${RANKS[p.a]}+${RANKS[p.b]}</bdi>`;
+  const L5=()=>DRAWS.slice(0,5);
+  const hotAt=(k,r)=>L5().filter(d=>d[k]===r);
+  const lastAt=(k,r)=>{const h=hotAt(k,r);return h.length?Math.max(...h.map(d=>d.n)):0;};
+  function bestPlace(p,skip){ // the placement of the pair that came out most in the last 5 draws
+    const A=RANKS[p.a],B=RANKS[p.b],free=SK.filter(k=>k!==skip),t=[];
+    for(const x of free)for(const y of free){if(x===y||(A===B&&y<x))continue;
+      t.push({cs:[[x,A],[y,B]],sc:[hotAt(x,A).length+hotAt(y,B).length,Math.max(lastAt(x,A),lastAt(y,B))]});}
+    t.sort((u,v)=>v.sc[0]-u.sc[0]||v.sc[1]-u.sc[1]);return t[0];
+  }
+  function c3For(p){
+    const out=[];const h=thirdHot(p,L5()),l=thirdLinked(p,L5());
+    if(h){const b=bestPlace(p,h.k);out.push({kind:"חם",cs:[...b.cs,[h.k,h.r]],why:`${ck(h.r,h.k)} עלה במיקום הזה ב־${h.hot.length} מתוך 5 ההגרלות האחרונות${h.co.length?`, ופעם${h.co.length>1?"ים":""} יחד עם הזוג (${h.co.map(d=>d.n).join(", ")})`:""}.`});}
+    if(l){const b=bestPlace(p,l.k);out.push({kind:"מקושר",cs:[...b.cs,[l.k,l.r]],why:`${ck(l.r,l.k)} עלה עם ${RANKS[p.a]} ב־${l.wa.map(d=>d.n).join(", ")} ${p.a===p.b?"":` ועם ${RANKS[p.b]} ב־${l.wb.map(d=>d.n).join(", ")}`}.`});}
+    return out;
+  }
+  function hottestIn(k,avoid){
+    const L50=DRAWS.slice(0,50);
+    return RANKS.map(r=>({r,n5:hotAt(k,r).length,last:lastAt(k,r),n50:L50.filter(d=>d[k]===r).length}))
+      .sort((a,b)=>b.n5-a.n5||b.last-a.last||b.n50-a.n50)[0];
+  }
+  function stale(){
+    const g=slotsAfter(DRAWS[0]);let s,miss=0;while((s=g.next().value).ms<=Date.now())miss++;
+    return {next:s,miss};
+  }
+  function basis(){const {miss}=stale();
+    return miss?`<span class="sm">שים לב: התוצאה של ${miss===1?"ההגרלה האחרונה":miss+" ההגרלות האחרונות"} עוד לא נכנסה. הניתוח מבוסס עד הגרלה ${DRAWS[0].n}, ויתעדכן לבד כשהתוצאה תיכנס.</span>`:`<span class="sm">מבוסס על 5 ההגרלות האחרונות (${L5()[4].n}–${L5()[0].n}).</span>`;}
+
+  // ---- answers ----
+  function aPairs(){
+    const M=pickAll(L5());
+    if(!M.length)return `אין כרגע זוג שעלה פעמיים או יותר ב־5 ההגרלות האחרונות.${basis()}`;
+    const rows=M.map((p,i)=>{const b=bestPlace(p);return `<li><b>${pn(p)}</b> · ${p.hit.length} מתוך 5${i===0?" · <b>הכי חזק</b>":""}<br>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li>`;}).join("");
+    return `<b>צ'אנס 2: הזוגות החזקים לפי השיטה</b><ul>${rows}</ul>${aLinkShort()}<span class="sm">לזוג רגיל יש בערך 14% לעלות בהגרלה הבאה, בכל מיקום; לזוג כפול (כמו 7+7) כ־8%. לכל טופס צ'אנס 2 יש סיכוי של 1 ל־64.</span>${basis()}`;
+  }
+  function aLinkShort(){const LP=linkPairs(L5(),pickAll(L5()));if(!LP.length)return "";
+    return `<span class="sm">עלולים להתחבר: ${LP.map(p=>pn(p)).join(", ")}. כתוב "עלולים להתחבר" להסבר.</span>`;}
+  function aLink(){
+    const LP=linkPairs(L5(),pickAll(L5()));
+    if(!LP.length)return `כרגע אין זוג שעלול להתחבר: לא היו שתי הגרלות רצופות עם שני קלפי עוגן משותפים.${basis()}`;
+    return `<b>זוגות שעלולים להתחבר</b><ul>${LP.map(p=>{const b=bestPlace(p);return `<li><b>${pn(p)}</b>: בהגרלה ${p.from.x} עלה ${p.from.xa} עם ${p.anchors.join(" ו־")}, ובהגרלה ${p.from.y} עלה ${p.from.yb} עם אותם קלפים. לכן הם "אוהבים" את אותם קלפים ועלולים לעלות יחד.<br>מיקום: ${hand(b.cs)}${tBtn(b.cs)}</li>`;}).join("")}</ul>${basis()}`;
+  }
+  function aC3(p){
+    p=p||pickAll(L5())[0];if(!p)return `אין כרגע זוג חזק לבנות עליו צ'אנס 3.${basis()}`;
+    const o=c3For(p);if(!o.length)return `לזוג ${pn(p)} אין כרגע קלף שלישי שמתאים לכללים (חם או מקושר).${basis()}`;
+    return `<b>צ'אנס 3 על הזוג ${pn(p)}</b><ul>${o.map((t,i)=>`<li><b>${i===0?"הכי חם":"עם קלף "+t.kind}:</b> ${hand(t.cs)}${tBtn(t.cs)}<br>${t.why}</li>`).join("")}</ul><span class="sm">לכל טופס צ'אנס 3 יש סיכוי של 1 ל־512, ופרס פי 300. לזוג אחר כתוב למשל "צ'אנס 3 ל־7+7".</span>${basis()}`;
+  }
+  function aC4(){
+    const p=pickAll(L5())[0];if(!p)return `אין כרגע זוג חזק לבנות עליו צ'אנס 4.${basis()}`;
+    const o=c3For(p)[0];let cs;
+    if(o)cs=o.cs.slice();else cs=bestPlace(p).cs.slice();
+    while(cs.length<4){const used=new Set(cs.map(c=>c[0]));const k=SK.find(k=>!used.has(k));const h=hottestIn(k);cs.push([k,h.r]);}
+    const extra=cs.slice(o?3:2).map(([k,r])=>{const n=hotAt(k,r).length;return `${ck(r,k)} ${n?`עלה ב${sn(k)[2]} ב־${n} מתוך 5 ההגרלות האחרונות`:`הכי חם ב${sn(k)[2]} ב־50 ההגרלות האחרונות`}`;}).join("; ");
+    return `<b>צ'אנס 4</b>: ${hand(cs)}${tBtn(cs)}<br>הבסיס הוא הזוג ${pn(p)}${o?` עם הקלף החם`:""}, ובנוסף ${extra}.<span class="sm">לטופס צ'אנס 4 יש סיכוי של 1 ל־4,096, ופרס פי 2,000.</span>${basis()}`;
+  }
+  function aHot(){
+    const L50=DRAWS.slice(0,50);
+    const rows=SUITS.map(([k,sym,name])=>{const cnt=RANKS.map(r=>({r,n:L50.filter(d=>d[k]===r).length})).sort((a,b)=>b.n-a.n);
+      const h5=hottestIn(k);const cold=cnt[cnt.length-1];
+      return `<li><b>${name}:</b> חם ב־5 האחרונות ${ck(h5.r,k)} (${h5.n5}) · ב־50 האחרונות ${ck(cnt[0].r,k)} (${cnt[0].n}) · הכי קר ${ck(cold.r,k)} (${cold.n})</li>`;}).join("");
+    return `<b>הקלפים החמים בכל צורה</b><ul>${rows}</ul><span class="sm">בממוצע כל קלף עולה ב־1 מכל 8 הגרלות בכל צורה. הכפתור "חמים לצ'אנס 3" בטופס ממלא את שלושת החמים.</span>`;
+  }
+  function aNext(){
+    const {next,miss}=stale();const s=Math.max(0,Math.floor((next.ms-Date.now())/1000));
+    const h=Math.floor(s/3600),m=Math.floor(s%3600/60);
+    const nowP=tzParts(Date.now());
+    return `ההגרלה הבאה היא <b>${next.n}</b>, ${dayLabel(next,nowP)} בשעה <b>${next.time}</b>, בעוד ${h?h+" שעות ו־":""}${m} דקות.${miss?`<span class="sm">${miss} הגרלות כבר נערכו והתוצאות שלהן עוד לא נכנסו.</span>`:""}`;
+  }
+  function aLast(){
+    const d=DRAWS[0];const M=pickAll(DRAWS.slice(1,6));
+    const hit=M.filter(p=>pairIn(d,RANKS[p.a],RANKS[p.b]));
+    return `ההגרלה האחרונה באתר: <b>${d.n}</b> (${fmtDate(d.date)} ${d.time||""}): ${hand(SK.map(k=>[k,d[k]]))}${d.manual?" (הוזנה ידנית)":""}<br>${M.length?(hit.length?`זוגות השיטה שפגעו בה: ${hit.map(pn).join(", ")} ✓`:`זוגות השיטה לפניה (${M.map(pn).join(", ")}) לא פגעו.`):""}${stale().miss?`<span class="sm">יש הגרלה חדשה יותר שהתוצאה שלה עוד לא נכנסה. אם יש לך אותה, אפשר להזין אותה בכפתור "עדכון הגרלה אחרונה".</span>`:""}`;
+  }
+  function aTrack(){
+    const R=lastR3||[];if(!R.length)return "המעקב מתחיל מהגרלה 53839. עוד אין מספיק הגרלות לספירה.";
+    const n=R.length,c=key=>R.filter(x=>x[key]).length,e=key=>(R.reduce((s,x)=>s+x[key],0)/n*100).toFixed(1);
+    const LR=R.filter(x=>x.hasLp);
+    return `<b>איך השיטה מצליחה מאז 53839</b> (${n} הגרלות)<ul><li>זוגות השיטה: ${c("pair")} מתוך ${n} (במקרה היה צפוי ${e("ep")}%)</li><li>זוג + קלף חם: ${c("hot")} מתוך ${n} (במקרה ${e("eh")}%)</li><li>זוג + קלף מקושר: ${c("lnk")} מתוך ${n} (במקרה ${e("el")}%)</li>${LR.length?`<li>עלולים להתחבר: ${LR.filter(x=>x.lp).length} מתוך ${LR.length}</li>`:""}</ul><span class="sm">בבדיקה על 50 אלף הגרלות השיטה פגעה בערך כמו בחירה אקראית. המעקב כאן ממשיך לספור כל הגרלה.</span>`;
+  }
+  function aOdds(){
+    return `<b>הסיכויים וההחזר</b><ul><li>צ'אנס 1: 1 ל־8, פרס פי 5, החזר ממוצע כ־62 אג׳ לשקל</li><li>צ'אנס 2: 1 ל־64, פרס פי 30 (וחצי חזרה על קלף אחד), החזר כ־58 אג׳</li><li>צ'אנס 3: 1 ל־512, פרס פי 300, החזר כ־70 אג׳</li><li>צ'אנס 4: 1 ל־4,096, פרס פי 2,000, החזר כ־60 אג׳</li></ul><span class="sm">ההחזר הממוצע זהה לכל בחירת קלפים, כך שאף שיטה לא משנה אותו. כדאי לשחק רק בסכום שנעים להפסיד.</span>`;
+  }
+  function aWhy(){
+    const p=pickAll(L5())[0];if(!p)return "אין כרגע זוג מוביל.";
+    const hd=L5().filter(d=>pairIn(d,RANKS[p.a],RANKS[p.b]));
+    const nums=hd.map(d=>d.n),consec=nums.some(n=>nums.includes(n-1));
+    return `השיטה סופרת אילו שני קלפים עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה. ${pn(p)} עלו יחד ב־${hd.length} מתוך 5 (${nums.join(", ")})${consec?", ובשתי הגרלות ברצף":""}. בתיקו קובע מי עלה מאוחר יותר. בחר את הזוג באתר כדי לראות את כל ההסבר.${basis()}`;
+  }
+  function aPair(p){
+    const A=RANKS[p.a],B=RANKS[p.b],l5=L5();
+    const hd=l5.filter(d=>pairIn(d,A,B)),all=rankAllPairs(l5),pos=all.findIndex(x=>x.a===p.a&&x.b===p.b)+1;
+    const inM=pickAll(l5).some(x=>x.a===p.a&&x.b===p.b),isL=linkPairs(l5,pickAll(l5)).some(x=>x.a===p.a&&x.b===p.b);
+    const W=DRAWS.slice(0,1000),n1k=W.filter(d=>pairIn(d,A,B)).length,e1k=p.a===p.b?78.9:144;
+    const lastI=DRAWS.findIndex(d=>pairIn(d,A,B));
+    const b=bestPlace(p);const mine=myPairs.some(m=>m.a===p.a&&m.b===p.b);
+    const verdict=inM?"<b>חזק לפי השיטה</b>: הוא בין 4 הזוגות שהשיטה בוחרת.":isL?"<b>עלול להתחבר</b>: הוא אחד הזוגות של רעיון העוגן.":pos<=10?"<b>בינוני לפי השיטה</b>: קרוב לארבעת המובילים.":"<b>חלש לפי השיטה</b>: הוא לא בולט ב־5 ההגרלות האחרונות.";
+    return `<b>הזוג ${pn(p)}</b><ul><li>${verdict}</li><li>עלו יחד ב־${hd.length} מתוך 5 ההגרלות האחרונות${hd.length?` (${hd.map(d=>d.n).join(", ")})`:""}. מקום ${pos} מתוך 36 זוגות.</li><li>ב־1,000 ההגרלות האחרונות: ${n1k} פעמים, לעומת ${Math.round(e1k)} בממוצע.</li><li>${lastI<0?"לא עלו יחד ב־2,000 ההגרלות האחרונות.":lastI===0?"עלו יחד בהגרלה האחרונה.":lastI===1?`עלו יחד בהגרלה שלפני האחרונה (${DRAWS[1].n}).`:`עלו יחד לאחרונה לפני ${lastI} הגרלות (${DRAWS[lastI].n}).`}</li><li>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li></ul>${mine?`<span class="sm">הזוג כבר ברשימת "הזוגות שלי" ונספר במעקב.</span>`:`<button type="button" class="chT" data-add="${p.a}-${p.b}">הוסף לזוגות שלי</button>`}<span class="sm">לצ'אנס 3 על הזוג הזה כתוב "צ'אנס 3 ל־${A}+${B}".</span>`;
+  }
+  const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים</li><li>מתי ההגרלה הבאה, מה יצא באחרונה</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
+
+  // ---- understanding the question ----
+  const WORD={"נסיך":"J","נסיכים":"J","מלכה":"Q","מלכות":"Q","מלך":"K","מלכים":"K","אס":"A","אסים":"A","אסים":"A"};
+  function cardsIn(t){
+    const out=[];const re=/(?<![0-9a-z])(10|[789]|[jqka])(?![0-9a-z:])|(?<![א-ת])[והבל]?(נסיכים|נסיך|מלכות|מלכה|מלכים|מלך|אסים|אס)(?![א-ת])/g;let m;
+    while((m=re.exec(t))){out.push(m[1]?m[1].toUpperCase():WORD[m[2]]);}
+    return out;
+  }
+  function answer(raw){
+    const t=" "+raw.toLowerCase().replace(/[׳'’`"״]/g,"").replace(/[-־+,.?!]/g," ")+" ";
+    const has=re=>re.test(t);
+    const tc=t.replace(/צאנס\s*[1-4]/g," ").replace(/\b5[0-9]{4}\b/g," ");
+    const cs=cardsIn(tc);
+    const c3=has(/צאנס\s*3|שלושה קלפים|3 קלפים|שלישי/),c4=has(/צאנס\s*4|ארבעה קלפים|4 קלפים/),lk=has(/מתחבר|להתחבר|עוגן/);
+    const c2=has(/צאנס\s*2/)||(!lk&&has(/זוג/))||(!c3&&!c4&&!lk&&has(/חזק|הכי טוב|מה לשחק|מה לשים|תמליץ|המלצ|ניחוש|תנחש|מה כדאי/));
+    if(cs.length>=2){
+      let a=RANKS.indexOf(cs[0]),b=RANKS.indexOf(cs[1]);if(a>b)[a,b]=[b,a];const p={a,b};
+      return c3?aC3(p):aPair(p);
+    }
+    if(cs.length===1&&!c3&&!c4){const r=cs[0];
+      const L50=DRAWS.slice(0,50);const rows=SUITS.map(([k,sym,name])=>`${ck(r,k)} ${L50.filter(d=>d[k]===r).length}`).join(" · ");
+      const partner=RANKS.map((x,i)=>{let a=RANKS.indexOf(r),b=i;if(a>b)[a,b]=[b,a];return {p:{a,b},n:DRAWS.slice(0,1000).filter(d=>pairIn(d,RANKS[a],RANKS[b])).length,e:a===b?78.9:144};}).sort((u,v)=>v.n/v.e-u.n/u.e)[0];
+      return `<b>הקלף ${r}</b> ב־50 ההגרלות האחרונות, לפי צורה: ${rows}.<br>השותף שעלה איתו הכי הרבה ב־1,000 ההגרלות האחרונות: ${pn(partner.p)} (${partner.n} פעמים).<span class="sm">כתוב שני קלפים, למשל "${r} ו־K", כדי לבדוק זוג.</span>`;}
+    const parts=[];
+    if(has(/שלום|היי|הי |אהלן|מה אתה יודע|עזרה|מה אפשר|איך זה עובד/)&&!c2&&!c3&&!c4)return HELP;
+    if(c2)parts.push(aPairs());
+    if(lk)parts.push(aLink());
+    if(c3)parts.push(aC3());
+    if(c4)parts.push(aC4());
+    if(parts.length){const bs=basis();return parts.map(x=>x.split(bs).join("")).join("<hr style='border:0;border-top:1px solid var(--line);margin:10px 0'>")+(parts.some(x=>x.includes(bs))?bs:"");}
+    if(has(/מתי|הבאה|טיימר|כמה זמן|באיזה שעה|באיזו שעה/))return aNext();
+    if(has(/אחרונה|מה יצא|מה עלה|תוצאה|תוצאות/))return aLast();
+    if(has(/פגע|פגיעות|מעקב|הצליח|הצלחה|מצליח|סטטיסטיק|כמה פעמים|זכית|זכה/))return aTrack();
+    if(has(/סיכוי|אחוז|החזר|משתלם|כסף|רווח|להרוויח/))return aOdds();
+    if(has(/למה|הסבר|איך בחרת|איך השיטה/))return aWhy();
+    if(has(/חם|חמים|קר|קרים|קלפים/))return aHot();
+    if(has(/צאנס|לשחק|טופס|הגרלה/))return aPairs();
+    return `לא בטוח שהבנתי. ${HELP}`;
+  }
+
+  // ---- UI ----
+  function say(html,who){const m=document.createElement("div");m.className="chM "+who;m.innerHTML=html;log.appendChild(m);log.scrollTop=log.scrollHeight;}
+  function ask(q){q=q.trim();if(!q)return;say(q.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c])),"u");
+    let a;try{a=answer(q);}catch(e){a="משהו השתבש בחישוב. נסה לשאול שוב.";}
+    setTimeout(()=>say(a,"b"),250);}
+  let opened=false;
+  function open(){box.hidden=false;document.getElementById("chFab").hidden=true;
+    if(!opened){opened=true;say(`היי! אני העוזר של האתר. ${HELP}`,"b");}
+    try{if(matchMedia("(pointer:fine)").matches)inp.focus();}catch(e){}}
+  document.getElementById("chFab").addEventListener("click",open);
+  document.getElementById("chClose").addEventListener("click",()=>{box.hidden=true;document.getElementById("chFab").hidden=false;});
+  document.getElementById("chForm").addEventListener("submit",e=>{e.preventDefault();const q=inp.value;inp.value="";ask(q);});
+  document.getElementById("chQ").addEventListener("click",e=>{const b=e.target.closest("button");if(b)ask(b.textContent);});
+  log.addEventListener("click",e=>{
+    const b=e.target.closest("button.chT");if(!b)return;
+    if(b.dataset.add){const [a,c]=b.dataset.add.split("-").map(Number);
+      if(!myPairs.some(m=>m.a===a&&m.b===c)){if(myPairs.length>=4)myPairs.shift();myPairs.push({a,b:c,from:DRAWS[0].n+1});saveMine();}
+      document.getElementById("myPairClr").hidden=false;preDraw();renderTrack3();
+      b.replaceWith(Object.assign(document.createElement("span"),{className:"sm",textContent:"נוסף לזוגות שלי ✓ הוא יופיע בניתוח ובמעקב."}));return;}
+    mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
+    save();renderSlip();document.getElementById("res").hidden=true;
+    b.textContent="בטופס ✓";
+    if(innerWidth<700){box.hidden=true;document.getElementById("chFab").hidden=false;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});}
+  });
+  try{window._chatAnswer=answer;}catch(e){}
+})();
 </script>
