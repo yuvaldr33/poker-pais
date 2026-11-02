@@ -377,6 +377,9 @@ table.pairs td.nn{font-family:var(--mono)}
     <h3 class="h3">זוגות שחוזרים מהר</h3>
     <p class="sub">כמה פעמים זוג עלה יחד ואז חזר שוב תוך 3 הגרלות לכל היותר.</p>
     <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>חזרות</th><th>צפוי</th></tr></thead><tbody id="pRet"></tbody></table></div>
+    <h3 class="tplH">הקלף שנצמד לכל זוג</h3>
+    <p class="tplNote">לכל אחד מ־36 הזוגות: הקלף שיצא איתו באותה הגרלה הכי הרבה פעמים ב־1,000 ההגרלות האחרונות, והצורה שבה יצא הכי הרבה. "צפוי" הוא כמה פעמים הקלף היה יוצא עם הזוג סתם במקרה.</p>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הזוג</th><th>יצא</th><th>נצמד</th><th>פעמים</th><th>צפוי</th></tr></thead><tbody id="pStick"></tbody></table></div>
     <p class="honest">הטבלאות מתעדכנות אחרי כל הגרלה. בבדיקה של 96 גרסאות של השיטה על 50,837 הגרלות, וב־1,000 הרצות של הגרלות אקראיות להשוואה, החריגות שמופיעות כאן היו בגודל שיוצא גם סתם במקרה, וזוגות חמים לא המשיכו להיות חמים בהגרלות שאחריהן.</p>
   </section>
 
@@ -402,6 +405,7 @@ table.pairs td.nn{font-family:var(--mono)}
     <button type="button">צ'אנס 4</button>
     <button type="button">זוגות שעלולים להתחבר</button>
     <button type="button">צמצום שבלונות</button>
+    <button type="button">איזה קלף נצמד לזוגות?</button>
     <button type="button">מה הקלפים החמים?</button>
     <button type="button">מתי ההגרלה הבאה?</button>
     <button type="button">מה יצא בהגרלה האחרונה?</button>
@@ -471,6 +475,19 @@ function pairRepeat(p,W){ // in the last W draws: appearances and back-to-back r
 function repText(p,short){const r=pairRepeat(p,1000);
   if(short)return `חזר בהגרלה שאחרי ${r.rep} פעמים · צמודים ${r.radj} · מפוצלים ${r.rspl}`;
   return `ב־1,000 ההגרלות האחרונות הזוג עלה <b>${r.all}</b> פעמים: <b>צמודים ${r.adj}</b>, <b>מפוצלים ${r.spl}</b>. הוא <b>חזר בהגרלה שמיד אחרי ${r.rep} פעמים</b>: צמודים ${r.radj}, מפוצלים ${r.rspl}${r.last?` (לאחרונה ב־${r.last})`:""}.`;}
+// ---- the card that "sticks" to a pair: which card came out most often in the same draw ----
+function pairRest(d,A,B){const r=SK.map(k=>[k,d[k]]);const i=r.findIndex(x=>x[1]===A);if(i<0)return null;r.splice(i,1);const j=r.findIndex(x=>x[1]===B);if(j<0)return null;r.splice(j,1);return r;}
+const _stickExp={};
+function stickExp(a,b){const key=a+"-"+b;if(_stickExp[key])return _stickExp[key];const A=RANKS[a],B=RANKS[b],c=new Array(8).fill(0);let n=0;
+  for(let m=0;m<4096;m++){const d={S:RANKS[m&7],H:RANKS[(m>>3)&7],D:RANKS[(m>>6)&7],C:RANKS[(m>>9)&7]};const r=pairRest(d,A,B);if(!r)continue;n++;new Set(r.map(x=>x[1])).forEach(x=>c[RANKS.indexOf(x)]++);}
+  return _stickExp[key]=c.map(x=>x/n);}
+function stickyFor(p,W){const A=RANKS[p.a],B=RANKS[p.b],n0=Math.min(W||1000,DRAWS.length),cnt={},pos={},last={};let n=0;
+  for(let i=0;i<n0;i++){const d=DRAWS[i],r=pairRest(d,A,B);if(!r)continue;n++;
+    const seen=new Set();for(const [k,x] of r){if(!seen.has(x)){seen.add(x);cnt[x]=(cnt[x]||0)+1;if(!last[x])last[x]=d.n;}pos[k+x]=(pos[k+x]||0)+1;}}
+  const ex=stickExp(p.a,p.b);
+  const list=RANKS.map((x,i)=>({r:x,c:cnt[x]||0,e:n*ex[i],last:last[x]||0})).sort((u,v)=>v.c-u.c||v.last-u.last);
+  const top=list[0],k=SK.slice().sort((u,v)=>(pos[v+top.r]||0)-(pos[u+top.r]||0))[0];
+  return {n,list,top,k,kc:pos[k+top.r]||0};}
 let tplOn=false;try{tplOn=localStorage.getItem("chance-tpl")==="1";}catch(e){}
 function tripHit(d,A,B,c){return c&&d[c.k]===c.r&&pairIn(d,A,B,c.k);}
 const _c3Cache=new Map();
@@ -704,6 +721,8 @@ function explainPair(p,idx){
     } else items.push(`דורג שני, אחרי <bdi dir="ltr">${oA}+${oB}</bdi>, לפי אותם כללים.`);}
   const rows=last5.map(d=>{const on=appears(d);return `<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${K.map(k=>{const s=sn(k);const hl=on&&(d[k]===A||d[k]===B);return `<span class="${s[3]?"r ":""}${hl?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${on?'<span class="mt">✓</span>':""}</div>`;}).join("");
   items.push(repText(p)+` <span class="tplNote">צמודים = במקומות סמוכים בטופס (עלה־לב, לב־יהלום, יהלום־תלתן); מפוצלים = עם רווח ביניהם (עלה־יהלום, עלה־תלתן, לב־תלתן). במקרה כל צורה יוצאת בערך חצי מהפעמים, וזוג חוזר בהגרלה שאחרי בכ־${p.a===p.b?"8":"14"}% מהפעמים.</span>`);
+  {const st=stickyFor(p,1000),s2=st.list[1];
+   items.push(`<b>הקלף שנצמד לזוג:</b> ב־${st.n} הפעמים שהזוג עלה ב־1,000 ההגרלות האחרונות, הקלף שיצא איתו הכי הרבה הוא <b>${st.top.r}</b> (${st.top.c} פעמים, במקרה צפוי ${Math.round(st.top.e)}), הכי הרבה ב${sn(st.k)[2]} <span class="cg">${chip(st.top.r,st.k)}</span> (${st.kc}). אחריו ${s2.r} (${s2.c}).`);}
   const base=p.a===p.b?"7.9%":"14.4%";
   let crit="";
   if(p.mine){
@@ -869,6 +888,9 @@ function renderPairs(){
   if(P.length>=1000){const tp=[...mP].sort((x,y)=>y[1]-x[1]).slice(0,20);const a1=tp.reduce((s,x)=>s+x[1],0)/20,a2=tp.reduce((s,x)=>s+(mW.get(x[0])||0),0)/20;
     v+=` 20 הזוגות שהיו הכי חמים ב־1,000 ההגרלות שלפני עלו שם בממוצע ${a1.toFixed(1)} פעמים, וב־1,000 האחרונות ${a2.toFixed(1)}, קרוב לממוצע הצפוי (15.6).`;}
   document.getElementById("pverdict").innerHTML=`<b>השורה התחתונה:</b> ${v}`;
+  {const rows=[];for(let a=0;a<8;a++)for(let b=a;b<8;b++){const st=stickyFor({a,b},1000);rows.push({a,b,st});}
+   const s=k=>SUITS.find(x=>x[0]===k);
+   document.getElementById("pStick").innerHTML=rows.map(({a,b,st})=>`<tr><td><span class="pp" dir="ltr"><span class="k">${RANKS[a]}</span> + <span class="k">${RANKS[b]}</span></span></td><td class="nn">${st.n}</td><td><span class="pp"><span class="k${s(st.k)[3]?" r":""}" style="${s(st.k)[3]?"color:var(--red)":""}">${st.top.r}${s(st.k)[1]}</span></span></td><td class="nn"><b>${st.top.c}</b></td><td class="nn">${Math.round(st.top.e)}</td></tr>`).join("");}
 }
 
 // ---- track record of the 5-draw method, recomputed after every draw ----
@@ -990,7 +1012,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="1049416a67";
+const BUILD="a60a260e0b";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1105,7 +1127,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const lastI=DRAWS.findIndex(d=>pairIn(d,A,B));
     const b=bestPlace(p);const mine=myPairs.some(m=>m.a===p.a&&m.b===p.b);
     const verdict=inM?"<b>חזק לפי השיטה</b>: הוא בין 4 הזוגות שהשיטה בוחרת.":isL?"<b>עלול להתחבר</b>: הוא אחד הזוגות של רעיון העוגן.":pos<=10?"<b>בינוני לפי השיטה</b>: קרוב לארבעת המובילים.":"<b>חלש לפי השיטה</b>: הוא לא בולט ב־5 ההגרלות האחרונות.";
-    return `<b>הזוג ${pn(p)}</b><ul><li>${verdict}</li><li>עלו יחד ב־${hd.length} מתוך 5 ההגרלות האחרונות${hd.length?` (${hd.map(d=>d.n).join(", ")})`:""}. מקום ${pos} מתוך 36 זוגות.</li><li>ב־1,000 ההגרלות האחרונות: ${n1k} פעמים, לעומת ${Math.round(e1k)} בממוצע.</li><li>${repText(p)}</li><li>${lastI<0?"לא עלו יחד ב־2,000 ההגרלות האחרונות.":lastI===0?"עלו יחד בהגרלה האחרונה.":lastI===1?`עלו יחד בהגרלה שלפני האחרונה (${DRAWS[1].n}).`:`עלו יחד לאחרונה לפני ${lastI} הגרלות (${DRAWS[lastI].n}).`}</li><li>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li></ul>${mine?`<span class="sm">הזוג כבר ברשימת "הזוגות שלי" ונספר במעקב.</span>`:`<button type="button" class="chT" data-add="${p.a}-${p.b}">הוסף לזוגות שלי</button>`}<span class="sm">לצ'אנס 3 על הזוג הזה כתוב "צ'אנס 3 ל־${A}+${B}".</span>`;
+    return `<b>הזוג ${pn(p)}</b><ul><li>${verdict}</li><li>עלו יחד ב־${hd.length} מתוך 5 ההגרלות האחרונות${hd.length?` (${hd.map(d=>d.n).join(", ")})`:""}. מקום ${pos} מתוך 36 זוגות.</li><li>ב־1,000 ההגרלות האחרונות: ${n1k} פעמים, לעומת ${Math.round(e1k)} בממוצע.</li><li>${(st=>`הקלף שנצמד: <b>${st.top.r}</b> (${st.top.c} פעמים, במקרה ${Math.round(st.top.e)}), הכי הרבה ב${sn(st.k)[2]}`)(stickyFor(p,1000))}</li><li>${repText(p)}</li><li>${lastI<0?"לא עלו יחד ב־2,000 ההגרלות האחרונות.":lastI===0?"עלו יחד בהגרלה האחרונה.":lastI===1?`עלו יחד בהגרלה שלפני האחרונה (${DRAWS[1].n}).`:`עלו יחד לאחרונה לפני ${lastI} הגרלות (${DRAWS[lastI].n}).`}</li><li>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li></ul>${mine?`<span class="sm">הזוג כבר ברשימת "הזוגות שלי" ונספר במעקב.</span>`:`<button type="button" class="chT" data-add="${p.a}-${p.b}">הוסף לזוגות שלי</button>`}<span class="sm">לצ'אנס 3 על הזוג הזה כתוב "צ'אנס 3 ל־${A}+${B}".</span>`;
   }
   function aTpl(p){
     p=p||pickAll(L5())[0];if(!p)return `אין כרגע זוג חזק לצמצם לו שבלונות.${basis()}`;
@@ -1113,7 +1135,13 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const tk=tplTickets(p,tf.keys);
     return `<b>צמצום ל־2 שבלונות: ${pn(p)}</b><br>בהופעות האחרונות שלו הזוג עלה הכי הרבה ב${tf.keys.map(k=>`<b>${TPL_NAME[k]}</b> (${tf.cnt[k]})`).join(" וב")}.<ul>${tk.map(cs=>`<li>${hand(cs)}${tBtn(cs)}</li>`).join("")}</ul><span class="sm">${tk.length} טפסים במקום ${p.a===p.b?6:12}. הזוג עולה בשתי השבלונות האלה בכ־${p.a===p.b?37:41}% מהפעמים שהוא עולה, כמו בכל 2 שבלונות: חוסך טפסים, לא מגדיל סיכוי. לזוג אחר כתוב למשל "שבלונות ל־7+7".</span>`;
   }
-  const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים, צמצום לשבלונות</li><li>מתי ההגרלה הבאה, מה יצא באחרונה</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
+  function aStick(p){
+    const L=p?[p]:[...pickAll(L5()),...linkPairs(L5(),pickAll(L5()))];
+    if(!L.length)return "אין כרגע זוגות להציג.";
+    return `<b>הקלף שנצמד לכל זוג</b> (ב־1,000 ההגרלות האחרונות)<ul>${L.map(q=>{const st=stickyFor(q,1000),b=bestPlace(q,st.k),cs=[...b.cs,[st.k,st.top.r]];
+      return `<li><b>${pn(q)}</b>: יצא ${st.n} פעמים, ובהן <b>${st.top.r}</b> יצא איתו ${st.top.c} פעמים (במקרה ${Math.round(st.top.e)}), הכי הרבה ב${sn(st.k)[2]}. אחריו ${st.list[1].r} (${st.list[1].c}).<br>צ'אנס 3: ${hand(cs)}${tBtn(cs)}</li>`;}).join("")}</ul><span class="sm">בבדיקה על 30 אלף הגרלות, הקלף שנצמד לזוג יצא איתו בפעם הבאה ב־26.7% מהפעמים, כמעט בדיוק כמו שהיה צפוי לאותם קלפים במקרה (26.3%). לזוג אחר כתוב למשל "מה נצמד ל־7+K".</span>`;
+  }
+  const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים, צמצום לשבלונות, הקלף שנצמד לכל זוג</li><li>מתי ההגרלה הבאה, מה יצא באחרונה</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
 
   // ---- understanding the question ----
   const WORD={"נסיך":"J","נסיכים":"J","גק":"J","ג׳ק":"J","מלכה":"Q","מלכות":"Q","דמה":"Q","דמות":"Q","קווין":"Q","מלך":"K","מלכים":"K","קינג":"K","קינגים":"K","אס":"A","אסים":"A"};
@@ -1131,13 +1159,14 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const c2=has(/צאנס\s*2/)||(!lk&&has(/זוג/))||(!c3&&!c4&&!lk&&has(/חזק|הכי טוב|מה לשחק|מה לשים|תמליץ|המלצ|ניחוש|תנחש|מה כדאי/));
     if(cs.length>=2){
       let a=RANKS.indexOf(cs[0]),b=RANKS.indexOf(cs[1]);if(a>b)[a,b]=[b,a];const p={a,b};
-      return has(/שבלונ|צמצ/)?aTpl(p):c3?aC3(p):aPair(p);
+      return has(/שבלונ|צמצ/)?aTpl(p):has(/נצמד|נדבק|להיצמד|נצמדים|יוצא עם|יצא עם|אוהב/)?aStick(p):c3?aC3(p):aPair(p);
     }
     if(cs.length===1&&!c3&&!c4){const r=cs[0];
       const L50=DRAWS.slice(0,50);const rows=SUITS.map(([k,sym,name])=>`${ck(r,k)} ${L50.filter(d=>d[k]===r).length}`).join(" · ");
       const partner=RANKS.map((x,i)=>{let a=RANKS.indexOf(r),b=i;if(a>b)[a,b]=[b,a];return {p:{a,b},n:DRAWS.slice(0,1000).filter(d=>pairIn(d,RANKS[a],RANKS[b])).length,e:a===b?78.9:144};}).sort((u,v)=>v.n/v.e-u.n/u.e)[0];
       return `<b>הקלף ${r}</b> ב־50 ההגרלות האחרונות, לפי צורה: ${rows}.<br>השותף שעלה איתו הכי הרבה ב־1,000 ההגרלות האחרונות: ${pn(partner.p)} (${partner.n} פעמים).<span class="sm">כתוב שני קלפים, למשל "${r} ו־K", כדי לבדוק זוג.</span>`;}
     if(has(/שבלונ|צמצ/))return aTpl();
+    if(has(/נצמד|נדבק|להיצמד|נצמדים|אוהב/))return aStick();
     const parts=[];
     if(has(/שלום|היי|הי |אהלן|מה אתה יודע|עזרה|מה אפשר|איך זה עובד/)&&!c2&&!c3&&!c4)return HELP;
     if(c2)parts.push(aPairs());
