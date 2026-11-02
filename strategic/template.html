@@ -76,8 +76,8 @@ h2{font-size:1.3rem}
 .honest{font-size:.85rem;color:var(--muted);background:var(--chip);border-radius:10px;padding:10px 12px}
 /* table */
 .tbl{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
-table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:420px}
-th,td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
+table{width:100%;border-collapse:collapse;font-size:.92rem;min-width:0}
+th,td{padding:8px 6px;text-align:center;border-bottom:1px solid var(--line);white-space:nowrap}
 th{font-weight:600;color:var(--muted);font-size:.8rem;background:var(--surface);position:sticky;top:0}
 td.n,td.d{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.85rem}
 td.d{color:var(--muted)}
@@ -85,11 +85,12 @@ td.k{font-family:var(--mono);font-weight:700}
 td.k.r{color:var(--red)}
 tbody tr:nth-child(even){background:color-mix(in srgb,var(--surface) 70%,var(--bg))}
 tbody tr:last-child td{border-bottom:0}
-.dayrow td{background:var(--chip);font-size:.78rem;color:var(--muted);text-align:start;padding:4px 10px;font-weight:600}
+.dayrow td{background:var(--chip);font-size:.78rem;color:var(--muted);text-align:center;direction:rtl;padding:4px 10px;font-weight:600}
 .foot{font-size:.8rem;color:var(--muted)}
 .foot a{color:inherit}
 .legend .up::before{background:var(--felt)}
-.upm{color:var(--felt);font-weight:700;font-size:.8rem;margin-inline-start:6px}
+.upm{color:var(--felt);font-weight:700;font-size:.75rem;display:block;margin-top:2px;direction:rtl}
+.pp{unicode-bidi:isolate;direction:ltr;display:inline-block}
 :root[data-theme="dark"] .upm{color:#5fd39a}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .upm{color:#5fd39a}}
 .verdict{background:var(--chip);border-radius:10px;padding:12px;font-size:.95rem}
@@ -313,7 +314,7 @@ function renderStatic(){
   let html="",cur="";
   L.forEach(x=>{
     if(x.date!==cur){cur=x.date;const wd=new Date(x.date+"T12:00:00Z").getUTCDay();html+=`<tr class="dayrow"><td colspan="6">יום ${DAYS[wd]} ${fmtDate(x.date)}</td></tr>`;}
-    html+=`<tr><td class="n">${x.n}</td><td class="d">${x.time}</td>${SUITS.map(s=>`<td class="k${s[3]?" r":""}">${x[s[0]]}</td>`).join("")}</tr>`;
+    html+=`<tr><td class="n">${x.n}</td><td class="d">${x.time||"—"}</td>${SUITS.map(s=>`<td class="k${s[3]?" r":""}">${x[s[0]]}</td>`).join("")}</tr>`;
   });
   document.getElementById("hist").innerHTML=html;
 }
@@ -433,15 +434,15 @@ function renderPairs(){
   const cs=(i,r)=>{const s=SUITS[i];return `<span class="k${s[3]?" r":""}">${r}${s[1]}</span>`;};
   const up=f=>f?'<span class="upm">▲ עלה שוב</span>':"";
   const topS=[...mW].sort((x,y)=>y[1]-x[1]).slice(0,15);
-  document.getElementById("pSuit").innerHTML=topS.map(([k,c])=>{const [i,j,a,b]=k.split("|");return `<tr><td>${cs(+i,a)} + ${cs(+j,b)}${up(isNew(k))}</td><td class="nn"><b>${c}</b></td><td class="nn">${P.length>=1000?(mP.get(k)||0):"–"}</td></tr>`;}).join("");
+  document.getElementById("pSuit").innerHTML=topS.map(([k,c])=>{const [i,j,a,b]=k.split("|");return `<tr><td><span class="pp">${cs(+i,a)} + ${cs(+j,b)}</span>${up(isNew(k))}</td><td class="nn"><b>${c}</b></td><td class="nn">${P.length>=1000?(mP.get(k)||0):"–"}</td></tr>`;}).join("");
   const ranksOf=d=>K.map(k=>d[k]);
   const has=(d,a,b)=>{const r=ranksOf(d);return a===b?r.filter(x=>x===a).length>=2:(r.includes(a)&&r.includes(b));};
   const pairs=[];for(let x=0;x<8;x++)for(let y=x;y<8;y++)pairs.push([RANKS[x],RANKS[y]]);
   const rk=pairs.map(([a,b])=>{const exp=a===b?78.9:144.0;const n=W.filter(d=>has(d,a,b)).length;return {a,b,n,exp,ratio:n/exp,nw:has(newest,a,b)};}).sort((x,y)=>y.ratio-x.ratio).slice(0,10);
-  document.getElementById("pRank").innerHTML=rk.map(x=>`<tr><td><span class="k">${x.a}</span> + <span class="k">${x.b}</span>${up(x.nw)}</td><td class="nn"><b>${x.n}</b></td><td class="nn">${Math.round(x.exp)}</td></tr>`).join("");
+  document.getElementById("pRank").innerHTML=rk.map(x=>`<tr><td><span class="pp"><span class="k">${x.a}</span> + <span class="k">${x.b}</span></span>${up(x.nw)}</td><td class="nn"><b>${x.n}</b></td><td class="nn">${Math.round(x.exp)}</td></tr>`).join("");
   const chron=W.slice().reverse();
   const rt=pairs.map(([a,b])=>{const exp=a===b?17.2:53.7;const idx=[];chron.forEach((d,i)=>{if(has(d,a,b))idx.push(i)});let n=0;for(let i=1;i<idx.length;i++)if(idx[i]-idx[i-1]<=3)n++;return {a,b,n,exp,ratio:n/exp,nw:has(newest,a,b)};}).sort((x,y)=>y.ratio-x.ratio).slice(0,8);
-  document.getElementById("pRet").innerHTML=rt.map(x=>`<tr><td><span class="k">${x.a}</span> + <span class="k">${x.b}</span>${up(x.nw)}</td><td class="nn"><b>${x.n}</b></td><td class="nn">${Math.round(x.exp)}</td></tr>`).join("");
+  document.getElementById("pRet").innerHTML=rt.map(x=>`<tr><td><span class="pp"><span class="k">${x.a}</span> + <span class="k">${x.b}</span></span>${up(x.nw)}</td><td class="nn"><b>${x.n}</b></td><td class="nn">${Math.round(x.exp)}</td></tr>`).join("");
   let v=`הזוג הכי חזק עכשיו עלה ${topS[0][1]} פעמים, כשהממוצע לזוג הוא 16 ובהגרלות אקראיות הזוג המוביל מגיע בדרך כלל לבערך 28.`;
   if(P.length>=1000){const tp=[...mP].sort((x,y)=>y[1]-x[1]).slice(0,20);const a1=tp.reduce((s,x)=>s+x[1],0)/20,a2=tp.reduce((s,x)=>s+(mW.get(x[0])||0),0)/20;
     v+=` 20 הזוגות שהיו הכי חמים ב־1,000 ההגרלות שלפני עלו שם בממוצע ${a1.toFixed(1)} פעמים, וב־1,000 האחרונות ${a2.toFixed(1)}, קרוב לממוצע הצפוי (15.6).`;}
