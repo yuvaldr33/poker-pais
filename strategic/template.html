@@ -238,7 +238,7 @@ table.pairs td.nn{font-family:var(--mono)}
 </div>
 
 <script>
-const DRAWS = __DATA__;
+let DRAWS = __DATA__;
 const SUITS=[["S","♠","עלה",0],["H","♥","לב",1],["D","♦","יהלום",1],["C","♣","תלתן",0]];
 const RANKS=["7","8","9","10","J","Q","K","A"];
 const DAYS=["ראשון","שני","שלישי","רביעי","חמישי","שישי","שבת"];
@@ -272,7 +272,7 @@ function* slotsAfter(last){
     i++;
   }
 }
-const last=DRAWS[0];
+let last=DRAWS[0];
 function dayLabel(s,nowP){
   const today=Date.UTC(nowP.year,nowP.month-1,nowP.day), that=Date.UTC(s.y,s.m-1,s.d);
   const diff=Math.round((that-today)/864e5);
@@ -416,4 +416,15 @@ document.getElementById("places").addEventListener("click",e=>{
 preDraw();
 renderSlip();
 renderStatic(); tick(); setInterval(tick,1000);
+// ---- live refresh: pull new results without reloading ----
+async function refreshDraws(){
+  try{
+    const r=await fetch("draws.json?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return;
+    const d=await r.json();
+    if(Array.isArray(d)&&d.length&&d[0].n>DRAWS[0].n){DRAWS=d;last=DRAWS[0];preSel=0;renderStatic();preDraw();tick();}
+  }catch(e){}
+}
+refreshDraws(); setInterval(refreshDraws,60000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshDraws();});
 </script>
