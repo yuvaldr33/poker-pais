@@ -442,6 +442,20 @@ function chanceTpl(list){ // exact chance that at least one pair comes out in on
     if(list.some(([p,keys])=>tplHit(d,p,keys)))ok++;}
   const v=ok/4096;_tplCache.set(key,v);return v;
 }
+// ---- adjacent (צמודים) vs split (מפוצלים): order on the slip is ♠ ♥ ♦ ♣ ----
+const ADJ=new Set(["SH","HD","DC"]);
+function pairRepeat(p,W){ // in the last W draws: appearances and back-to-back repeats, by adjacent/split
+  const A=RANKS[p.a],B=RANKS[p.b],n=Math.min(W||1000,DRAWS.length-1);
+  const r={n,all:0,adj:0,spl:0,rep:0,radj:0,rspl:0,last:null};
+  for(let i=0;i<n;i++){const s=pairTpls(DRAWS[i],A,B);if(!s.size)continue;
+    const ad=[...s].some(k=>ADJ.has(k)),sp=[...s].some(k=>!ADJ.has(k));
+    r.all++;if(ad)r.adj++;if(sp)r.spl++;
+    if(pairTpls(DRAWS[i+1],A,B).size){r.rep++;if(ad)r.radj++;if(sp)r.rspl++;if(!r.last)r.last=DRAWS[i].n;}}
+  return r;
+}
+function repText(p,short){const r=pairRepeat(p,1000);
+  if(short)return `חזר בהגרלה שאחרי ${r.rep} פעמים · צמודים ${r.radj} · מפוצלים ${r.rspl}`;
+  return `ב־1,000 ההגרלות האחרונות הזוג עלה <b>${r.all}</b> פעמים: <b>צמודים ${r.adj}</b>, <b>מפוצלים ${r.spl}</b>. הוא <b>חזר בהגרלה שמיד אחרי ${r.rep} פעמים</b>: צמודים ${r.radj}, מפוצלים ${r.rspl}${r.last?` (לאחרונה ב־${r.last})`:""}.`;}
 let tplOn=false;try{tplOn=localStorage.getItem("chance-tpl")==="1";}catch(e){}
 function tripHit(d,A,B,c){return c&&d[c.k]===c.r&&pairIn(d,A,B,c.k);}
 const _c3Cache=new Map();
@@ -642,7 +656,7 @@ function preDraw(){
   document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
   if(!preList.length){document.getElementById("preExplain").innerHTML="";chance3(null);document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
   document.getElementById("preWhy").textContent=`ארבעת הזוגות החזקים ביותר לפי השיטה, עד 2 זוגות שעלולים להתחבר (מסגרת מנוקדת) ועד 4 זוגות שלך (מסגרת מקווקוות): עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
-  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}${p.link?" link":""}" id="pc-${i}" data-i="${i}"><span class="rk">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":p.link?"עלולים להתחבר · ":""}${p.hit.length} מתוך 5${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}</small></button>`).join("");
+  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}${p.link?" link":""}" id="pc-${i}" data-i="${i}"><span class="rk" dir="ltr">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":p.link?"עלולים להתחבר · ":""}${p.hit.length} מתוך 5${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}<br>${repText(p,true)}</small></button>`).join("");
   showPlaces();
   document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
 }
@@ -674,6 +688,7 @@ function explainPair(p,idx){
       else items.push(`דורג ראשון כי ההופעות שלו קרובות יותר להגרלה האחרונה מאלה של ${oA}+${oB}.`);
     } else items.push(`דורג שני, אחרי <bdi dir="ltr">${oA}+${oB}</bdi>, לפי אותם כללים.`);}
   const rows=last5.map(d=>{const on=appears(d);return `<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${K.map(k=>{const s=sn(k);const hl=on&&(d[k]===A||d[k]===B);return `<span class="${s[3]?"r ":""}${hl?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${on?'<span class="mt">✓</span>':""}</div>`;}).join("");
+  items.push(repText(p)+` <span class="tplNote">צמודים = במקומות סמוכים בטופס (עלה־לב, לב־יהלום, יהלום־תלתן); מפוצלים = עם רווח ביניהם (עלה־יהלום, עלה־תלתן, לב־תלתן). במקרה כל צורה יוצאת בערך חצי מהפעמים, וזוג חוזר בהגרלה שאחרי בכ־${p.a===p.b?"8":"14"}% מהפעמים.</span>`);
   const base=p.a===p.b?"7.9%":"14.4%";
   let crit="";
   if(p.mine){
@@ -1011,7 +1026,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
   function aPairs(){
     const M=pickAll(L5());
     if(!M.length)return `אין כרגע זוג שעלה פעמיים או יותר ב־5 ההגרלות האחרונות.${basis()}`;
-    const rows=M.map((p,i)=>{const b=bestPlace(p);return `<li><b>${pn(p)}</b> · ${p.hit.length} מתוך 5${i===0?" · <b>הכי חזק</b>":""}<br>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li>`;}).join("");
+    const rows=M.map((p,i)=>{const b=bestPlace(p);return `<li><b>${pn(p)}</b> · ${p.hit.length} מתוך 5${i===0?" · <b>הכי חזק</b>":""}<br>${repText(p,true)}<br>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li>`;}).join("");
     return `<b>צ'אנס 2: הזוגות החזקים לפי השיטה</b><ul>${rows}</ul>${aLinkShort()}<span class="sm">לזוג רגיל יש בערך 14% לעלות בהגרלה הבאה, בכל מיקום; לזוג כפול (כמו 7+7) כ־8%. לכל טופס צ'אנס 2 יש סיכוי של 1 ל־64.</span>${basis()}`;
   }
   function aLinkShort(){const LP=linkPairs(L5(),pickAll(L5()));if(!LP.length)return "";
@@ -1019,7 +1034,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
   function aLink(){
     const LP=linkPairs(L5(),pickAll(L5()));
     if(!LP.length)return `כרגע אין זוג שעלול להתחבר: לא היו שתי הגרלות רצופות עם שני קלפי עוגן משותפים.${basis()}`;
-    return `<b>זוגות שעלולים להתחבר</b><ul>${LP.map(p=>{const b=bestPlace(p);return `<li><b>${pn(p)}</b>: בהגרלה ${p.from.x} עלה ${p.from.xa} עם ${p.anchors.join(" ו־")}, ובהגרלה ${p.from.y} עלה ${p.from.yb} עם אותם קלפים. לכן הם "אוהבים" את אותם קלפים ועלולים לעלות יחד.<br>מיקום: ${hand(b.cs)}${tBtn(b.cs)}</li>`;}).join("")}</ul>${basis()}`;
+    return `<b>זוגות שעלולים להתחבר</b><ul>${LP.map(p=>{const b=bestPlace(p);return `<li><b>${pn(p)}</b> (${repText(p,true)}): בהגרלה ${p.from.x} עלה ${p.from.xa} עם ${p.anchors.join(" ו־")}, ובהגרלה ${p.from.y} עלה ${p.from.yb} עם אותם קלפים. לכן הם "אוהבים" את אותם קלפים ועלולים לעלות יחד.<br>מיקום: ${hand(b.cs)}${tBtn(b.cs)}</li>`;}).join("")}</ul>${basis()}`;
   }
   function aC3(p){
     p=p||pickAll(L5())[0];if(!p)return `אין כרגע זוג חזק לבנות עליו צ'אנס 3.${basis()}`;
@@ -1075,7 +1090,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const lastI=DRAWS.findIndex(d=>pairIn(d,A,B));
     const b=bestPlace(p);const mine=myPairs.some(m=>m.a===p.a&&m.b===p.b);
     const verdict=inM?"<b>חזק לפי השיטה</b>: הוא בין 4 הזוגות שהשיטה בוחרת.":isL?"<b>עלול להתחבר</b>: הוא אחד הזוגות של רעיון העוגן.":pos<=10?"<b>בינוני לפי השיטה</b>: קרוב לארבעת המובילים.":"<b>חלש לפי השיטה</b>: הוא לא בולט ב־5 ההגרלות האחרונות.";
-    return `<b>הזוג ${pn(p)}</b><ul><li>${verdict}</li><li>עלו יחד ב־${hd.length} מתוך 5 ההגרלות האחרונות${hd.length?` (${hd.map(d=>d.n).join(", ")})`:""}. מקום ${pos} מתוך 36 זוגות.</li><li>ב־1,000 ההגרלות האחרונות: ${n1k} פעמים, לעומת ${Math.round(e1k)} בממוצע.</li><li>${lastI<0?"לא עלו יחד ב־2,000 ההגרלות האחרונות.":lastI===0?"עלו יחד בהגרלה האחרונה.":lastI===1?`עלו יחד בהגרלה שלפני האחרונה (${DRAWS[1].n}).`:`עלו יחד לאחרונה לפני ${lastI} הגרלות (${DRAWS[lastI].n}).`}</li><li>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li></ul>${mine?`<span class="sm">הזוג כבר ברשימת "הזוגות שלי" ונספר במעקב.</span>`:`<button type="button" class="chT" data-add="${p.a}-${p.b}">הוסף לזוגות שלי</button>`}<span class="sm">לצ'אנס 3 על הזוג הזה כתוב "צ'אנס 3 ל־${A}+${B}".</span>`;
+    return `<b>הזוג ${pn(p)}</b><ul><li>${verdict}</li><li>עלו יחד ב־${hd.length} מתוך 5 ההגרלות האחרונות${hd.length?` (${hd.map(d=>d.n).join(", ")})`:""}. מקום ${pos} מתוך 36 זוגות.</li><li>ב־1,000 ההגרלות האחרונות: ${n1k} פעמים, לעומת ${Math.round(e1k)} בממוצע.</li><li>${repText(p)}</li><li>${lastI<0?"לא עלו יחד ב־2,000 ההגרלות האחרונות.":lastI===0?"עלו יחד בהגרלה האחרונה.":lastI===1?`עלו יחד בהגרלה שלפני האחרונה (${DRAWS[1].n}).`:`עלו יחד לאחרונה לפני ${lastI} הגרלות (${DRAWS[lastI].n}).`}</li><li>מיקום מומלץ: ${hand(b.cs)}${tBtn(b.cs)}</li></ul>${mine?`<span class="sm">הזוג כבר ברשימת "הזוגות שלי" ונספר במעקב.</span>`:`<button type="button" class="chT" data-add="${p.a}-${p.b}">הוסף לזוגות שלי</button>`}<span class="sm">לצ'אנס 3 על הזוג הזה כתוב "צ'אנס 3 ל־${A}+${B}".</span>`;
   }
   function aTpl(p){
     p=p||pickAll(L5())[0];if(!p)return `אין כרגע זוג חזק לצמצם לו שבלונות.${basis()}`;
