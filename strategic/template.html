@@ -126,6 +126,11 @@ table.pairs td.nn{font-family:var(--mono)}
 .tk .bar2 b{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--ink)}
 .hitm{color:var(--felt);font-weight:700}
 .missm{color:var(--muted)}
+.hitbox{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.hb{background:var(--felt);color:var(--felt-ink);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.hb.alt{background:var(--chip);color:var(--ink)}
+.hb b{font-family:var(--mono);font-size:1.6rem;line-height:1.1}
+.hb span{font-size:.78rem;opacity:.9}
 /* my slip */
 .guess{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
 .glab{font-weight:700;font-size:.9rem}
@@ -192,7 +197,12 @@ table.pairs td.nn{font-family:var(--mono)}
 
   <section class="panel" id="trackSec">
     <div class="top"><h2>מעקב השיטה</h2><span class="sub">כמה פעמים הזוג שהשיטה בחרה באמת עלה</span></div>
+    <div class="hitbox" id="hitBox"></div>
+    <h3 class="h3">הפגיעות האחרונות של השיטה</h3>
+    <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>הזוג שנבחר</th><th>איפה הוא עלה</th></tr></thead><tbody id="hitRows"></tbody></table></div>
+    <h3 class="h3">אחוז פגיעה לעומת המקרה</h3>
     <div class="trk" id="trkSum"></div>
+    <h3 class="h3">10 ההגרלות האחרונות</h3>
     <div class="tbl"><table class="pairs"><thead><tr><th>הגרלה</th><th>הזוג שנבחר</th><th>מה עלה</th><th>תוצאה</th></tr></thead><tbody id="trkRows"></tbody></table></div>
     <p class="honest" id="trkNote"></p>
   </section>
@@ -480,12 +490,20 @@ function renderTrack(){
     const d=DRAWS[i],A=RANKS[p.a],B=RANKS[p.b],r=K.map(k=>d[k]);
     const hit=p.a===p.b?r.filter(x=>x===A).length>=2:(r.includes(A)&&r.includes(B));
     let pay=0,tix=0;for(let x=0;x<4;x++)for(let y=0;y<4;y++){if(x===y||(p.a===p.b&&y<x))continue;tix++;const h=(d[K[x]]===A)+(d[K[y]]===B);pay+=h===2?30:h===1?0.5:0;}
-    rows.push({n:d.n,date:d.date,time:d.time,A,B,hit,exp:p.a===p.b?0.0789:0.1440,pay,tix,d});
+    let where=[];if(hit){const sa=K.filter(k=>d[k]===A),sb=K.filter(k=>d[k]===B);
+      if(p.a===p.b){for(let x=0;x<sa.length;x++)for(let y=x+1;y<sa.length;y++)where.push([sa[x],A,sa[y],B]);}
+      else{sa.forEach(x=>sb.forEach(y=>{if(x!==y)where.push([x,A,y,B])}));}}
+    rows.push({n:d.n,date:d.date,time:d.time,A,B,hit,exp:p.a===p.b?0.0789:0.1440,pay,tix,d,where});
   }
   if(rows.length<20){document.getElementById("trackSec").hidden=true;return;}
   document.getElementById("trackSec").hidden=false;
   const box=(lbl,R)=>{const h=R.filter(x=>x.hit).length,e=R.reduce((s,x)=>s+x.exp,0),pct=h/R.length*100,ep=e/R.length*100,ret=R.reduce((s,x)=>s+x.pay,0)/R.reduce((s,x)=>s+x.tix,0);
     return `<div class="tk"><span class="lb">${lbl}</span><span class="big">${pct.toFixed(1)}%</span><div class="bar2"><i style="width:${Math.min(100,pct*3)}%"></i><b style="left:${Math.min(100,ep*3)}%"></b></div><span class="cmp">במקרה: ${ep.toFixed(1)}% · ${h} פגיעות מתוך ${R.length}</span><span class="cmp">החזר על כל שקל (צ'אנס 2): ${Math.round(ret*100)} אגורות</span></div>`;};
+  const H=rows.filter(x=>x.hit),fmtD=iso=>{const [y,m,dd]=iso.split("-");return dd+"/"+m;};
+  const today=rows.filter(x=>x.date===rows[0].date);
+  document.getElementById("hitBox").innerHTML=`<div class="hb"><span>השיטה פגעה</span><b>${H.length}</b><span>מתוך ${rows.length.toLocaleString("he-IL")} הגרלות</span></div><div class="hb alt"><span>ב־100 האחרונות</span><b>${rows.slice(0,100).filter(x=>x.hit).length}</b><span>פגיעות</span></div><div class="hb alt"><span>היום (${fmtD(rows[0].date)})</span><b>${today.filter(x=>x.hit).length}</b><span>מתוך ${today.length} הגרלות</span></div>`;
+  const cw=(k,v)=>{const s=SUITS.find(z=>z[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
+  document.getElementById("hitRows").innerHTML=H.slice(0,15).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${fmtD(x.date)} ${x.time||""}</small></td><td><span class="pp"><span class="k">${x.A}</span> + <span class="k">${x.B}</span></span></td><td>${x.where.map(w=>`<span class="pp">${cw(w[0],w[1])} + ${cw(w[2],w[3])}</span>`).join("<br>")}</td></tr>`).join("");
   document.getElementById("trkSum").innerHTML=box("100 ההגרלות האחרונות",rows.slice(0,100))+box("1,000 ההגרלות האחרונות",rows.slice(0,1000))+box(`כל ${rows.length.toLocaleString("he-IL")} ההגרלות`,rows);
   const c=(k,v)=>{const s=SUITS.find(x=>x[0]===k);return `<span class="k${s[3]?" r":""}">${v}${s[1]}</span>`;};
   document.getElementById("trkRows").innerHTML=rows.slice(0,10).map(x=>`<tr><td class="nn">${x.n}<br><small class="missm">${x.time||""}</small></td><td><span class="pp"><span class="k">${x.A}</span> + <span class="k">${x.B}</span></span></td><td><span class="pp">${K.map(k=>c(k,x.d[k])).join(" ")}</span></td><td class="${x.hit?"hitm":"missm"}">${x.hit?"✓ עלה":"לא עלה"}</td></tr>`).join("");
