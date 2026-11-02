@@ -975,7 +975,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="777fc75d8b";
+const BUILD="258974b284";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1005,7 +1005,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
   }
   function c3For(p){
     const out=[];const h=thirdHot(p,L5()),l=thirdLinked(p,L5());
-    if(h){const b=bestPlace(p,h.k);out.push({kind:"חם",cs:[...b.cs,[h.k,h.r]],why:`${ck(h.r,h.k)} עלה במיקום הזה ב־${h.hot.length} מתוך 5 ההגרלות האחרונות${h.co.length?`, ופעם${h.co.length>1?"ים":""} יחד עם הזוג (${h.co.map(d=>d.n).join(", ")})`:""}.`});}
+    if(h){const b=bestPlace(p,h.k);out.push({kind:"חם",cs:[...b.cs,[h.k,h.r]],why:`${ck(h.r,h.k)} עלה במיקום הזה ב־${h.hot.length} מתוך 5 ההגרלות האחרונות${h.co.length?`, ו${h.co.length>1?h.co.length+" פעמים":"פעם אחת"} יחד עם הזוג (${h.co.map(d=>d.n).join(", ")})`:""}.`});}
     if(l){const b=bestPlace(p,l.k);out.push({kind:"מקושר",cs:[...b.cs,[l.k,l.r]],why:`${ck(l.r,l.k)} עלה עם ${RANKS[p.a]} ב־${l.wa.map(d=>d.n).join(", ")} ${p.a===p.b?"":` ועם ${RANKS[p.b]} ב־${l.wb.map(d=>d.n).join(", ")}`}.`});}
     if(out.length===2&&out[0].cs.map(String).sort().join()===out[1].cs.map(String).sort().join()){out[0].why+=" זה גם הקלף המקושר: "+out[1].why;out.pop();}
     return out;
