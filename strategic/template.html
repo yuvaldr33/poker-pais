@@ -523,6 +523,7 @@ function mergeManual(base){
     const off=base.find(d=>d.n===m.n);
     if(off){if(["S","H","D","C"].some(k=>off[k]!==m[k]))manualMsg=`התוצאה הרשמית של הגרלה ${m.n} שונה ממה שהוזן, והיא זו שנשמרה.`;continue;}
     if(m.n===out[0].n+1){out.unshift(m);keep.push(m);}
+    else if(m.n>out[0].n+1)keep.push(m); // waiting for the missing draw(s) before it
   }
   if(keep.length!==manualDraws.length){manualDraws=keep;try{localStorage.setItem("chance-manual",JSON.stringify(keep));}catch(e){}}
   return out;
@@ -965,19 +966,24 @@ renderTrack();renderTrack3();
 
 // ---- manual result entry ----
 function rerenderAll(){last=DRAWS[0];preSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();tick();showManNote();}
-function showManNote(){const n=document.getElementById("manNote");const t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
-  n.textContent=[t,manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
+function showManNote(){const n=document.getElementById("manNote");let t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
+  const wait=manualDraws.filter(m=>m.n>last.n+1);if(wait.length)t+=` ${wait.map(m=>`הגרלה ${m.n} (${m.time})`).join(", ")} שמורה וממתינה: היא תיכנס לניתוח ברגע שהגרלה ${last.n+1} תיכנס (רשמית או ידנית).`;
+  n.textContent=[t.trim(),manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
 function nextSlot(){const g=slotsAfter(last);const s=g.next().value;return s;}
+let manSlots=[];
+function manOpenSlots(){ // draws already held whose result is missing (or the next one if none)
+  const g=slotsAfter(last),out=[];let s;while((s=g.next().value).ms<=Date.now()&&out.length<8)out.push(s);
+  if(!out.length)out.push(s);return out;}
 document.getElementById("manBtn").addEventListener("click",()=>{
   const f=document.getElementById("manForm");if(!f.hidden){f.hidden=true;return;}
-  const s=nextSlot();
-  document.getElementById("manTitle").textContent=`הגרלה ${s.n} · ${pad(s.d)}/${pad(s.m)} · ${s.time}: בחר את הקלף שעלה בכל צורה`;
+  manSlots=manOpenSlots();const def=manSlots.length-1;
+  document.getElementById("manTitle").innerHTML=`<label>איזו הגרלה? <select id="man-slot">${manSlots.map((s,i)=>`<option value="${i}"${i===def?" selected":""}>${s.time} · ${pad(s.d)}/${pad(s.m)} · הגרלה ${s.n}</option>`).join("")}</select></label> ובחר את הקלף שעלה בכל צורה`+(manSlots.length>1?`<br><small>חסרות באתר ${manSlots.length} הגרלות. אפשר להזין כל אחת מהן; הניתוח מתעדכן כשאין רווח ביניהן.</small>`:"");
   document.getElementById("manSel").innerHTML=SUITS.map(([k,sym,name,red])=>`<label><span><span class="s${red?" r":""}">${sym}</span> ${name}</span><select id="man-${k}">${RANKS.map(r=>`<option>${r}</option>`).join("")}</select></label>`).join("");
   f.hidden=false;
 });
 document.getElementById("manCancel").addEventListener("click",()=>{document.getElementById("manForm").hidden=true;});
 document.getElementById("manOk").addEventListener("click",()=>{
-  const s=nextSlot();
+  const sel=document.getElementById("man-slot");const s=manSlots[sel?+sel.value:0]||nextSlot();
   const m={n:s.n,date:`${s.y}-${pad(s.m)}-${pad(s.d)}`,time:s.time,manual:true};
   for(const [k] of SUITS)m[k]=document.getElementById("man-"+k).value;
   manualDraws=manualDraws.filter(x=>x.n!==m.n);manualDraws.push(m);
