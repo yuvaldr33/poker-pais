@@ -213,11 +213,11 @@ table.pairs td.nn{font-family:var(--mono)}
 /* ---- triples ---- */
 .triExp .triSteps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
 .triExp .triSteps ul{margin:4px 0;padding-inline-start:16px;font-size:.85rem}
-#triPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
-#hotPanel .tix,#triPanel .tix{display:grid;grid-template-columns:1fr;gap:6px}
-#hotPanel .tk3,#triPanel .tk3{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.95rem;text-align:start}
-#hotPanel .tk3.best,#triPanel .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
-#hotPanel .tk3 small,#triPanel .tk3 small{font-size:.75rem;color:var(--muted);line-height:1.5}
+#triPanel:not([hidden]),#ancPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
+#ancPanel .tix,#hotPanel .tix,#triPanel .tix{display:grid;grid-template-columns:1fr;gap:6px}
+#ancPanel .tk3,#hotPanel .tk3,#triPanel .tk3{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.95rem;text-align:start}
+#ancPanel .tk3.best,#hotPanel .tk3.best,#triPanel .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
+#ancPanel .tk3 small,#hotPanel .tk3 small,#triPanel .tk3 small{font-size:.75rem;color:var(--muted);line-height:1.5}
 #triPanel .tk3 small .ck,#triPanel .tplNote .ck{font-size:.75rem}
 .tribars{display:flex;flex-wrap:wrap;gap:6px}
 .trb{border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.85rem;background:var(--surface)}
@@ -286,10 +286,11 @@ table.pairs td.nn{font-family:var(--mono)}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
-    <div class="tplBar"><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button></div>
+    <div class="tplBar"><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button></div>
     <p class="tplNote">שלישיות שמיועדות לבוא, לפי 200 ההגרלות האחרונות</p>
     <div id="triPanel" class="c3" hidden></div>
     <div id="hotPanel" class="c3" hidden></div>
+    <div id="ancPanel" class="c3" hidden></div>
     <div class="mypair">
       <span class="glab">הזוג שלי:</span>
       <select id="myA" aria-label="קלף ראשון"></select><span>+</span><select id="myB" aria-label="קלף שני"></select>
@@ -418,6 +419,7 @@ table.pairs td.nn{font-family:var(--mono)}
     <button type="button">זוגות שעלולים להתחבר</button>
     <button type="button">צמצום שבלונות</button>
     <button type="button">שלישיות חמות להגרלה הבאה</button>
+    <button type="button">עוגן + 2 שותפים</button>
     <button type="button">שלישיות להגרלה הבאה</button>
     <button type="button">כמה פעמים יצאו A 9 8 ביחד?</button>
     <button type="button">איזה קלף נצמד לזוגות?</button>
@@ -835,8 +837,8 @@ function renderTrack3(){
     const win=DRAWS.slice(i+1,i+6),L=pickAll(win);if(!L.length)continue;const d=DRAWS[i];
     const P=L.map(p=>[RANKS[p.a],RANKS[p.b]]),H=L.map(p=>thirdHot(p,win)),K=L.map(p=>thirdLinked(p,win));
     const LP=linkPairs(win,L);const TK=L.map(p=>tplFor(p,DRAWS.slice(i+1)).keys);
-    const TA=triAnalysis(DRAWS.slice(i+1),null,true),HT=hotTri(DRAWS.slice(i+1)).map(x=>x.t);
-    R3.push({d,tri:TA?triHit(d,TA.tix):false,etri:TA?chanceTix(TA.tix):0,ht:HT.length?triHit(d,HT):false,eht:HT.length?chanceTix(HT):0,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),tpl:L.some((p,j)=>tplHit(d,p,TK[j])),et:chanceTpl(L.map((p,j)=>[{a:p.a,b:p.b},TK[j]])),
+    const AP=anchorPred(DRAWS.slice(i+1)),TA=triAnalysis(DRAWS.slice(i+1),null,true),HT=hotTri(DRAWS.slice(i+1)).map(x=>x.t);
+    R3.push({d,anc:AP?hasCards(d,AP.tri):false,eanc:AP?0.0380859375:0,tri:TA?triHit(d,TA.tix):false,etri:TA?chanceTix(TA.tix):0,ht:HT.length?triHit(d,HT):false,eht:HT.length?chanceTix(HT):0,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),tpl:L.some((p,j)=>tplHit(d,p,TK[j])),et:chanceTpl(L.map((p,j)=>[{a:p.a,b:p.b},TK[j]])),
       ep:chanceAny(L),eh:chanceTrip(P.map(([A,B],j)=>[A,B,H[j]]).filter(x=>x[2])),el:chanceTrip(P.map(([A,B],j)=>[A,B,K[j]]).filter(x=>x[2]))});
   }
   lastR3=R3;
@@ -850,7 +852,7 @@ function renderTrack3(){
     mineBox=`<div class="tk"><span class="lb">הזוגות שלי (${myPairs.map(m=>RANKS[m.a]+"+"+RANKS[m.b]).join(", ")})</span><span class="big">${h} / ${n}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;}
   const LR=R3.filter(x=>x.hasLp),lh=LR.filter(x=>x.lp).length,le=LR.reduce((s,x)=>s+x.elp,0);
   const lbox=`<div class="tk"><span class="lb">זוגות שעלולים להתחבר</span><span class="big">${lh} / ${LR.length}</span><span class="cmp">${LR.length?`פגיעה ${(lh/LR.length*100).toFixed(1)}% · במקרה ${(le/LR.length*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;
-  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+box("שלישיות (6 טפסי צ'אנס 3)","tri","etri")+box("שלישיות חמות (6 טפסים)","ht","eht")+mineBox;
+  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+box("שלישיות (6 טפסי צ'אנס 3)","tri","etri")+box("שלישיות חמות (6 טפסים)","ht","eht")+box("עוגן + 2 שותפים (שלישייה בכל סדר)","anc","eanc")+mineBox;
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
   document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td><td>${m(x.tpl)}</td></tr>`).join(""):`<tr><td colspan="5" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
 }
@@ -997,7 +999,7 @@ function renderTrack(){
 renderTrack();renderTrack3();
 
 // ---- manual result entry ----
-function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();tick();showManNote();}
+function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();tick();showManNote();}
 function showManNote(){const n=document.getElementById("manNote");let t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
   const wait=manualDraws.filter(m=>m.n>last.n+1);if(wait.length)t+=` ${wait.map(m=>`הגרלה ${m.n} (${m.time})`).join(", ")} שמורה וממתינה: היא תיכנס לניתוח ברגע שהגרלה ${last.n+1} תיכנס (רשמית או ידנית).`;
   n.textContent=[t.trim(),manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
@@ -1216,7 +1218,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
       if(has(/כל ההיסטוריה|בכל הארכיון|מאז ומעולם|בכל ההגרלות/))N=1e9;
       const cw=cardsWithSuit(tc);return aCount(cw.length?cw:cs.map(r=>({r,k:null})),N);
     }
-    const c3=has(/צאנס\s*3|שלושה קלפים|3 קלפים|קלף שלישי/),c4=has(/צאנס\s*4|ארבעה קלפים|4 קלפים/),lk=has(/מתחבר|להתחבר|עוגן/);
+    const c3=has(/צאנס\s*3|שלושה קלפים|3 קלפים|קלף שלישי/),c4=has(/צאנס\s*4|ארבעה קלפים|4 קלפים/),lk=has(/מתחבר|להתחבר/);
     const c2=has(/צאנס\s*2/)||(!lk&&has(/זוג/))||(!c3&&!c4&&!lk&&has(/חזק|הכי טוב|מה לשחק|מה לשים|תמליץ|המלצ|ניחוש|תנחש|מה כדאי/));
     if(cs.length>=2){
       let a=RANKS.indexOf(cs[0]),b=RANKS.indexOf(cs[1]);if(a>b)[a,b]=[b,a];const p={a,b};
@@ -1226,6 +1228,8 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
       const L50=DRAWS.slice(0,50);const rows=SUITS.map(([k,sym,name])=>`${ck(r,k)} ${L50.filter(d=>d[k]===r).length}`).join(" · ");
       const partner=RANKS.map((x,i)=>{let a=RANKS.indexOf(r),b=i;if(a>b)[a,b]=[b,a];return {p:{a,b},n:DRAWS.slice(0,1000).filter(d=>pairIn(d,RANKS[a],RANKS[b])).length,e:a===b?78.9:144};}).sort((u,v)=>v.n/v.e-u.n/u.e)[0];
       return `<b>הקלף ${r}</b> ב־50 ההגרלות האחרונות, לפי צורה: ${rows}.<br>השותף שעלה איתו הכי הרבה ב־1,000 ההגרלות האחרונות: ${pn(partner.p)} (${partner.n} פעמים).<span class="sm">כתוב שני קלפים, למשל "${r} ו־K", כדי לבדוק זוג.</span>`;}
+    if(has(/עוגן|שותפים/)){const X=anchorPred(DRAWS);if(!X)return "אין מספיק נתונים.";
+      return `<b>עוגן + 2 שותפים</b><br>העוגן: <b>${X.a}</b> (בעלה בהגרלה ${X.from}). השותפים: <b>${X.p.join(" ו־")}</b> (${X.p.map(x=>X.c[x]).join(" ו־")} פעמים איתו ב־5 ההגרלות האחרונות).<ul>${X.tix.slice(0,3).map(q=>`<li>${hand(q.cards)}${tBtn(q.cards)}</li>`).join("")}</ul><span class="sm">הפירוט המלא בכפתור "עוגן + 2 שותפים" באתר.</span>`;}
     if(has(/שלישיות חמות|שלישייה חמה|השלישיות החמות/)){const L=hotTri(DRAWS);if(!L.length)return "אין מספיק נתונים.";
       return `<b>6 השלישיות החמות להגרלה הבאה</b><ul>${L.map(x=>`<li>${hand(x.t.cards)}${tBtn(x.t.cards)}<br><span class="sm" style="display:inline">מהזוג ${pn({a:RANKS.indexOf(x.R.P.a),b:RANKS.indexOf(x.R.P.b)})} · יצאה בדיוק כך ${x.exact} פעמים החודש</span></li>`).join("")}</ul><span class="sm">הסבר מלא בכפתור "שלישיות חמות להגרלה הבאה" באתר. לכל טופס 1 ל־512.</span>`;}
     if(has(/שלישי/)&&!c3){const R=triAnalysis(DRAWS);if(!R)return "אין מספיק נתונים.";
@@ -1428,6 +1432,56 @@ document.getElementById("hotPanel").addEventListener("click",e=>{
   save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
 });
 renderHot();
+// ---- anchor + 2 partners: the ♠ card of the last draw "comes up" and brings 2 cards that came with it lately ----
+function anchorPred(base){
+  const L=base.slice(0,5);if(L.length<2)return null;const a=L[0].S;const c={},last={},seen={};
+  for(const d of L){const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)continue;v.splice(i,1);
+    for(const x of new Set(v)){if(x===a)continue;c[x]=(c[x]||0)+1;if(!last[x])last[x]=d.n;(seen[x]=seen[x]||[]).push(d.n);}}
+  const ranked=Object.keys(c).sort((u,v)=>c[v]-c[u]||last[v]-last[u]);
+  if(ranked.length<2)return null;
+  const p=ranked.slice(0,2),tri=[a,...p];
+  // placements: score each way to put the 3 cards in 3 of the 4 suits by how often each card came in that suit (last 200)
+  const H=base.slice(0,200),pos={};for(const d of H)for(const k of SK)pos[k+d[k]]=(pos[k+d[k]]||0)+1;
+  const tix=[];
+  for(const ks of [["S","H","D"],["S","H","C"],["S","D","C"],["H","D","C"]])
+    for(const perm of [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]]){
+      const cards=ks.map((k,j)=>[k,tri[perm[j]]]);
+      const exact=H.filter(d=>cards.every(([k,r])=>d[k]===r)).length;
+      const sc=cards.reduce((s,[k,r])=>s+(pos[k+r]||0),0);
+      tix.push({cards,exact,sc});}
+  tix.sort((x,y)=>y.exact-x.exact||y.sc-x.sc);
+  const tieN=ranked.filter(x=>c[x]===c[p[1]]).length;
+  return {a,from:L[0].n,p,c,ranked,seen,tieN,L,tix:tix.slice(0,6),tri};
+}
+var ancOpen=false;
+function renderAnchor(){
+  const el=document.getElementById("ancPanel"),bt=document.getElementById("ancBtn");if(!el)return;
+  bt.textContent="עוגן + 2 שותפים"+(ancOpen?" ▴":" ▾");bt.classList.toggle("on",ancOpen);bt.setAttribute("aria-pressed",ancOpen);el.hidden=!ancOpen;if(!ancOpen)return;
+  const A=anchorPred(DRAWS);if(!A){el.innerHTML='<p class="tplNote">העוגן לא יצא עם מספיק קלפים אחרים ב־5 ההגרלות האחרונות.</p>';return;}
+  const sn=k=>SUITS.find(s=>s[0]===k);
+  const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
+  const cg=cs=>`<span class="cg">${cs.slice().sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>`;
+  const rows=A.L.map(d=>{const v=SK.map(k=>d[k]);const on=v.includes(A.a);return `<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${SK.map(k=>{const s=sn(k),hl=on&&(d[k]===A.a||A.p.includes(d[k]));return `<span class="${s[3]?"r ":""}${hl?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${on?'<span class="mt">✓</span>':""}</div>`;}).join("");
+  const exp=chanceTix(A.tix);
+  el.innerHTML=`<h3 class="tplH">עוגן + 2 שותפים להגרלה הבאה</h3>
+  <p class="tplNote"><b>הרוטינה:</b> הקלף הראשון (בעלה ♠) של ההגרלה האחרונה "עולה" להגרלה הבאה, ומביא איתו 2 קלפים שיצאו איתו הכי הרבה ב־5 ההגרלות האחרונות.</p>
+  <ol class="triSteps">
+   <li><b>העוגן: ${A.a}</b>. יצא כ־${ck(A.a,"S")} בהגרלה האחרונה (${A.from}).</li>
+   <li><b>השותפים: ${A.p.join(" ו־")}</b>. ב־5 ההגרלות האחרונות ה־${A.a} יצא עם: ${A.ranked.slice(0,5).map(x=>`<b>${x}</b> ${A.c[x]} פעמים (${A.seen[x].join(", ")})`).join(" · ")}.${A.tieN>1?` <b>תיקו של ${A.c[A.p[1]]}</b> על המקום השני, ונבחר מי שיצא עם העוגן מאוחר יותר.`:""}</li>
+   <li><b>השלישייה: <bdi dir="ltr">${A.tri.join(" ")}</bdi></b>. המיקומים למטה מסודרים לפי כמה פעמים כל קלף יצא בכל צורה ב־200 ההגרלות האחרונות (ומי שיצאה בדיוק כך קודם).</li>
+  </ol>
+  <div class="mini">${rows}</div>
+  <div class="tix">${A.tix.map((t,i)=>`<button type="button" class="tk3${i===0?" best":""}" data-t="${t.cards.map(q=>q.join(":")).join("|")}">${cg(t.cards)}<small>${t.exact?`יצאה בדיוק כך ${t.exact} פעמים החודש · `:""}לטופס</small></button>`).join("")}</div>
+  <div class="odds"><div><b>3.8%</b><span>שהשלישייה תצא בכל סדר</span></div><div><b>${(exp*100).toFixed(1)}%</b><span>שאחד מ־${A.tix.length} הטפסים יזכה</span></div></div>
+  <div class="reality">בבדיקה על כל הארכיון (49,510 הגרלות) העוגן חזר ב־41.5% מהפעמים (במקרה 41.4%), והעוגן עם שני השותפים יצאו יחד 1,900 פעמים מול 1,863 במקרה. המעקב למטה סופר את הרוטינה בנפרד.</div>`;
+}
+document.getElementById("ancBtn").addEventListener("click",()=>{ancOpen=!ancOpen;renderAnchor();if(ancOpen)document.getElementById("ancPanel").scrollIntoView({behavior:"smooth",block:"start"});});
+document.getElementById("ancPanel").addEventListener("click",e=>{
+  const b=e.target.closest("button.tk3");if(!b)return;
+  mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
+  save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
+});
+renderAnchor();
 // ---- full draw history for the chat (static archive + the live draws) ----
 var HIST=null,histLoading=null;
 function loadHist(){
@@ -1447,6 +1501,7 @@ function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
     ["שלישיות להגרלה הבאה",()=>{if(!triOpen){triOpen=true;renderTri();}return document.getElementById("triBtn");}],
     ["שלישיות חמות להגרלה הבאה",()=>{if(!hotOpen){hotOpen=true;renderHot();}return document.getElementById("hotBtn");}],
+    ["עוגן + 2 שותפים",()=>{if(!ancOpen){ancOpen=true;renderAnchor();}return document.getElementById("ancBtn");}],
     ["שבלונות לזוגות",()=>document.getElementById("tplBtn")],
     ["צ'אנס 3: זוג + קלף שלישי",()=>document.getElementById("preC3")],
     ["מעקב השיטה ופגיעות",()=>document.getElementById("trackSec")],
