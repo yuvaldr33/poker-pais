@@ -304,7 +304,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
-    <div class="tplBar"><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">התבניות שלי להגרלה הבאה ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
+    <div class="tplBar"><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">תבניות ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
     <p class="tplNote">שלישיות שמיועדות לבוא, לפי 200 ההגרלות האחרונות</p>
     <div id="mypPanel" class="c3" hidden></div>
     <div id="triPanel" class="c3" hidden></div>
@@ -873,7 +873,7 @@ function renderTrack3(){
     mineBox=`<div class="tk"><span class="lb">הזוגות שלי (${myPairs.map(m=>RANKS[m.a]+"+"+RANKS[m.b]).join(", ")})</span><span class="big">${h} / ${n}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;}
   const LR=R3.filter(x=>x.hasLp),lh=LR.filter(x=>x.lp).length,le=LR.reduce((s,x)=>s+x.elp,0);
   const lbox=`<button type="button" class="tk tkb" data-k="lp" aria-expanded="false"><span class="lb">זוגות שעלולים להתחבר · <u>פירוט</u></span><span class="big">${lh} / ${LR.length}</span><span class="cmp">${LR.length?`פגיעה ${(lh/LR.length*100).toFixed(1)}% · במקרה ${(le/LR.length*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></button>`;
-  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+box("שלישיות (6 טפסי צ'אנס 3)","tri","etri")+box("שלישיות חמות (6 טפסים)","ht","eht")+box("עוגן + 2 שותפים (שלישייה בכל סדר)","anc","eanc")+box("התבניות שלי: שלישייה מובילה","cv","ecv")+box("אזור עניין: 3 קלפים מהאזור","ar","ear")+mineBox;
+  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+box("שלישיות (6 טפסי צ'אנס 3)","tri","etri")+box("שלישיות חמות (6 טפסים)","ht","eht")+box("עוגן + 2 שותפים (שלישייה בכל סדר)","anc","eanc")+box("תבניות: שלישייה מובילה","cv","ecv")+box("אזור עניין: 3 קלפים מהאזור","ar","ear")+mineBox;
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
   if(typeof trkKey!=="undefined"&&trkKey)setTimeout(()=>trkDetail(trkKey),0);
   document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td><td>${m(x.tpl)}</td></tr>`).join(""):`<tr><td colspan="5" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
@@ -1531,7 +1531,7 @@ function trkDetail(key){
   const pairStats=(x,A,B)=>{const i=DRAWS.indexOf(x.d);const W=DRAWS.slice(i+1,i+1001);const n=W.filter(d=>pairIn(d,A,B)).length;const li=W.findIndex(d=>pairIn(d,A,B));
     return `ב־1,000 ההגרלות שלפני: ${n} פעמים (בממוצע ${A===B?79:144}). ${li<0?"":li===0?"עלה גם בהגרלה שמיד לפני.":`לפני כן עלה לאחרונה ${li+1} הגרלות קודם (${W[li].n}).`}`;};
   const where=(d,cards)=>SK.filter(k=>cards.includes(d[k]));
-  const TITLE={cv:"התבניות שלי: שלישייה מובילה",ar:"אזור עניין: 3 קלפים מהאזור",lp:"זוגות שעלולים להתחבר",pair:"זוגות השיטה",hot:"זוג + קלף חם",lnk:"זוג + קלף מקושר",tpl:"זוגות בצמצום ל־2 שבלונות",tri:"שלישיות (6 טפסי צ'אנס 3)",ht:"שלישיות חמות (6 טפסים)",anc:"עוגן + 2 שותפים"};
+  const TITLE={cv:"תבניות: שלישייה מובילה",ar:"אזור עניין: 3 קלפים מהאזור",lp:"זוגות שעלולים להתחבר",pair:"זוגות השיטה",hot:"זוג + קלף חם",lnk:"זוג + קלף מקושר",tpl:"זוגות בצמצום ל־2 שבלונות",tri:"שלישיות (6 טפסי צ'אנס 3)",ht:"שלישיות חמות (6 טפסים)",anc:"עוגן + 2 שותפים"};
   const EXP={cv:"ecv",ar:"ear",lp:"elp",pair:"ep",hot:"eh",lnk:"el",tpl:"et",tri:"etri",ht:"eht",anc:"eanc"};
   const rows=R3.filter(x=>(key!=="lp"||x.hasLp)&&(key!=="ar"||x.hasAr));
   const n=rows.length,h=rows.filter(x=>x[key]).length,e=rows.reduce((s,x)=>s+x[EXP[key]],0);
@@ -1693,14 +1693,14 @@ function myPatterns(base){
 var mypOpen=false;
 function renderMyP(){
   const el=document.getElementById("mypPanel"),bt=document.getElementById("mypBtn");if(!el)return;
-  bt.textContent="התבניות שלי להגרלה הבאה"+(mypOpen?" ▴":" ▾");bt.classList.toggle("on",mypOpen);bt.setAttribute("aria-pressed",mypOpen);el.hidden=!mypOpen;if(!mypOpen)return;
+  bt.textContent="תבניות"+(mypOpen?" ▴":" ▾");bt.classList.toggle("on",mypOpen);bt.setAttribute("aria-pressed",mypOpen);el.hidden=!mypOpen;if(!mypOpen)return;
   const M=myPatterns(DRAWS);if(!M){el.innerHTML="";return;}
   const sn=k=>SUITS.find(s=>s[0]===k);const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
   const cg=cs=>`<span class="cg">${cs.slice().sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>`;
   const row=(d,hl)=>`<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${SK.map(k=>{const s=sn(k);return `<span class="${s[3]?"r ":""}${hl(k,d[k])?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span></div>`;
   const fill=cs=>`<button type="button" class="chT myF" data-t="${cs.map(c=>c.join(":")).join("|")}">${cg(cs)} לטופס</button>`;
   const ancTxt=Object.entries(M.anc).map(([s,a])=>`<li><b>עוגן ב${sn(s)[2]}: ${a.a}</b> + ${a.p.join(", ")} ← ${fill(a.tix[0].cards)} <small>(${a.st.keep?`ה־${a.a} נוטה להישאר ב${sn(s)[2]}`:`ה־${a.a} עובר הכי הרבה ל${sn(a.st.best)[2]}`})</small></li>`).join("");
-  el.innerHTML=`<h3 class="tplH">התבניות שלי להגרלה הבאה</h3>
+  el.innerHTML=`<h3 class="tplH">תבניות</h3>
   <p class="tplNote">כל התבניות שמצאנו יחד, מחושבות מחדש אחרי כל הגרלה, ובסוף איפה הן מתכנסות.</p>
   <ol class="triSteps">
    <li><b>אזור עניין (3 ההגרלות האחרונות):</b> קלפים שחזרו פעמיים ומעלה: <b>${M.area.map(r=>`${r} (${M.cnt[r]})`).join(", ")||"אין"}</b>.<div class="mini">${M.L3.map(d=>row(d,(k,r)=>M.area.includes(r))).join("")}</div></li>
@@ -1734,7 +1734,7 @@ function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);
   const items=[
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
-    ["התבניות שלי להגרלה הבאה",()=>{if(!mypOpen){mypOpen=true;renderMyP();}return document.getElementById("mypBtn");}],
+    ["תבניות",()=>{if(!mypOpen){mypOpen=true;renderMyP();}return document.getElementById("mypBtn");}],
     ["שלישיות להגרלה הבאה",()=>{if(!triOpen){triOpen=true;renderTri();}return document.getElementById("triBtn");}],
     ["שלישיות חמות להגרלה הבאה",()=>{if(!hotOpen){hotOpen=true;renderHot();}return document.getElementById("hotBtn");}],
     ["עוגן + 2 שותפים",()=>{if(!ancOpen){ancOpen=true;renderAnchor();}return document.getElementById("ancBtn");}],
