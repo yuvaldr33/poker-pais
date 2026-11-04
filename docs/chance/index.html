@@ -1068,7 +1068,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="864b0333e4";
+const BUILD="8916a7f75b";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1531,7 +1531,7 @@ function trkDetail(key){
   const EXP={lp:"elp",pair:"ep",hot:"eh",lnk:"el",tpl:"et",tri:"etri",ht:"eht",anc:"eanc"};
   const rows=R3.filter(x=>key!=="lp"||x.hasLp);
   const n=rows.length,h=rows.filter(x=>x[key]).length,e=rows.reduce((s,x)=>s+x[EXP[key]],0);
-  const blocks=rows.map(x=>{const D=x.det,d=x.d;let offer="",why="",hl=null;
+  const blocks=rows.filter(x=>x[key]).map(x=>{const D=x.det,d=x.d;let offer="",why="",hl=null;
     if(key==="pair"||key==="lp"){
       const list=key==="pair"?D.L:D.LP;
       offer=list.map(p=>{const A=RANKS[p.a],B=RANKS[p.b],hit=pairIn(d,A,B);return `${hit?"<b>✓ ":""}${pn(A,B)}${hit?"</b>":""}`;}).join(" · ");
@@ -1567,7 +1567,7 @@ function trkDetail(key){
     }
     const hit=x[key];
     return `<div class="trkd${hit?" hit":""}"><div class="trkh"><b>${d.n}</b> <small>${d.time||""}</small> ${row(d,hit?hl:null)} ${hit?'<span class="hitm">✓ פגיעה</span>':'<span class="missm">–</span>'}</div><div class="trko">הוצע: ${offer||"–"}</div>${why?`<ul>${why}</ul>`:""}</div>`;}).join("");
-  el.innerHTML=`<h3>${TITLE[key]}: פירוט</h3><p class="tplNote">${n} הגרלות מאז 53839 · <b>${h} פגיעות (${n?(h/n*100).toFixed(1):0}%)</b> · במקרה ${n?(e/n*100).toFixed(1):0}%. לכל הגרלה: מה השיטה הציעה לפניה, ואם פגעה, למה היא בחרה את זה, איפה זה פגע והיסטוריה של הזוג.</p>${blocks}<div class="acts"><button class="btn" type="button" id="trkClose">סגור פירוט</button></div>`;
+  el.innerHTML=`<h3>${TITLE[key]}: פירוט</h3><p class="tplNote">${n} הגרלות מאז 53839 · <b>${h} פגיעות (${n?(h/n*100).toFixed(1):0}%)</b> · במקרה ${n?(e/n*100).toFixed(1):0}%. מוצגות רק ההגרלות שבהן היא פגעה: מה הוצע, למה, איפה זה פגע והיסטוריה של הזוג.</p>${blocks||'<p class="tplNote">עוד לא הייתה פגיעה מאז 53839.</p>'}<div class="acts"><button class="btn" type="button" id="trkClose">סגור פירוט</button></div>`;
   el.hidden=false;
 }
 document.getElementById("trk3").addEventListener("click",e=>{const b=e.target.closest(".tkb");if(!b)return;trkKey=trkKey===b.dataset.k?null:b.dataset.k;trkDetail(trkKey);if(trkKey)document.getElementById("trkDetail").scrollIntoView({behavior:"smooth",block:"start"});});
