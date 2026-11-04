@@ -154,7 +154,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .c3 .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
 .c3 .tk3 small{font-size:.7rem;color:var(--muted)}
 .futT{overflow-x:auto}
-.futT table{border-collapse:collapse;width:100%;min-width:260px;font-variant-numeric:tabular-nums}
+.futT table{direction:ltr!important;border-collapse:collapse;width:100%;min-width:260px;font-variant-numeric:tabular-nums}
 .futT th,.futT td{border:1px solid var(--line);padding:6px 4px;text-align:center}
 .futT th{background:var(--felt);color:var(--felt-ink);font-weight:600;font-size:.9rem}
 .futT th .r{color:#ffb3bd}
@@ -1777,10 +1777,10 @@ function futPast(i){ // tickets that were suggested for DRAWS[i], computed from 
 function futFull(o,d){return SK.every(k=>!o[k]||o[k]===d[k]);}
 function futTable(rows,d){
   if(!rows.length)return `<div class="reality">אין טפסים.</div>`;
-  const head=`<tr>${SUITS.map(([k,sym,name,red])=>`<th>${name} <span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>#</th></tr>`;
-  const res=d?`<tr class="futR">${SUITS.map(([k,,,red])=>`<td class="${red?"r":""}">${d[k]}</td>`).join("")}<td class="n">יצא</td></tr>`:"";
-  return `<div class="futT"><table><thead>${head}${res}</thead><tbody>${rows.map((o,i)=>{const full=d&&futFull(o,d);
-    return `<tr${full?' class="win"':""}>${SUITS.map(([k,,,red])=>o[k]?`<td class="${red?"r":""}"><span class="${d&&d[k]===o[k]?"hitc":""}">${o[k]}</span></td>`:`<td class="no">—</td>`).join("")}<td class="n">${full?"✓":i+1}</td></tr>`;}).join("")}</tbody></table></div>`;
+  const head=`<tr><th>#</th>${SUITS.map(([k,sym,name,red])=>`<th>${name} <span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>`;
+  const res=d?`<tr class="futR"><td class="n">יצא</td>${SUITS.map(([k,,,red])=>`<td class="${red?"r":""}">${d[k]}</td>`).join("")}</tr>`:"";
+  return `<div class="futT"><table dir="ltr"><thead>${head}${res}</thead><tbody>${rows.map((o,i)=>{const full=d&&futFull(o,d);
+    return `<tr${full?' class="win"':""}><td class="n">${full?"✓":i+1}</td>${SUITS.map(([k,,,red])=>o[k]?`<td class="${red?"r":""}"><span class="${d&&d[k]===o[k]?"hitc":""}">${o[k]}</span></td>`:`<td class="no">—</td>`).join("")}</tr>`;}).join("")}</tbody></table></div>`;
 }
 function renderFut(){
   const el=document.getElementById("futPanel"),bt=document.getElementById("futBtn");if(!el)return;
