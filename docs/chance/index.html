@@ -224,6 +224,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .navMenu button{text-align:start;background:none;border:0;border-radius:10px;padding:11px 12px;font-family:var(--body);font-size:.98rem;color:var(--felt-ink);cursor:pointer}
 .navMenu button+button{border-top:1px solid rgba(255,255,255,.12);border-radius:0}
 .navMenu button:hover,.navMenu button:focus-visible{background:rgba(0,0,0,.22);border-radius:10px}
+.ancStat{margin-top:6px;padding:8px 10px;border-radius:10px;background:var(--chip);font-size:.86rem;line-height:1.7}
 .ancS button{font-family:var(--body);cursor:pointer;color:var(--ink)}
 .ancS button .r{color:var(--red)}
 .ancS button.now .r{color:var(--felt-ink)}
@@ -1071,7 +1072,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="49a39eb1f4";
+const BUILD="f9cb0cbf9b";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1473,6 +1474,12 @@ function anchorPred(base,suit){
     for(const x of new Set(v)){if(x===a)continue;c[x]=(c[x]||0)+1;if(!last[x])last[x]=d.n;(seen[x]=seen[x]||[]).push(d.n);}}
   const ranked=Object.keys(c).sort((u,v)=>c[v]-c[u]||last[v]-last[u]);
   if(ranked.length<2)return null;
+  // history of this exact anchor (this card in this suit) over the last 1,000 draws: did it come again, and where
+  const st={n:0,rep:0,land:{S:0,H:0,D:0,C:0},cases:[]};
+  for(let i=1;i<Math.min(base.length,1001);i++){if(base[i][suit]!==a)continue;st.n++;const nx=base[i-1];const ks=SK.filter(k=>nx[k]===a);
+    if(ks.length){st.rep++;ks.forEach(k=>st.land[k]++);}if(st.cases.length<6&&ks.length)st.cases.push({from:base[i].n,to:nx.n,ks});}
+  st.best=SK.slice().sort((u,v)=>st.land[v]-st.land[u]||(u===suit?-1:v===suit?1:0))[0];
+  st.keep=st.best===suit;
   const p=ranked.slice(0,2),tri=[a,...p];
   // placements: score each way to put the 3 cards in 3 of the 4 suits by how often each card came in that suit (last 200)
   const H=base.slice(0,200),pos={};for(const d of H)for(const k of SK)pos[k+d[k]]=(pos[k+d[k]]||0)+1;
@@ -1483,9 +1490,10 @@ function anchorPred(base,suit){
       const exact=H.filter(d=>cards.every(([k,r])=>d[k]===r)).length;
       const sc=cards.reduce((s,[k,r])=>s+(pos[k+r]||0),0);
       tix.push({cards,exact,sc});}
-  tix.sort((x,y)=>y.exact-x.exact||y.sc-x.sc);
+  const ancAt=c=>c.cards.find(([k,r])=>r===a)[0]===st.best?1:0;
+  tix.sort((x,y)=>ancAt(y)-ancAt(x)||y.exact-x.exact||y.sc-x.sc);
   const tieN=ranked.filter(x=>c[x]===c[p[1]]).length;
-  return {a,suit,from:L[0].n,p,c,ranked,seen,tieN,L,tix:tix.slice(0,6),tri};
+  return {a,suit,st,from:L[0].n,p,c,ranked,seen,tieN,L,tix:tix.slice(0,6),tri};
 }
 var ancOpen=false,ancSuit="S";
 function renderAnchor(){
@@ -1502,7 +1510,8 @@ function renderAnchor(){
   el.innerHTML=`<h3 class="tplH">עוגן + 2 שותפים להגרלה הבאה</h3>${SUITBAR}
   <p class="tplNote"><b>הרוטינה:</b> הקלף ב${SN[2]} ${SN[1]} של ההגרלה האחרונה "עולה" להגרלה הבאה, ומביא איתו 2 קלפים שיצאו איתו הכי הרבה ב־5 ההגרלות האחרונות.</p>
   <ol class="triSteps">
-   <li><b>העוגן: ${A.a}</b>. יצא כ־${ck(A.a,A.suit)} בהגרלה האחרונה (${A.from}).</li>
+   <li><b>העוגן: ${A.a}</b>. יצא כ־${ck(A.a,A.suit)} בהגרלה האחרונה (${A.from}).${(()=>{const s=A.st;if(!s.n)return "";const pc=x=>s.rep?Math.round(x/s.rep*100):0;
+     return `<div class="ancStat"><b>ההיסטוריה של ${ck(A.a,A.suit)} (1,000 הגרלות):</b> הוא היה במקום הזה ${s.n} פעמים, ו<b>חזר בהגרלה שאחרי ${s.rep} פעמים (${Math.round(s.rep/s.n*100)}%</b>, במקרה כ־41%).<br>${s.rep?`לאן הוא חזר (מתוך ${s.rep} החזרות): ${SK.map(k=>`${ck(A.a,k)} ${s.land[k]} (${pc(s.land[k])}%)`).join(" · ")}. ${s.keep?`<b>נשאר הכי הרבה באותו מקום (${SUITS.find(x=>x[0]===A.suit)[2]})</b>, לכן העוגן נשאר ב${SUITS.find(x=>x[0]===A.suit)[2]} בטפסים.`:`<b>כשחזר, הוא עבר הכי הרבה ל${SUITS.find(x=>x[0]===s.best)[2]}</b> (${s.land[s.best]} פעמים, מול ${s.land[A.suit]} שנשאר במקום), לכן הטפסים הראשונים שמים אותו כ־${ck(A.a,s.best)}.`}`:""}</div>`;})()}</li>
    <li><b>השותפים: ${A.p.join(" ו־")}</b>. ב־5 ההגרלות האחרונות ה־${A.a} יצא עם: ${A.ranked.slice(0,5).map(x=>`<b>${x}</b> ${A.c[x]} פעמים (${A.seen[x].join(", ")})`).join(" · ")}.${(()=>{const v=A.c[A.p[1]],inP=A.p.filter(x=>A.c[x]===v).length;return A.tieN>inP?` <b>תיקו של ${v}</b> על המקום השני בין ${A.ranked.filter(x=>A.c[x]===v).join(", ")}, ונבחר מי שיצא עם העוגן מאוחר יותר.`:inP===2?` <b>תיקו של ${v}</b> בין ${A.p.join(" ו־")}, ושניהם נבחרו.`:"";})()}</li>
    <li><b>השלישייה: <bdi dir="ltr">${A.tri.join(" ")}</bdi></b>. המיקומים למטה מסודרים לפי כמה פעמים כל קלף יצא בכל צורה ב־200 ההגרלות האחרונות (ומי שיצאה בדיוק כך קודם).</li>
   </ol>
