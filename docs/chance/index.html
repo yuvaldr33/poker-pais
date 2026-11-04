@@ -1070,7 +1070,7 @@ function manOpenSlots(){ // draws already held whose result is missing (or the n
   if(!out.length)out.push(s);return out;}
 document.getElementById("manBtn").addEventListener("click",()=>{
   const f=document.getElementById("manForm");if(!f.hidden){f.hidden=true;return;}
-  manSlots=manOpenSlots();const def=manSlots.length-1;
+  manSlots=manOpenSlots().filter(x=>!manualDraws.some(m=>m.n===x.n));if(!manSlots.length)manSlots=manOpenSlots();const def=0;
   document.getElementById("manTitle").innerHTML=`<label>איזו הגרלה? <select id="man-slot">${manSlots.map((s,i)=>`<option value="${i}"${i===def?" selected":""}>${s.time} · ${pad(s.d)}/${pad(s.m)} · הגרלה ${s.n}</option>`).join("")}</select></label> ובחר את הקלף שעלה בכל צורה`+(manSlots.length>1?`<br><small>חסרות באתר ${manSlots.length} הגרלות. אפשר להזין כל אחת מהן; הניתוח מתעדכן כשאין רווח ביניהן.</small>`:"");
   document.getElementById("manSel").innerHTML=SUITS.map(([k,sym,name,red])=>`<label><span><span class="s${red?" r":""}">${sym}</span> ${name}</span><select id="man-${k}">${RANKS.map(r=>`<option>${r}</option>`).join("")}</select></label>`).join("");
   f.hidden=false;
@@ -1083,6 +1083,8 @@ document.getElementById("manOk").addEventListener("click",()=>{
   manualDraws=manualDraws.filter(x=>x.n!==m.n);manualDraws.push(m);
   try{localStorage.setItem("chance-manual",JSON.stringify(manualDraws));}catch(e){}
   DRAWS=mergeManual(DRAWS);document.getElementById("manForm").hidden=true;rerenderAll();
+  const more=manOpenSlots().filter(x=>!manualDraws.some(q=>q.n===x.n));
+  if(more.length&&more[0].ms<=Date.now()){document.getElementById("manBtn").click();const t=document.getElementById("manTitle");t.insertAdjacentHTML("afterbegin",`<div class="gnote">הגרלה ${m.n} נשמרה ✓ עכשיו הזן את הבאה:</div>`);document.getElementById("manForm").scrollIntoView({behavior:"smooth",block:"center"});return;}
   document.getElementById("lHand").scrollIntoView({behavior:"smooth",block:"center"});
 });
 showManNote();
@@ -1097,7 +1099,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="c246037c59";
+const BUILD="a4a49955a6";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
