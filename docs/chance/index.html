@@ -1073,7 +1073,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="eebfd7a26b";
+const BUILD="900dc22155";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1602,6 +1602,42 @@ function swapStats(A,B,W){
       if(nx[y]===A)aMove++;if(nx[x]===B)bMove++;if(pairIn(nx,A,B))again++;}}
   return {N,sw,same,aMove,bMove,again,T,ex,span:AD.length-1,from:AD[AD.length-1]?AD[AD.length-1].n:0};
 }
+// ---- adjacent-pair moves: a pair sitting side by side (♠♥ / ♥♦ / ♦♣) — next draw: same, flipped, one step right/left (and flipped) ----
+function adjMoves(A,B,W){
+  const AD=allDraws().slice(0,(W||20000)+1);const P=[0,1,2].map(i=>({i,N:0,same:0,flip:0,right:0,rflip:0,left:0,lflip:0}));
+  for(let t=1;t<AD.length;t++){const d=AD[t],nx=AD[t-1];if(nx.n!==d.n+1)continue;
+    for(const o of P){const k1=SK[o.i],k2=SK[o.i+1],x=d[k1],y=d[k2];if(!((x===A&&y===B)||(x===B&&y===A)))continue;
+      o.N++;if(nx[k1]===x&&nx[k2]===y)o.same++;if(nx[k1]===y&&nx[k2]===x)o.flip++;
+      if(o.i+2<4){const k3=SK[o.i+2];if(nx[k2]===x&&nx[k3]===y)o.right++;if(nx[k2]===y&&nx[k3]===x)o.rflip++;}
+      if(o.i>0){const k0=SK[o.i-1];if(nx[k0]===x&&nx[k1]===y)o.left++;if(nx[k0]===y&&nx[k1]===x)o.lflip++;}}}
+  return P;
+}
+var _adjBoard=null,_adjBoardN=0;
+function adjBoard(){ // which pairs move most from the first two places (♠♥): flipped / one right / one right flipped
+  const AD=allDraws().slice(0,20001);if(_adjBoard&&_adjBoardN===AD[0].n)return _adjBoard;const st={};
+  for(let t=1;t<AD.length;t++){const d=AD[t],nx=AD[t-1];if(nx.n!==d.n+1)continue;const x=d.S,y=d.H;if(x===y)continue;
+    const k=[x,y].sort((u,v)=>RANKS.indexOf(u)-RANKS.indexOf(v)).join("+");const s=st[k]=st[k]||{k,N:0,mv:0};s.N++;
+    if((nx.S===y&&nx.H===x)||(nx.H===x&&nx.D===y)||(nx.H===y&&nx.D===x))s.mv++;}
+  _adjBoard=Object.values(st).sort((u,v)=>v.mv/v.N-u.mv/u.N);_adjBoardN=AD[0].n;return _adjBoard;
+}
+function adjHtml(A,B,ck){
+  const P=adjMoves(A,B,20000),pc=(x,n)=>n?(x/n*100).toFixed(1)+"%":"–",name=i=>`${SUITS[i][2]}־${SUITS[i+1][2]}`;
+  const tot=P.reduce((s,o)=>({N:s.N+o.N,same:s.same+o.same,flip:s.flip+o.flip,right:s.right+o.right,rflip:s.rflip+o.rflip,left:s.left+o.left,lflip:s.lflip+o.lflip}),{N:0,same:0,flip:0,right:0,rflip:0,left:0,lflip:0});
+  const p0=P[0],mv0=p0.flip+p0.right+p0.rflip,B0=adjBoard(),key=[A,B].sort((u,v)=>RANKS.indexOf(u)-RANKS.indexOf(v)).join("+"),rank=B0.findIndex(x=>x.k===key)+1;
+  const best=[["flip","התהפכו"],["right","זזו ימינה"],["rflip","ימינה והתהפכו"],["same","נשארו"]].sort((u,v)=>tot[v[0]]-tot[u[0]])[0];
+  const last=DRAWS[0],nowI=[0,1,2].find(i=>(last[SK[i]]===A&&last[SK[i+1]]===B)||(last[SK[i]]===B&&last[SK[i+1]]===A));
+  let now="";
+  if(nowI!==undefined){const k1=SK[nowI],k2=SK[nowI+1],x=last[k1],y=last[k2],opts=[[`התהפכו`,[[k1,y],[k2,x]]]];
+    if(nowI+2<4){const k3=SK[nowI+2];opts.push([`זזו ימינה`,[[k2,x],[k3,y]]],[`ימינה והתהפכו`,[[k2,y],[k3,x]]]);}
+    if(nowI>0){const k0=SK[nowI-1];opts.push([`זזו שמאלה`,[[k0,x],[k1,y]]]);}
+    now=`<p class="tplNote"><b>עכשיו:</b> בהגרלה האחרונה (${last.n}) הזוג צמוד ב${name(nowI)}: ${ck(x,k1)} ${ck(y,k2)}. האפשרויות להגרלה הבאה: ${opts.map(([l,cs])=>`${l} <button type="button" class="chT swpT" data-t="${cs.map(c=>c.join(":")).join("|")}">${cs.map(([k,r])=>ck(r,k)).join(" ")} לטופס</button>`).join(" · ")} (כל אחת 1 ל־64).</p>`;}
+  return `<h3 class="tplH">תנועה של הזוג כשהוא צמוד</h3>
+  <p class="tplNote">כש־${A} ו־${B} יצאו זה ליד זה (עלה־לב, לב־יהלום או יהלום־תלתן), מה קרה בהגרלה שאחרי: נשארו, התהפכו ביניהם, זזו מקום אחד ימינה (למשל מעלה־לב ללב־יהלום), או זזו ימינה והתהפכו. במקרה כל אחת מהן 1.56%.</p>
+  <div class="tbl"><table class="pairs"><thead><tr><th>צמודים ב…</th><th>פעמים</th><th>נשארו</th><th>התהפכו</th><th>ימינה</th><th>ימינה+הפוך</th><th>שמאלה</th></tr></thead><tbody>${P.map(o=>`<tr><td>${name(o.i)}</td><td class="nn">${o.N}</td><td class="nn">${o.same}</td><td class="nn"><b>${o.flip}</b></td><td class="nn">${o.i<2?`<b>${o.right}</b>`:"–"}</td><td class="nn">${o.i<2?`<b>${o.rflip}</b>`:"–"}</td><td class="nn">${o.i>0?o.left+o.lflip:"–"}</td></tr>`).join("")}</tbody></table></div>
+  <div class="ancStat"><b>הסיכום לתנועה:</b> בסך הכול ${tot.N} פעמים צמודים. הכי הרבה הם <b>${best[1]}</b> (${tot[best[0]]} פעמים, ${pc(tot[best[0]],tot.N)}). מהמקום הראשון והשני (עלה־לב) הזוג זז (התהפך / ימינה / ימינה והתהפך) ${mv0} פעמים מתוך ${p0.N} (${pc(mv0,p0.N)}, במקרה 4.7%), ${rank?`<b>מקום ${rank} מתוך ${B0.length}</b> בזוגות שזזים הכי הרבה מהמקום הראשון והשני.`:""}</div>
+  ${now}
+  <p class="tplNote"><b>הזוגות שזזים הכי הרבה מהמקום הראשון והשני:</b> ${B0.slice(0,5).map((x,i)=>`${i+1}. <bdi dir="ltr">${x.k}</bdi> ${x.mv}/${x.N} (${pc(x.mv,x.N)})`).join(" · ")}</p>`;
+}
 var swpOpen=false;
 function renderSwap(){
   const el=document.getElementById("swpPanel"),bt=document.getElementById("swpBtn");if(!el)return;
@@ -1630,6 +1666,7 @@ function renderSwap(){
     const lean=s.sw>s.same*1.15?"swap":s.same>s.sw*1.15?"stay":"even";
     const head=lean==="swap"?`<b>אם ${A}+${B} יחזרו בהגרלה הבאה, לפי ההיסטוריה שלהם יותר סביר שהם יחליפו מקומות מאשר יישארו באותו מקום</b> (${s.sw} החלפות מול ${s.same} פעמים שנשארו).`:lean==="stay"?`<b>אם ${A}+${B} יחזרו בהגרלה הבאה, לפי ההיסטוריה שלהם יותר סביר שהם יישארו באותו מקום ולא יחליפו</b> (${s.same} פעמים שנשארו מול ${s.sw} החלפות).`:`<b>אם ${A}+${B} יחזרו בהגרלה הבאה, אין להם נטייה ברורה</b>: הם החליפו מקום ${s.sw} פעמים ונשארו במקום ${s.same} פעמים, כמעט שווה.`;
     return `<div class="ancStat"><b>הסיכום:</b> ${head}<br>מתוך ${s.again} הפעמים שהזוג חזר בהגרלה שמיד אחרי: החליפו מקום ${s.sw} (${pa(s.sw)}%), נשארו במקום ${s.same} (${pa(s.same)}%), ובשאר ${other} הפעמים (${pa(other)}%) הם חזרו במקומות אחרים לגמרי. כלומר, גם כשהזוג חוזר, הכי סביר שהוא יופיע במיקום חדש. במקרה כל אחת מהאפשרויות "החליפו" ו"נשארו" היא כ־11% מהחזרות.</div>`;})()}
+  ${adjHtml(A,B,ck)}
   <div class="reality">החלפת מקומות של זוג מסוים קורה בערך פעם ב־64 הופעות שלו, בכל זוג. כשזוג מסוים מראה אחוז גבוה יותר, זה בדרך כלל על כמה עשרות פעמים בלבד.</div>`;
 }
 document.getElementById("swpBtn").addEventListener("click",()=>{swpOpen=!swpOpen;renderSwap();if(swpOpen)document.getElementById("swpPanel").scrollIntoView({behavior:"smooth",block:"start"});});
