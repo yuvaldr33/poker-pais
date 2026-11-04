@@ -217,6 +217,13 @@ table.pairs td.nn{font-family:var(--mono)}
 .btn.on{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
 .tplNote{font-size:.85rem;color:var(--muted);line-height:1.5}
 .tplNote b{color:var(--ink)}
+/* ---- section menu ---- */
+.navBtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));z-index:45;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.navMenu{position:fixed;top:calc(60px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));z-index:46;width:min(300px,calc(100vw - 20px));max-height:calc(100dvh - 80px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:6px;display:flex;flex-direction:column}
+.navMenu[hidden]{display:none}
+.navMenu button{text-align:start;background:none;border:0;border-radius:10px;padding:11px 12px;font-family:var(--body);font-size:.98rem;color:var(--ink);cursor:pointer}
+.navMenu button:hover,.navMenu button:focus-visible{background:var(--chip)}
+.trb.now{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
 /* ---- triples ---- */
 .triExp .triSteps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
 .triExp .triSteps ul{margin:4px 0;padding-inline-start:16px;font-size:.85rem}
@@ -410,6 +417,8 @@ table.pairs td.nn{font-family:var(--mono)}
 
   <p class="foot">התוצאות נאספו מאתרי תוצאות שמפרסמים את תוצאות מפעל הפיס ונבדקו מול כמה מקורות. התוצאות המחייבות הן של מפעל הפיס בלבד. משחק אחראי, מגיל 18.</p>
 </div>
+<button class="navBtn" id="navBtn" type="button" aria-label="תפריט קיצורי דרך" aria-expanded="false" aria-controls="navMenu">⋮</button>
+<nav class="navMenu" id="navMenu" hidden aria-label="קיצורי דרך"></nav>
 <button class="chFab" id="chFab" type="button" aria-label="פתח צ'אט"><span class="dot"></span>שאל את העוזר</button>
 <div class="chBox" id="chBox" dir="rtl" hidden role="dialog" aria-label="העוזר של צ'אנס">
   <div class="chHead"><div><b>העוזר של צ'אנס</b><small>עונה לפי הניתוח החי של האתר</small></div><button type="button" id="chClose" aria-label="סגור">✕</button></div>
@@ -421,6 +430,7 @@ table.pairs td.nn{font-family:var(--mono)}
     <button type="button">זוגות שעלולים להתחבר</button>
     <button type="button">צמצום שבלונות</button>
     <button type="button">שלישיות להגרלה הבאה</button>
+    <button type="button">כמה פעמים יצאו A 9 8 ביחד?</button>
     <button type="button">איזה קלף נצמד לזוגות?</button>
     <button type="button">מה הקלפים החמים?</button>
     <button type="button">מתי ההגרלה הבאה?</button>
@@ -1035,7 +1045,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="a7ad916567";
+const BUILD="56bbafd393";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1164,7 +1174,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     return `<b>הקלף שנצמד לכל זוג</b> (ב־1,000 ההגרלות האחרונות)<ul>${L.map(q=>{const st=stickyFor(q,1000),b=bestPlace(q,st.k),cs=[...b.cs,[st.k,st.top.r]];
       return `<li><b>${pn(q)}</b>: יצא ${st.n} פעמים, ובהן <b>${st.top.r}</b> יצא איתו ${st.top.c} פעמים (במקרה ${Math.round(st.top.e)}), הכי הרבה ב${sn(st.k)[2]}. אחריו ${st.list[1].r} (${st.list[1].c}).<br>צ'אנס 3: ${hand(cs)}${tBtn(cs)}</li>`;}).join("")}</ul><span class="sm">בבדיקה על 30 אלף הגרלות, הקלף שנצמד לזוג יצא איתו בפעם הבאה ב־26.7% מהפעמים, כמעט בדיוק כמו שהיה צפוי לאותם קלפים במקרה (26.3%). לזוג אחר כתוב למשל "מה נצמד ל־7+K".</span>`;
   }
-  const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים, צמצום לשבלונות, הקלף שנצמד לכל זוג</li><li>מתי ההגרלה הבאה, מה יצא באחרונה</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
+  const HELP=`אני עונה לפי הניתוח החי של האתר, שמתעדכן אחרי כל הגרלה. אפשר לשאול אותי:<ul><li>מה הזוג הכי חזק / צ'אנס 2</li><li>מה הכי טוב לצ'אנס 3 או לצ'אנס 4</li><li>מה עם זוג מסוים, למשל "8 ו־K" או "מלכה ומלך"</li><li>זוגות שעלולים להתחבר, קלפים חמים, צמצום לשבלונות, הקלף שנצמד לכל זוג</li><li>מתי ההגרלה הבאה, מה יצא באחרונה, מה יצא בהגרלה מסוימת (למשל "הגרלה 53800")</li><li>כמה פעמים יצאו קלפים בכל ההיסטוריה, למשל "כמה פעמים יצאו A 9 8 ביחד", "כמה פעמים Q בלב ו־7 ביהלום ב־500 הגרלות"</li><li>איך השיטה מצליחה, מה הסיכויים</li></ul>ליד כל המלצה יש כפתור "לטופס" שממלא את הטופס באתר.`;
 
   // ---- understanding the question ----
   const WORD={"נסיך":"J","נסיכים":"J","גק":"J","ג׳ק":"J","מלכה":"Q","מלכות":"Q","דמה":"Q","דמות":"Q","קווין":"Q","מלך":"K","מלכים":"K","קינג":"K","קינגים":"K","אס":"A","אסים":"A"};
@@ -1173,11 +1183,49 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     while((m=re.exec(t))){out.push(m[1]?m[1].toUpperCase():WORD[m[2]]);}
     return out;
   }
+  // ---- counting questions over the whole history ----
+  const SUITW={"עלה":"S","פיק":"S","ספייד":"S","לב":"H","יהלום":"D","תלתן":"C","תילתן":"C","♠":"S","♥":"H","♦":"D","♣":"C"};
+  function cardsWithSuit(t){
+    const out=[];const re=/(?:(?<![0-9a-z])(10|[789]|[jqka])(?![0-9a-z:])|(?<![א-ת])[והבל]?(נסיכים|נסיך|גק|מלכות|מלכה|דמות|דמה|קווין|מלכים|מלך|קינגים|קינג|אסים|אס)(?![א-ת]))(?:\s*(?:ב|ה)(עלה|פיק|ספייד)(?![א-ת])|\s*[בה]?(לב|יהלום|תלתן|תילתן)(?![א-ת])|\s*([♠♥♦♣]))?/g;let m;
+    while((m=re.exec(t))){const r=m[1]?m[1].toUpperCase():WORD[m[2]];const sw=m[3]||m[4]||m[5];out.push({r,k:sw?SUITW[sw]:null});}
+    return out;}
+  function matcher(cards){
+    return d=>{const used=new Set();
+      for(const c of cards)if(c.k){if(d[c.k]!==c.r)return false;used.add(c.k);}
+      const rest=SK.filter(k=>!used.has(k)).map(k=>d[k]);
+      for(const c of cards)if(!c.k){const i=rest.indexOf(c.r);if(i<0)return false;rest.splice(i,1);}
+      return true;};}
+  function probOf(f){let ok=0;for(let m=0;m<4096;m++){const d={S:RANKS[m&7],H:RANKS[(m>>3)&7],D:RANKS[(m>>6)&7],C:RANKS[(m>>9)&7]};if(f(d))ok++;}return ok/4096;}
+  const fullD=d=>hand(SK.map(k=>[k,d[k]]));
+  function aCount(cards,N){
+    const AD=allDraws(),f=matcher(cards),p=probOf(f);
+    const name=cards.map(c=>c.k?ck(c.r,c.k):`<b>${c.r}</b>`).join(" + ");
+    const wins=N?[Math.min(N,AD.length)]:[200,1000,AD.length];
+    const rows=wins.map(w=>{const n=AD.slice(0,w).filter(f).length;return `<li>${w===AD.length?`בכל ההיסטוריה (${w.toLocaleString("he-IL")} הגרלות)`:`ב־${w.toLocaleString("he-IL")} ההגרלות האחרונות`}: <b>${n}</b> פעמים <span class="sm" style="display:inline">(במקרה כ־${(w*p).toFixed(w*p<10?1:0)})</span></li>`;}).join("");
+    const hits=[];for(let i=0;i<AD.length&&hits.length<3;i++)if(f(AD[i]))hits.push(AD[i]);
+    const lastI=AD.findIndex(f);
+    let extra="";
+    if(cards.length<=2&&!cards.some(c=>c.k)){ // where did it come: per-suit for the cards, last 1000
+      const W=AD.slice(0,1000).filter(f),cnt={};for(const d of W)for(const c of cards)for(const k of SK)if(d[k]===c.r){const kk=c.r+k;cnt[kk]=(cnt[kk]||0)+1;}
+      extra=`<br><span class="sm">איפה יצא ב־1,000 האחרונות: ${[...new Set(cards.map(c=>c.r))].map(r=>SK.map(k=>`${ck(r,k)} ${cnt[r+k]||0}`).join(" · ")).join("<br>")}</span>`;}
+    return `<b>כמה פעמים יצא ${name}</b>${cards.length>1?" באותה הגרלה":""}<ul>${rows}</ul>${lastI<0?"לא יצא אף פעם.":lastI===0?`יצא בהגרלה האחרונה, ${AD[0].n}.`:lastI===1?`יצא בהגרלה שלפני האחרונה, ${AD[1].n}.`:`לאחרונה לפני ${lastI} הגרלות.`}${hits.length?`<br><span class="sm">הפעמים האחרונות: ${hits.map(d=>`${d.n} ${fullD(d)}`).join(" · ")}</span>`:""}${extra}<span class="sm">${HIST?`ההיסטוריה כוללת ${AD.length.toLocaleString("he-IL")} הגרלות ומתעדכנת אחרי כל הגרלה.`:"ההיסטוריה המלאה לא נטענה, הספירה היא על 2,000 ההגרלות האחרונות."} אפשר לבקש טווח, למשל "ב־500 הגרלות".</span>`;
+  }
+  function aDraw(n){const d=allDraws().find(x=>x.n===n);if(!d)return `אין לי את הגרלה ${n}.`;
+    return `הגרלה <b>${n}</b>${d.date?` (${fmtDate(d.date)} ${d.time||""})`:""}: ${fullD(d)}`;}
   function answer(raw){
     const t=" "+raw.toLowerCase().replace(/[׳'’`"״]/g,"").replace(/[-־+,.?!]/g," ")+" ";
     const has=re=>re.test(t);
     const tc=t.replace(/צאנס\s*[1-4]/g," ").replace(/\b5[0-9]{4}\b/g," ");
     const cs=cardsIn(tc);
+    const rawN=raw.replace(/(\d),(\d{3})/g,"$1$2");
+    const dm=rawN.match(/הגרלה\s*(?:מספר\s*|מס\s*)?(5\d{4})/)||rawN.match(/(?:מה|מי)\s*(?:יצא|עלה)\s*(?:ב|ב־|בהגרלה\s*)?(5\d{4})/);
+    if(dm&&cs.length===0)return aDraw(+dm[1]);
+    const isCount=has(/כמה פעמים|כמה עלה|כמה עלו|כמה יצא|כמה יצאו|כמה הופיע|יצאו ביחד|עלו ביחד|באו ביחד|יצאו יחד|עלו יחד|באו יחד|מתי יצא|מתי עלה|מתי עלו|מתי יצאו|לאחרונה/);
+    if(isCount&&cs.length>=1&&cs.length<=4){
+      const wm=rawN.match(/(\d{2,6})\s*(?:ה)?הגרלות/);let N=wm?+wm[1]:0;
+      if(has(/כל ההיסטוריה|בכל הארכיון|מאז ומעולם|בכל ההגרלות/))N=1e9;
+      const cw=cardsWithSuit(tc);return aCount(cw.length?cw:cs.map(r=>({r,k:null})),N);
+    }
     const c3=has(/צאנס\s*3|שלושה קלפים|3 קלפים|קלף שלישי/),c4=has(/צאנס\s*4|ארבעה קלפים|4 קלפים/),lk=has(/מתחבר|להתחבר|עוגן/);
     const c2=has(/צאנס\s*2/)||(!lk&&has(/זוג/))||(!c3&&!c4&&!lk&&has(/חזק|הכי טוב|מה לשחק|מה לשים|תמליץ|המלצ|ניחוש|תנחש|מה כדאי/));
     if(cs.length>=2){
@@ -1212,10 +1260,10 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
   // ---- UI ----
   function say(html,who){const m=document.createElement("div");m.className="chM "+who;m.innerHTML=html;log.appendChild(m);log.scrollTop=log.scrollHeight;}
   function ask(q){q=q.trim();if(!q)return;say(q.replace(/[<>&]/g,c=>({"<":"&lt;",">":"&gt;","&":"&amp;"}[c])),"u");
-    let a;try{a=answer(q);}catch(e){a="משהו השתבש בחישוב. נסה לשאול שוב.";}
-    setTimeout(()=>say(a,"b"),250);}
+    loadHist().then(()=>{let a;try{a=answer(q);}catch(e){a="משהו השתבש בחישוב. נסה לשאול שוב.";}
+    setTimeout(()=>say(a,"b"),150);});}
   let opened=false;
-  function open(){box.hidden=false;document.getElementById("chFab").hidden=true;
+  function open(){loadHist();box.hidden=false;document.getElementById("chFab").hidden=true;
     if(!opened){opened=true;say(`היי! אני העוזר של האתר. ${HELP}`,"b");}
     try{if(matchMedia("(pointer:fine)").matches)inp.focus();}catch(e){}}
   document.getElementById("chFab").addEventListener("click",open);
@@ -1329,7 +1377,8 @@ function renderTri(){
   <div class="odds"><div><b>1 ל־512</b><span>סיכוי לכל טופס · פרס פי 300</span></div><div><b>${(exp*100).toFixed(1)}%</b><span>שאחד מ־${R.tix.length} הטפסים יזכה</span></div></div>
   <h3 class="tplH">השלישיות החמות של החודש</h3>
   <p class="tplNote">כמה פעמים כל שלישייה יצאה מלאה ב־200 ההגרלות האחרונות, בכל סדר (במקרה: כ־7.6 לשלישייה של 3 קלפים שונים).</p>
-  <div class="tribars">${R.mine.map(m=>`<span class="trb"><b dir="ltr">${m.k}</b> ${m.n}</span>`).join("")}${R.extra.map(m=>`<span class="trb new"><b dir="ltr">${m.k}</b> ${m.n} · חדשה</span>`).join("")}</div>
+  <div class="tribars">${R.mine.map(m=>{const now=hasCards(H[0],m.k.split(" "));return `<span class="trb${now?" now":""}"><b dir="ltr">${m.k}</b> ${m.n}${now?` · יצאה ב־${H[0].n} ✓`:""}</span>`;}).join("")}${R.extra.map(m=>{const now=hasCards(H[0],m.k.split(" "));return `<span class="trb new${now?" now":""}"><b dir="ltr">${m.k}</b> ${m.n} · חדשה${now?` · יצאה ב־${H[0].n} ✓`:""}</span>`;}).join("")}</div>
+  <p class="tplNote">מתעדכן אחרי כל הגרלה. שלישייה שיצאה בהגרלה האחרונה מסומנת בירוק.</p>
   ${R.extra.length?`<p class="tplNote">"חדשה" = שלישייה שלא ברשימה שלך ויצאה החודש לפחות כמו המובילה שלך.</p>`:""}
   <div class="reality">לכל שלישייה מדויקת יש 1 ל־512 בכל הגרלה, בכל שיטת בחירה. החודש האחרון מראה מה היה, ובבדיקות על 50 אלף הגרלות דפוסים כאלה לא החזיקו. המעקב למטה סופר את השיטה הזאת בנפרד.</div>`;
 }
@@ -1341,6 +1390,42 @@ document.getElementById("triPanel").addEventListener("click",e=>{
   save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
 });
 renderTri();
+// ---- full draw history for the chat (static archive + the live draws) ----
+var HIST=null,histLoading=null;
+function loadHist(){
+  if(HIST)return Promise.resolve();if(histLoading)return histLoading;
+  histLoading=fetch("history.txt",{cache:"no-store"}).then(r=>r.ok?r.text():"").then(s=>{
+    const m=new Map();for(const it of s.split(",")){const i=it.indexOf(":");if(i<0)continue;const n=+it.slice(0,i),c=it.slice(i+1).split("").map(x=>x==="T"?"10":x);
+      if(c.length===4)m.set(n,{n,S:c[0],H:c[1],D:c[2],C:c[3]});}
+    if(m.size)HIST=m;}).catch(()=>{});
+  return histLoading;}
+function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);return [...m.values()].sort((a,b)=>b.n-a.n);}
+// ---- section menu (⋮) ----
+(function(){
+  const secs=[...document.querySelectorAll("section")];
+  secs.forEach((s,i)=>{if(!s.id)s.id="sec"+i;});
+  const items=[
+    ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
+    ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
+    ["שלישיות להגרלה הבאה",()=>{if(!triOpen){triOpen=true;renderTri();}return document.getElementById("triBtn");}],
+    ["שבלונות לזוגות",()=>document.getElementById("tplBtn")],
+    ["צ'אנס 3: זוג + קלף שלישי",()=>document.getElementById("preC3")],
+    ["מעקב השיטה ופגיעות",()=>document.getElementById("trackSec")],
+    ["הטופס שלי",()=>document.querySelector("section.slip")],
+    ["ההגרלה האחרונה",()=>document.querySelector("section.last")],
+    ["מה עלה ב־50 ההגרלות האחרונות",()=>document.getElementById("stats")?.closest("section")],
+    ["צירופים חוזרים ב־1,000 הגרלות",()=>document.getElementById("pairsSec")],
+    ["הקלף שנצמד לכל זוג",()=>document.getElementById("pStick")?.closest(".tbl")],
+    ["היסטוריית 50 ההגרלות",()=>document.getElementById("hist")?.closest("section")],
+    ["שאל את העוזר (צ'אט)",()=>{document.getElementById("chFab").click();return null;}]];
+  const btn=document.getElementById("navBtn"),menu=document.getElementById("navMenu");
+  menu.innerHTML=items.map((it,i)=>`<button type="button" data-i="${i}">${it[0]}</button>`).join("");
+  const close=()=>{menu.hidden=true;btn.setAttribute("aria-expanded","false");};
+  btn.addEventListener("click",e=>{e.stopPropagation();menu.hidden=!menu.hidden;btn.setAttribute("aria-expanded",String(!menu.hidden));});
+  menu.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;close();const el=items[+b.dataset.i][1]();if(el)el.scrollIntoView({behavior:"smooth",block:"start"});});
+  document.addEventListener("click",e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)close();});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
+})();
 </script>
 
 </body>
