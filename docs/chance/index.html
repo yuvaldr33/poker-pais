@@ -261,7 +261,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 .wrap{padding-bottom:56px}
 .chFab{position:fixed;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:40;
   display:flex;align-items:center;gap:8px;background:var(--felt);color:var(--felt-ink);border:0;border-radius:999px;padding:12px 18px;
-  font-family:var(--body);font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+  font-family:var(--body);font-weight:700;font-size:1rem;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.25);will-change:transform;-webkit-transform:translateZ(0);transform:translateZ(0)}
 .chFab .dot{width:10px;height:10px;border-radius:50%;background:#7fe0a8;box-shadow:0 0 0 3px rgba(127,224,168,.3)}
 .chBox{position:fixed;z-index:41;left:max(12px,env(safe-area-inset-left,0px));bottom:calc(12px + env(safe-area-inset-bottom,0px));
   width:min(420px,calc(100vw - 24px));height:min(640px,calc(100dvh - 24px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)));
@@ -1072,7 +1072,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="f9cb0cbf9b";
+const BUILD="97fbb85500";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1625,6 +1625,12 @@ function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);
   document.addEventListener("click",e=>{if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)close();});
   document.addEventListener("keydown",e=>{if(e.key==="Escape")close();});
 })();
+
+// ---- keep the assistant button pinned to the bottom-left of what is actually on screen (iOS toolbar / zoom) ----
+(function(){const vv=window.visualViewport,fab=document.getElementById("chFab");if(!vv||!fab)return;let raf=0;
+  function place(){raf=0;const dy=vv.offsetTop+vv.height-window.innerHeight,dx=vv.offsetLeft;fab.style.transform=`translate3d(${Math.round(dx)}px,${Math.round(dy)}px,0)`;}
+  const req=()=>{if(!raf)raf=requestAnimationFrame(place);};
+  vv.addEventListener("resize",req);vv.addEventListener("scroll",req);window.addEventListener("scroll",req,{passive:true});window.addEventListener("orientationchange",req);place();})();
 </script>
 
 </body>
