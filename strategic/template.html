@@ -173,6 +173,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .futH{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);color:var(--ink);border:0;padding:10px 12px;font-family:var(--body);font-size:.92rem;cursor:pointer;text-align:start}
 .futA.won .futH{background:var(--winH)}
 .futH small{color:var(--muted)}
+.futH.top{cursor:default}
 .futA.won .futH small{color:var(--felt);font-weight:600}
 .futB{display:flex;flex-direction:column;gap:8px;padding:10px}
 .c3b{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
@@ -1790,14 +1791,17 @@ function renderFut(){
   const F=futureTix(DRAWS,true),nx=DRAWS[0]?DRAWS[0].n+1:"";
   const sn=k=>SUITS.find(s=>s[0]===k);const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
   const FROM=53845,arc=[];for(let i=0;i<DRAWS.length&&DRAWS[i].n>=FROM&&arc.length<30;i++)arc.push(i);
-  const arcHtml=arc.length?arc.map(i=>{const d=DRAWS[i],P=futPast(i);const w3=P.c3.filter(o=>futFull(o,d)).length,w2=P.c2.filter(o=>futFull(o,d)).length,open=futArc===d.n;
-    return `<div class="futA${w3||w2?" won":""}"><button type="button" class="futH" data-n="${d.n}" aria-expanded="${open}"><span><b dir="ltr">${d.n}</b> · ${d.time||""} · <span class="cg">${SK.map(k=>ck(d[k],k)).join("")}</span></span><small>${w3||w2?"תפס: "+[w3?`${w3} בצ'אנס 3`:"",w2?`${w2} בצ'אנס 2`:""].filter(Boolean).join(" · "):"לא תפס"} ${open?"▴":"▾"}</small></button>${open?`<div class="futB"><h3>צ'אנס 3 (${P.c3.length})</h3>${futTable(P.c3,d)}<h3>צ'אנס 2 (${P.c2.length})</h3>${futTable(P.c2,d)}</div>`:""}</div>`;}).join(""):`<div class="reality">אחרי שתצא ההגרלה ${nx}, הטפסים שלה יירדו לכאן עם סימון של הפגיעות.</div>`;
+  const card=(i,top)=>{const d=DRAWS[i],P=futPast(i);const w3=P.c3.filter(o=>futFull(o,d)).length,w2=P.c2.filter(o=>futFull(o,d)).length,open=top||futArc===d.n;
+    return `<div class="futA${w3||w2?" won":""}"><${top?"div":"button type=\"button\""} class="futH${top?" top":""}" data-n="${d.n}"${top?"":` aria-expanded="${open}"`}><span><b dir="ltr">${d.n}</b> · ${d.time||""} · <span class="cg">${SK.map(k=>ck(d[k],k)).join("")}</span></span><small>${w3||w2?"תפס: "+[w3?`${w3} בצ'אנס 3`:"",w2?`${w2} בצ'אנס 2`:""].filter(Boolean).join(" · "):"לא תפס"}${top?"":open?" ▴":" ▾"}</small></${top?"div":"button"}>${open?`<div class="futB"><h3>צ'אנס 3 (${P.c3.length})</h3>${futTable(P.c3,d)}<h3>צ'אנס 2 (${P.c2.length})</h3>${futTable(P.c2,d)}</div>`:""}</div>`;};
+  const lastHtml=arc.length?card(arc[0],true):`<div class="reality">אחרי שתצא ההגרלה ${nx}, הטפסים שלה יירדו לכאן עם סימון של הפגיעות.</div>`;
+  const prevHtml=arc.slice(1).map(i=>card(i,false)).join("");
   el.innerHTML=`<h3 class="tplH">תוצאות להגרלה עתידית${nx?` · <bdi dir="ltr">${nx}</bdi>`:""}</h3>
   <h3>צ'אנס 3 (${F.c3.length})</h3>${futTable(F.c3)}
   <h3>צ'אנס 2 (${F.c2.length})</h3>${futTable(F.c2)}
-  <h3 class="tplH" style="margin-top:8px">הגרלות שכבר יצאו</h3><div class="futArc">${arcHtml}</div>`;
+  <h3 class="tplH" style="margin-top:8px">פגיעות בהגרלה האחרונה</h3><div class="futArc">${lastHtml}</div>
+  ${prevHtml?`<h3 class="tplH" style="margin-top:8px">הגרלות קודמות</h3><div class="futArc">${prevHtml}</div>`:""}`;
 }
-document.getElementById("futPanel").addEventListener("click",e=>{const b=e.target.closest(".futH");if(!b)return;const n=+b.dataset.n;futArc=futArc===n?null:n;renderFut();const h=document.querySelector(`.futH[data-n="${n}"]`);if(h)h.scrollIntoView({behavior:"smooth",block:"start"});});
+document.getElementById("futPanel").addEventListener("click",e=>{const b=e.target.closest("button.futH");if(!b)return;const n=+b.dataset.n;futArc=futArc===n?null:n;renderFut();const h=document.querySelector(`.futH[data-n="${n}"]`);if(h)h.scrollIntoView({behavior:"smooth",block:"start"});});
 document.getElementById("futBtn").addEventListener("click",()=>{futOpen=!futOpen;renderFut();if(futOpen)document.getElementById("futPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 // ---- section menu (⋮) ----
 (function(){
