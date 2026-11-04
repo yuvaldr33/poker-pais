@@ -203,11 +203,12 @@ table.pairs td.nn{font-family:var(--mono)}
 .tplNote{font-size:.85rem;color:var(--muted);line-height:1.5}
 .tplNote b{color:var(--ink)}
 /* ---- section menu ---- */
-.navBtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));z-index:45;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:1.5rem;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}
-.navMenu{position:fixed;top:calc(60px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));z-index:46;width:min(300px,calc(100vw - 20px));max-height:calc(100dvh - 80px);overflow-y:auto;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:6px;display:flex;flex-direction:column}
+.navBtn{position:fixed;top:calc(10px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));z-index:45;width:44px;height:44px;border-radius:50%;border:0;background:var(--felt);color:var(--felt-ink);font-size:1.5rem;line-height:1;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18)}
+.navMenu{position:fixed;top:calc(60px + env(safe-area-inset-top,0px));left:max(10px,env(safe-area-inset-left,0px));z-index:46;width:min(300px,calc(100vw - 20px));max-height:calc(100dvh - 80px);overflow-y:auto;background:var(--felt);border:0;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.25);padding:6px;display:flex;flex-direction:column}
 .navMenu[hidden]{display:none}
-.navMenu button{text-align:start;background:none;border:0;border-radius:10px;padding:11px 12px;font-family:var(--body);font-size:.98rem;color:var(--ink);cursor:pointer}
-.navMenu button:hover,.navMenu button:focus-visible{background:var(--chip)}
+.navMenu button{text-align:start;background:none;border:0;border-radius:10px;padding:11px 12px;font-family:var(--body);font-size:.98rem;color:var(--felt-ink);cursor:pointer}
+.navMenu button+button{border-top:1px solid rgba(255,255,255,.12);border-radius:0}
+.navMenu button:hover,.navMenu button:focus-visible{background:rgba(0,0,0,.22);border-radius:10px}
 .trb.now{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
 /* ---- triples ---- */
 .triExp .triSteps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
