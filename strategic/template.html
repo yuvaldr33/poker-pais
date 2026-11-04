@@ -231,7 +231,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 /* ---- triples ---- */
 .triExp .triSteps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
 .triExp .triSteps ul{margin:4px 0;padding-inline-start:16px;font-size:.85rem}
-#triPanel:not([hidden]),#ancPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
+#triPanel:not([hidden]),#ancPanel:not([hidden]),#swpPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
 #ancPanel .tix,#hotPanel .tix,#triPanel .tix{display:grid;grid-template-columns:1fr;gap:6px}
 #ancPanel .tk3,#hotPanel .tk3,#triPanel .tk3{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.95rem;text-align:start}
 #ancPanel .tk3.best,#hotPanel .tk3.best,#triPanel .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
@@ -304,11 +304,12 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
-    <div class="tplBar"><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button></div>
+    <div class="tplBar"><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
     <p class="tplNote">שלישיות שמיועדות לבוא, לפי 200 ההגרלות האחרונות</p>
     <div id="triPanel" class="c3" hidden></div>
     <div id="hotPanel" class="c3" hidden></div>
     <div id="ancPanel" class="c3" hidden></div>
+    <div id="swpPanel" class="c3" hidden></div>
     <div class="mypair">
       <span class="glab">הזוג שלי:</span>
       <select id="myA" aria-label="קלף ראשון"></select><span>+</span><select id="myB" aria-label="קלף שני"></select>
@@ -704,7 +705,7 @@ document.getElementById("myPairBtn").addEventListener("click",()=>{
   let i=myPairs.findIndex(p=>p.a===a&&p.b===b);
   if(i<0){if(myPairs.length>=4)myPairs.shift();myPairs.push({a,b,from:DRAWS[0].n+1});i=myPairs.length-1;}
   saveMine();mySel=i;
-  document.getElementById("myPairClr").hidden=false;preDraw();renderTrack3();triForced={a:RANKS[a],b:RANKS[b]};triSel=0;renderTri();
+  document.getElementById("myPairClr").hidden=false;preDraw();renderTrack3();triForced={a:RANKS[a],b:RANKS[b]};triSel=0;renderTri();renderSwap();
   document.getElementById("preExplain").scrollIntoView({behavior:"smooth",block:"start"});
 });
 document.getElementById("myPairClr").addEventListener("click",()=>{
@@ -799,7 +800,7 @@ function showPlaces(){
 document.getElementById("tplBtn").addEventListener("click",()=>{tplOn=!tplOn;try{localStorage.setItem("chance-tpl",tplOn?"1":"0");}catch(e){}showPlaces();});
 document.getElementById("prePair").addEventListener("click",e=>{
   const b=e.target.closest("button.pchip");if(!b)return;preSel=+b.dataset.i;
-  {const q=preList[preSel];if(q){triForced={a:RANKS[q.a],b:RANKS[q.b]};triSel=0;renderTri();}}
+  {const q=preList[preSel];if(q){triForced={a:RANKS[q.a],b:RANKS[q.b]};triSel=0;renderTri();renderSwap();}}
   document.querySelectorAll(".pchip").forEach((x,i)=>x.classList.toggle("on",i===preSel));showPlaces();
 });
 document.getElementById("places").addEventListener("click",e=>{
@@ -1019,7 +1020,7 @@ function renderTrack(){
 renderTrack();renderTrack3();
 
 // ---- manual result entry ----
-function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();tick();showManNote();}
+function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();tick();showManNote();}
 function showManNote(){const n=document.getElementById("manNote");let t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
   const wait=manualDraws.filter(m=>m.n>last.n+1);if(wait.length)t+=` ${wait.map(m=>`הגרלה ${m.n} (${m.time})`).join(", ")} שמורה וממתינה: היא תיכנס לניתוח ברגע שהגרלה ${last.n+1} תיכנס (רשמית או ידנית).`;
   n.textContent=[t.trim(),manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
@@ -1229,6 +1230,8 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
     const has=re=>re.test(t);
     const tc=t.replace(/צאנס\s*[1-4]/g," ").replace(/\b5[0-9]{4}\b/g," ");
     const cs=cardsIn(tc);
+    if(has(/חילופ|החליפ|מחליפ|החלפ/)&&cs.length>=2&&cs[0]!==cs[1]){const A=cs[0],B=cs[1],s=swapStats(A,B,20000);
+      return `<b>חילופי מקומות: ${A}+${B}</b> (${s.span.toLocaleString("he-IL")} הגרלות)<ul><li>יצאו יחד ${s.N} פעמים</li><li>בהגרלה שאחרי <b>החליפו מקומות ${s.sw} פעמים</b> (${s.N?(s.sw/s.N*100).toFixed(2):0}%, במקרה 1.56%)</li><li>נשארו באותם מקומות: ${s.same}</li><li>רק ${A} עבר למקום של ${B}: ${s.aMove} · רק ${B} עבר למקום של ${A}: ${s.bMove}</li></ul><span class="sm">הפירוט המלא בכפתור "חילופי מקומות" באתר (בוחרים את הזוג למעלה).</span>`;}
     const rawN=raw.replace(/(\d),(\d{3})/g,"$1$2");
     const dm=rawN.match(/הגרלה\s*(?:מספר\s*|מס\s*)?(5\d{4})/)||rawN.match(/(?:מה|מי)\s*(?:יצא|עלה)\s*(?:ב|ב־|בהגרלה\s*)?(5\d{4})/);
     if(dm&&cs.length===0)return aDraw(+dm[1]);
@@ -1572,6 +1575,48 @@ function trkDetail(key){
 }
 document.getElementById("trk3").addEventListener("click",e=>{const b=e.target.closest(".tkb");if(!b)return;trkKey=trkKey===b.dataset.k?null:b.dataset.k;trkDetail(trkKey);if(trkKey)document.getElementById("trkDetail").scrollIntoView({behavior:"smooth",block:"start"});});
 document.getElementById("trkDetail").addEventListener("click",e=>{if(e.target.closest("#trkClose")){trkKey=null;trkDetail(null);document.getElementById("trk3").scrollIntoView({behavior:"smooth",block:"start"});}});
+// ---- position swaps for a pair: when A and B came out, did they swap places in the next draw? ----
+function swapStats(A,B,W){
+  const AD=allDraws().slice(0,(W||20000)+1),T={};let N=0,sw=0,same=0,aMove=0,bMove=0,again=0;const ex=[];
+  for(const k1 of SK)for(const k2 of SK)if(k1!==k2){const key=[k1,k2].sort((u,v)=>SK.indexOf(u)-SK.indexOf(v)).join("");if(!T[key])T[key]={n:0,sw:0,same:0};}
+  for(let i=1;i<AD.length;i++){const d=AD[i],nx=AD[i-1];if(nx.n!==d.n+1)continue;
+    for(const x of SK)for(const y of SK){if(x===y||d[x]!==A||d[y]!==B)continue;
+      N++;const key=[x,y].sort((u,v)=>SK.indexOf(u)-SK.indexOf(v)).join("");T[key].n++;
+      const s=nx[x]===B&&nx[y]===A,m=nx[x]===A&&nx[y]===B;
+      if(s){sw++;T[key].sw++;if(ex.length<6)ex.push({d,nx,x,y});}if(m){same++;T[key].same++;}
+      if(nx[y]===A)aMove++;if(nx[x]===B)bMove++;if(pairIn(nx,A,B))again++;}}
+  return {N,sw,same,aMove,bMove,again,T,ex,span:AD.length-1,from:AD[AD.length-1]?AD[AD.length-1].n:0};
+}
+var swpOpen=false;
+function renderSwap(){
+  const el=document.getElementById("swpPanel"),bt=document.getElementById("swpBtn");if(!el)return;
+  const p=preList[preSel];const lab=p?`${RANKS[p.a]}+${RANKS[p.b]}`:"";
+  bt.textContent=`חילופי מקומות${lab?" ל־"+lab:""}`+(swpOpen?" ▴":" ▾");bt.classList.toggle("on",swpOpen);bt.setAttribute("aria-pressed",swpOpen);el.hidden=!swpOpen;if(!swpOpen)return;
+  if(!p){el.innerHTML='<p class="tplNote">בחר זוג למעלה.</p>';return;}
+  const A=RANKS[p.a],B=RANKS[p.b];
+  if(A===B){el.innerHTML=`<h3 class="tplH">חילופי מקומות: <bdi dir="ltr">${A}+${B}</bdi></h3><p class="tplNote">בזוג כפול שני הקלפים זהים, אז אין משמעות להחלפת מקומות. בחר זוג של שני קלפים שונים.</p>`;return;}
+  if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(swpOpen)renderSwap();});return;}
+  const s=swapStats(A,B,20000);const sn=k=>SUITS.find(x=>x[0]===k);
+  const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
+  const full=d=>`<span class="cg">${SK.map(k=>ck(d[k],k)).join("")}</span>`;
+  const pc=(x,n)=>n?(x/n*100).toFixed(2)+"%":"–";
+  const ratio=s.N?(s.sw/s.N)/(1/64):0;
+  const verdict=s.N<150?"אין מספיק מקרים כדי לקבוע.":ratio>=1.4?"<b>נוהג להחליף מקומות יותר מהממוצע.</b>":ratio<=0.6?"<b>כמעט לא מחליף מקומות</b>, פחות מהממוצע.":"<b>מתנהג כמו כל זוג:</b> מחליף מקומות בערך בקצב של המקרה.";
+  const tpls=Object.entries(s.T).filter(([k,v])=>v.n).sort((u,v)=>v[1].sw/v[1].n-u[1].sw/u[1].n);
+  const last=DRAWS[0],nowPl=[];for(const x of SK)for(const y of SK)if(x!==y&&last[x]===A&&last[y]===B)nowPl.push([x,y]);
+  el.innerHTML=`<h3 class="tplH">חילופי מקומות: <bdi dir="ltr">${A}+${B}</bdi></h3>
+  <p class="tplNote">בכל פעם ש־${A} ו־${B} יצאו באותה הגרלה, בדקתי מה קרה בהגרלה שמיד אחריה: האם הם <b>החליפו מקומות</b> (${A} עבר למקום של ${B} ו־${B} למקום של ${A}), נשארו באותם מקומות, או שרק אחד מהם עבר. ${s.span.toLocaleString("he-IL")} ההגרלות האחרונות (מ־${s.from}).</p>
+  <div class="odds"><div><b>${s.sw} / ${s.N}</b><span>החליפו מקומות · ${pc(s.sw,s.N)} (במקרה 1.56%)</span></div><div><b>${s.same}</b><span>נשארו במקום · ${pc(s.same,s.N)} (במקרה 1.56%)</span></div><div><b>${s.again}</b><span>הזוג חזר בכל מקום · ${pc(s.again,s.N)} (במקרה כ־14%)</span></div></div>
+  <p class="tplNote">${verdict} רק ${A} עבר למקום של ${B}: ${s.aMove} (${pc(s.aMove,s.N)}) · רק ${B} עבר למקום של ${A}: ${s.bMove} (${pc(s.bMove,s.N)}), במקרה 12.5% לכל אחד.</p>
+  <div class="tbl"><table class="pairs"><thead><tr><th>שבלונה</th><th>פעמים</th><th>החליפו</th><th>נשארו</th></tr></thead><tbody>${tpls.map(([k,v])=>`<tr><td>${TPL_NAME[k]}</td><td class="nn">${v.n}</td><td class="nn"><b>${v.sw}</b> <small>${pc(v.sw,v.n)}</small></td><td class="nn">${v.same}</td></tr>`).join("")}</tbody></table></div>
+  ${s.ex.length?`<p class="tplNote"><b>הפעמים האחרונות שהחליפו:</b></p><div class="mini">${s.ex.map(e=>`<div class="mrow"><span class="mn">${e.d.n}→${e.nx.n}</span>${full(e.d)} ← ${full(e.nx)}</div>`).join("")}</div>`:""}
+  ${nowPl.length?`<p class="tplNote"><b>עכשיו:</b> בהגרלה האחרונה (${last.n}) ${A}+${B} יצאו כ־${nowPl.map(([x,y])=>`${ck(A,x)} ${ck(B,y)}`).join(" / ")}. החלפה בהגרלה הבאה = ${nowPl.map(([x,y])=>`<button type="button" class="chT swpT" data-t="${x}:${B}|${y}:${A}">${ck(B,x)} ${ck(A,y)} לטופס</button>`).join(" ")}. סיכוי 1 ל־64.</p>`:`<p class="tplNote">${A}+${B} לא יצאו בהגרלה האחרונה, אז אין כרגע החלפה לבדוק להגרלה הבאה.</p>`}
+  <div class="reality">החלפת מקומות של זוג מסוים קורה בערך פעם ב־64 הופעות שלו, בכל זוג. כשזוג מסוים מראה אחוז גבוה יותר, זה בדרך כלל על כמה עשרות פעמים בלבד.</div>`;
+}
+document.getElementById("swpBtn").addEventListener("click",()=>{swpOpen=!swpOpen;renderSwap();if(swpOpen)document.getElementById("swpPanel").scrollIntoView({behavior:"smooth",block:"start"});});
+document.getElementById("swpPanel").addEventListener("click",e=>{const b=e.target.closest(".swpT");if(!b)return;
+  mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
+  save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});});
 // ---- full draw history for the chat (static archive + the live draws) ----
 var HIST=null,histLoading=null;
 function loadHist(){
@@ -1592,6 +1637,7 @@ function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);
     ["שלישיות להגרלה הבאה",()=>{if(!triOpen){triOpen=true;renderTri();}return document.getElementById("triBtn");}],
     ["שלישיות חמות להגרלה הבאה",()=>{if(!hotOpen){hotOpen=true;renderHot();}return document.getElementById("hotBtn");}],
     ["עוגן + 2 שותפים",()=>{if(!ancOpen){ancOpen=true;renderAnchor();}return document.getElementById("ancBtn");}],
+    ["חילופי מקומות לזוגות",()=>{if(!swpOpen){swpOpen=true;renderSwap();}return document.getElementById("swpBtn");}],
     ["שבלונות לזוגות",()=>document.getElementById("tplBtn")],
     ["צ'אנס 3: זוג + קלף שלישי",()=>document.getElementById("preC3")],
     ["מעקב השיטה ופגיעות",()=>document.getElementById("trackSec")],
