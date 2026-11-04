@@ -246,7 +246,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 /* ---- triples ---- */
 .triExp .triSteps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
 .triExp .triSteps ul{margin:4px 0;padding-inline-start:16px;font-size:.85rem}
-#triPanel:not([hidden]),#ancPanel:not([hidden]),#swpPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
+#triPanel:not([hidden]),#mypPanel:not([hidden]),#ancPanel:not([hidden]),#swpPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
 #ancPanel .tix,#hotPanel .tix,#triPanel .tix{display:grid;grid-template-columns:1fr;gap:6px}
 #ancPanel .tk3,#hotPanel .tk3,#triPanel .tk3{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.95rem;text-align:start}
 #ancPanel .tk3.best,#hotPanel .tk3.best,#triPanel .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
@@ -319,8 +319,9 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
-    <div class="tplBar"><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
+    <div class="tplBar"><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">התבניות שלי להגרלה הבאה ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
     <p class="tplNote">שלישיות שמיועדות לבוא, לפי 200 ההגרלות האחרונות</p>
+    <div id="mypPanel" class="c3" hidden></div>
     <div id="triPanel" class="c3" hidden></div>
     <div id="hotPanel" class="c3" hidden></div>
     <div id="ancPanel" class="c3" hidden></div>
@@ -872,8 +873,8 @@ function renderTrack3(){
     const win=DRAWS.slice(i+1,i+6),L=pickAll(win);if(!L.length)continue;const d=DRAWS[i];
     const P=L.map(p=>[RANKS[p.a],RANKS[p.b]]),H=L.map(p=>thirdHot(p,win)),K=L.map(p=>thirdLinked(p,win));
     const LP=linkPairs(win,L);const TK=L.map(p=>tplFor(p,DRAWS.slice(i+1)).keys);
-    const AP=anchorPred(DRAWS.slice(i+1)),TA=triAnalysis(DRAWS.slice(i+1),null,true),HTF=hotTri(DRAWS.slice(i+1)),HT=HTF.map(x=>x.t);
-    R3.push({d,det:{L,H,K,LP,TK,AP,TA,HT:HTF},anc:AP?hasCards(d,AP.tri):false,eanc:AP?0.0380859375:0,tri:TA?triHit(d,TA.tix):false,etri:TA?chanceTix(TA.tix):0,ht:HT.length?triHit(d,HT):false,eht:HT.length?chanceTix(HT):0,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),tpl:L.some((p,j)=>tplHit(d,p,TK[j])),et:chanceTpl(L.map((p,j)=>[{a:p.a,b:p.b},TK[j]])),
+    const MP=myPatterns(DRAWS.slice(i+1)),AP=anchorPred(DRAWS.slice(i+1)),TA=triAnalysis(DRAWS.slice(i+1),null,true),HTF=hotTri(DRAWS.slice(i+1)),HT=HTF.map(x=>x.t);
+    R3.push({d,ar:MP&&MP.area.length>=3?MP.area.filter(r=>SK.some(k=>d[k]===r)).length>=3:false,ear:MP&&MP.area.length>=3?pAtLeast(MP.area,3):0,hasAr:!!(MP&&MP.area.length>=3),cv:MP&&MP.cands[0]?hasCards(d,MP.cands[0].tri):false,ecv:MP&&MP.cands[0]?0.0380859375:0,det:{MP,L,H,K,LP,TK,AP,TA,HT:HTF},anc:AP?hasCards(d,AP.tri):false,eanc:AP?0.0380859375:0,tri:TA?triHit(d,TA.tix):false,etri:TA?chanceTix(TA.tix):0,ht:HT.length?triHit(d,HT):false,eht:HT.length?chanceTix(HT):0,lp:LP.some(p=>pairIn(d,RANKS[p.a],RANKS[p.b])),elp:LP.length?chanceAny(LP):0,hasLp:LP.length>0,pair:P.some(([A,B])=>pairIn(d,A,B)),hot:P.some(([A,B],j)=>tripHit(d,A,B,H[j])),lnk:P.some(([A,B],j)=>tripHit(d,A,B,K[j])),tpl:L.some((p,j)=>tplHit(d,p,TK[j])),et:chanceTpl(L.map((p,j)=>[{a:p.a,b:p.b},TK[j]])),
       ep:chanceAny(L),eh:chanceTrip(P.map(([A,B],j)=>[A,B,H[j]]).filter(x=>x[2])),el:chanceTrip(P.map(([A,B],j)=>[A,B,K[j]]).filter(x=>x[2]))});
   }
   lastR3=R3;
@@ -887,7 +888,7 @@ function renderTrack3(){
     mineBox=`<div class="tk"><span class="lb">הזוגות שלי (${myPairs.map(m=>RANKS[m.a]+"+"+RANKS[m.b]).join(", ")})</span><span class="big">${h} / ${n}</span><span class="cmp">${n?`פגיעה ${(h/n*100).toFixed(1)}% · במקרה ${(e/n*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></div>`;}
   const LR=R3.filter(x=>x.hasLp),lh=LR.filter(x=>x.lp).length,le=LR.reduce((s,x)=>s+x.elp,0);
   const lbox=`<button type="button" class="tk tkb" data-k="lp" aria-expanded="false"><span class="lb">זוגות שעלולים להתחבר · <u>פירוט</u></span><span class="big">${lh} / ${LR.length}</span><span class="cmp">${LR.length?`פגיעה ${(lh/LR.length*100).toFixed(1)}% · במקרה ${(le/LR.length*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></button>`;
-  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+box("שלישיות (6 טפסי צ'אנס 3)","tri","etri")+box("שלישיות חמות (6 טפסים)","ht","eht")+box("עוגן + 2 שותפים (שלישייה בכל סדר)","anc","eanc")+mineBox;
+  document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+box("שלישיות (6 טפסי צ'אנס 3)","tri","etri")+box("שלישיות חמות (6 טפסים)","ht","eht")+box("עוגן + 2 שותפים (שלישייה בכל סדר)","anc","eanc")+box("התבניות שלי: שלישייה מובילה","cv","ecv")+box("אזור עניין: 3 קלפים מהאזור","ar","ear")+mineBox;
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
   if(typeof trkKey!=="undefined"&&trkKey)setTimeout(()=>trkDetail(trkKey),0);
   document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td><td>${m(x.tpl)}</td></tr>`).join(""):`<tr><td colspan="5" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
@@ -1035,7 +1036,7 @@ function renderTrack(){
 renderTrack();renderTrack3();
 
 // ---- manual result entry ----
-function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();tick();showManNote();}
+function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();renderMyP();tick();showManNote();}
 function showManNote(){const n=document.getElementById("manNote");let t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
   const wait=manualDraws.filter(m=>m.n>last.n+1);if(wait.length)t+=` ${wait.map(m=>`הגרלה ${m.n} (${m.time})`).join(", ")} שמורה וממתינה: היא תיכנס לניתוח ברגע שהגרלה ${last.n+1} תיכנס (רשמית או ידנית).`;
   n.textContent=[t.trim(),manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
@@ -1073,7 +1074,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="900dc22155";
+const BUILD="7b37b49707";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1545,9 +1546,9 @@ function trkDetail(key){
   const pairStats=(x,A,B)=>{const i=DRAWS.indexOf(x.d);const W=DRAWS.slice(i+1,i+1001);const n=W.filter(d=>pairIn(d,A,B)).length;const li=W.findIndex(d=>pairIn(d,A,B));
     return `ב־1,000 ההגרלות שלפני: ${n} פעמים (בממוצע ${A===B?79:144}). ${li<0?"":li===0?"עלה גם בהגרלה שמיד לפני.":`לפני כן עלה לאחרונה ${li+1} הגרלות קודם (${W[li].n}).`}`;};
   const where=(d,cards)=>SK.filter(k=>cards.includes(d[k]));
-  const TITLE={lp:"זוגות שעלולים להתחבר",pair:"זוגות השיטה",hot:"זוג + קלף חם",lnk:"זוג + קלף מקושר",tpl:"זוגות בצמצום ל־2 שבלונות",tri:"שלישיות (6 טפסי צ'אנס 3)",ht:"שלישיות חמות (6 טפסים)",anc:"עוגן + 2 שותפים"};
-  const EXP={lp:"elp",pair:"ep",hot:"eh",lnk:"el",tpl:"et",tri:"etri",ht:"eht",anc:"eanc"};
-  const rows=R3.filter(x=>key!=="lp"||x.hasLp);
+  const TITLE={cv:"התבניות שלי: שלישייה מובילה",ar:"אזור עניין: 3 קלפים מהאזור",lp:"זוגות שעלולים להתחבר",pair:"זוגות השיטה",hot:"זוג + קלף חם",lnk:"זוג + קלף מקושר",tpl:"זוגות בצמצום ל־2 שבלונות",tri:"שלישיות (6 טפסי צ'אנס 3)",ht:"שלישיות חמות (6 טפסים)",anc:"עוגן + 2 שותפים"};
+  const EXP={cv:"ecv",ar:"ear",lp:"elp",pair:"ep",hot:"eh",lnk:"el",tpl:"et",tri:"etri",ht:"eht",anc:"eanc"};
+  const rows=R3.filter(x=>(key!=="lp"||x.hasLp)&&(key!=="ar"||x.hasAr));
   const n=rows.length,h=rows.filter(x=>x[key]).length,e=rows.reduce((s,x)=>s+x[EXP[key]],0);
   const blocks=rows.filter(x=>x[key]).map(x=>{const D=x.det,d=x.d;let offer="",why="",hl=null;
     if(key==="pair"||key==="lp"){
@@ -1578,6 +1579,9 @@ function trkDetail(key){
         const src=key==="tri"?D.TA.P:D.HT.find(z=>z.t===t).R.P;
         why=`<li>${cg(t.cards)} פגע. נבנה מהזוג ${pn(src.a,src.b)} (חזר בהגרלה שאחרי ${src.again} מתוך ${src.n} בחודש), בשבלונה שהגיעה ${t.t.after} פעמים אחרי הזוג, ועם ${ck(t.comp[1],t.comp[0])} שנכנס ${t.compN} מתוך ${t.selN}.</li>`;}
       else{const near=T.map(t=>({t,k:t.cards.filter(([k,r])=>d[k]===r).length})).sort((u,v)=>v.k-u.k)[0];if(near&&near.k>=2)why=`<li class="missm">הכי קרוב: ${cg(near.t.cards)} עם ${near.k} מתוך 3 קלפים במקום.</li>`;}
+    } else if(key==="cv"||key==="ar"){const M=D.MP;if(M){
+      if(key==="cv"){const c=M.cands[0];offer=`<bdi dir="ltr">${c.k}</bdi> (מ${c.src})`;hl=(k,r)=>c.tri.includes(r);why=`<li>השלישייה ${c.k} יצאה. ציון ההתכנסות שלה היה ${c.s} (סך התבניות של שלושת הקלפים): ${c.tri.map(r=>`${r} (${(M.why[r]||[]).join(", ")})`).join(" · ")}.</li>`;}
+      else{offer=`אזור: ${M.area.join(", ")}`;const got=M.area.filter(r=>SK.some(k=>d[k]===r));hl=(k,r)=>M.area.includes(r);why=`<li>מתוך האזור (${M.area.join(", ")}) יצאו ${got.length}: ${got.join(", ")}. האזור נבנה מ־${M.L3.map(z=>z.n).join(", ")}.</li>`;}}
     } else if(key==="anc"){
       const A=D.AP;if(A){const hit=hasCards(d,A.tri);offer=`עוגן ${A.a} + ${A.p.join(", ")} → <bdi dir="ltr">${A.tri.join(" ")}</bdi>${hit?" <b>✓</b>":""}`;
         const got=A.tri.filter(r=>SK.some(k=>d[k]===r));hl=(k,r)=>A.tri.includes(r);
@@ -1673,6 +1677,61 @@ document.getElementById("swpBtn").addEventListener("click",()=>{swpOpen=!swpOpen
 document.getElementById("swpPanel").addEventListener("click",e=>{const b=e.target.closest(".swpT");if(!b)return;
   mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
   save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});});
+// ---- "my patterns": area of interest, edges + middle, anchors, edge repeats -> where they converge ----
+var _pAL;
+function pAtLeast(set,m){if(!_pAL)_pAL={};const key=set.slice().sort().join(",")+"|"+m;if(_pAL[key]!=null)return _pAL[key];let ok=0;
+  for(let x=0;x<4096;x++){const v=new Set([RANKS[x&7],RANKS[(x>>3)&7],RANKS[(x>>6)&7],RANKS[(x>>9)&7]]);let c=0;for(const r of set)if(v.has(r))c++;if(c>=m)ok++;}
+  return _pAL[key]=ok/4096;}
+function myPatterns(base){
+  if(base.length<6)return null;const L3=base.slice(0,3),last=base[0],prev=base[1],rk=r=>RANKS.indexOf(r);
+  const cnt={};L3.forEach(d=>new Set(SK.map(k=>d[k])).forEach(r=>cnt[r]=(cnt[r]||0)+1));
+  const area=Object.keys(cnt).filter(r=>cnt[r]>=2).sort((u,v)=>cnt[v]-cnt[u]||rk(u)-rk(v));
+  const em=[["S",last.S],["H",prev.H],["D",prev.D],["C",last.C]];
+  const ec={};L3.forEach(d=>[d.S,d.C].forEach(r=>ec[r]=(ec[r]||0)+1));const edgeRep=Object.keys(ec).filter(r=>ec[r]>=2);
+  const anc={};for(const s of ["S","H","D"]){const a=anchorPred(base,s);if(a)anc[s]=a;}
+  // score every card by how many patterns point at it
+  const sc={},why={};const add=(r,w)=>{sc[r]=(sc[r]||0)+1;(why[r]=why[r]||[]).push(w);};
+  area.forEach(r=>add(r,"אזור"));[...new Set(em.map(x=>x[1]))].forEach(r=>add(r,"קצוות+אמצע"));edgeRep.forEach(r=>add(r,"קצה חוזר"));
+  for(const s in anc)anc[s].tri.forEach(r=>add(r,"עוגן ב"+SUITS.find(x=>x[0]===s)[2]));
+  const ranked=Object.keys(sc).sort((u,v)=>sc[v]-sc[u]||(cnt[v]||0)-(cnt[u]||0)||rk(u)-rk(v));
+  // candidate triples: anchor triples, edges+middle (distinct cards), area combos -> score by card scores
+  const cands=[];const seen=new Set();const push=(tri,src,tix)=>{const k=tri.slice().sort((u,v)=>rk(u)-rk(v)).join(" ");if(seen.has(k))return;seen.add(k);cands.push({k,tri,src,tix,s:tri.reduce((s,r)=>s+(sc[r]||0),0)});};
+  for(const s of ["S","D","H"])if(anc[s])push(anc[s].tri,"עוגן ב"+SUITS.find(x=>x[0]===s)[2],anc[s].tix[0].cards);
+  const emR=[...new Set(em.map(x=>x[1]))];if(emR.length>=3){for(let i=0;i<emR.length;i++)for(let j=i+1;j<emR.length;j++)for(let k=j+1;k<emR.length;k++){const tri=[emR[i],emR[j],emR[k]];push(tri,"קצוות+אמצע",em.filter(([kk,r])=>tri.includes(r)).filter((x,ix,arr)=>arr.findIndex(y=>y[1]===x[1])===ix).slice(0,3));}}
+  for(let i=0;i<area.length;i++)for(let j=i+1;j<area.length;j++)for(let k=j+1;k<area.length;k++)push([area[i],area[j],area[k]],"אזור",null);
+  cands.sort((u,v)=>v.s-u.s);
+  // placement for triples without one: each card in the suit it came most in the last 200
+  const H=base.slice(0,200),pos={};for(const d of H)for(const k of SK)pos[k+d[k]]=(pos[k+d[k]]||0)+1;
+  for(const c of cands)if(!c.tix){let best=null;for(const ks of [["S","H","D"],["S","H","C"],["S","D","C"],["H","D","C"]])for(const pm of [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]]){const cards=ks.map((k,j)=>[k,c.tri[pm[j]]]);const v=cards.reduce((s,[k,r])=>s+(pos[k+r]||0),0);if(!best||v>best.v)best={v,cards};}c.tix=best.cards;}
+  return {L3,area,cnt,em,ec,edgeRep,anc,sc,why,ranked,cands:cands.slice(0,4),last,prev};
+}
+var mypOpen=false;
+function renderMyP(){
+  const el=document.getElementById("mypPanel"),bt=document.getElementById("mypBtn");if(!el)return;
+  bt.textContent="התבניות שלי להגרלה הבאה"+(mypOpen?" ▴":" ▾");bt.classList.toggle("on",mypOpen);bt.setAttribute("aria-pressed",mypOpen);el.hidden=!mypOpen;if(!mypOpen)return;
+  const M=myPatterns(DRAWS);if(!M){el.innerHTML="";return;}
+  const sn=k=>SUITS.find(s=>s[0]===k);const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
+  const cg=cs=>`<span class="cg">${cs.slice().sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>`;
+  const row=(d,hl)=>`<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${SK.map(k=>{const s=sn(k);return `<span class="${s[3]?"r ":""}${hl(k,d[k])?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span></div>`;
+  const fill=cs=>`<button type="button" class="chT myF" data-t="${cs.map(c=>c.join(":")).join("|")}">${cg(cs)} לטופס</button>`;
+  const ancTxt=Object.entries(M.anc).map(([s,a])=>`<li><b>עוגן ב${sn(s)[2]}: ${a.a}</b> + ${a.p.join(", ")} ← ${fill(a.tix[0].cards)} <small>(${a.st.keep?`ה־${a.a} נוטה להישאר ב${sn(s)[2]}`:`ה־${a.a} עובר הכי הרבה ל${sn(a.st.best)[2]}`})</small></li>`).join("");
+  el.innerHTML=`<h3 class="tplH">התבניות שלי להגרלה הבאה</h3>
+  <p class="tplNote">כל התבניות שמצאנו יחד, מחושבות מחדש אחרי כל הגרלה, ובסוף איפה הן מתכנסות.</p>
+  <ol class="triSteps">
+   <li><b>אזור עניין (3 ההגרלות האחרונות):</b> קלפים שחזרו פעמיים ומעלה: <b>${M.area.map(r=>`${r} (${M.cnt[r]})`).join(", ")||"אין"}</b>.<div class="mini">${M.L3.map(d=>row(d,(k,r)=>M.area.includes(r))).join("")}</div></li>
+   <li><b>קצוות + אמצע:</b> הקצוות של ${M.last.n} (${ck(M.last.S,"S")} … ${ck(M.last.C,"C")}) והאמצע של ${M.prev.n} (${ck(M.prev.H,"H")} ${ck(M.prev.D,"D")}) ← <b><bdi dir="ltr">${M.em.map(x=>x[1]).join(" ")}</bdi></b>. צ'אנס 4 במיקומים שלהם: ${fill(M.em)}</li>
+   <li><b>עוגן + 2 שותפים:</b><ul>${ancTxt}</ul></li>
+   <li><b>קלפי קצוות חוזרים:</b> ${Object.entries(M.ec).sort((u,v)=>v[1]-u[1]).map(([r,n])=>`${r}${n>1?` <b>(${n})</b>`:""}`).join(", ")}.</li>
+  </ol>
+  <div class="ancStat"><b>איפה התבניות מתכנסות:</b> ${M.ranked.slice(0,5).map(r=>`<b>${r}</b> ${M.sc[r]===1?"בתבנית אחת":`ב־${M.sc[r]} תבניות`} <small>(${M.why[r].join(", ")})</small>`).join(" · ")}
+   <br><b>השלישיות המובילות:</b><ul>${M.cands.map((c,i)=>`<li>${i===0?"<b>":""}<bdi dir="ltr">${c.k}</bdi>${i===0?"</b>":""} (ציון ${c.s} = סך התבניות של הקלפים, מ${c.src}) ${fill(c.tix)}</li>`).join("")}</ul></div>
+  <div class="reality">לכל טופס צ'אנס 3 יש 1 ל־512, ולצ'אנס 4 1 ל־4,096. בבדיקה על 1,000 הגרלות, "3 קלפים מהאזור בהגרלה הבאה" קרה 103 פעמים מול 113 במקרה, ו"קצוות + אמצע" 6 פעמים מול 4. המעקב למטה סופר את התבניות האלה מעכשיו.</div>`;
+}
+document.getElementById("mypBtn").addEventListener("click",()=>{mypOpen=!mypOpen;renderMyP();if(mypOpen)document.getElementById("mypPanel").scrollIntoView({behavior:"smooth",block:"start"});});
+document.getElementById("mypPanel").addEventListener("click",e=>{const b=e.target.closest(".myF");if(!b)return;
+  mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
+  save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});});
+renderMyP();
 // ---- full draw history for the chat (static archive + the live draws) ----
 var HIST=null,histLoading=null;
 function loadHist(){
@@ -1690,6 +1749,7 @@ function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);
   const items=[
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
+    ["התבניות שלי להגרלה הבאה",()=>{if(!mypOpen){mypOpen=true;renderMyP();}return document.getElementById("mypBtn");}],
     ["שלישיות להגרלה הבאה",()=>{if(!triOpen){triOpen=true;renderTri();}return document.getElementById("triBtn");}],
     ["שלישיות חמות להגרלה הבאה",()=>{if(!hotOpen){hotOpen=true;renderHot();}return document.getElementById("hotBtn");}],
     ["עוגן + 2 שותפים",()=>{if(!ancOpen){ancOpen=true;renderAnchor();}return document.getElementById("ancBtn");}],
