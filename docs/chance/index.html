@@ -224,6 +224,9 @@ table.pairs td.nn{font-family:var(--mono)}
 .navMenu button{text-align:start;background:none;border:0;border-radius:10px;padding:11px 12px;font-family:var(--body);font-size:.98rem;color:var(--felt-ink);cursor:pointer}
 .navMenu button+button{border-top:1px solid rgba(255,255,255,.12);border-radius:0}
 .navMenu button:hover,.navMenu button:focus-visible{background:rgba(0,0,0,.22);border-radius:10px}
+.ancS button{font-family:var(--body);cursor:pointer;color:var(--ink)}
+.ancS button .r{color:var(--red)}
+.ancS button.now .r{color:var(--felt-ink)}
 .trb.now{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
 /* ---- tracking detail ---- */
 button.tk{font-family:var(--body);text-align:start;background:var(--surface);color:var(--ink);cursor:pointer}
@@ -1068,7 +1071,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="8916a7f75b";
+const BUILD="49a39eb1f4";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1259,8 +1262,8 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden){refreshDr
       const L50=DRAWS.slice(0,50);const rows=SUITS.map(([k,sym,name])=>`${ck(r,k)} ${L50.filter(d=>d[k]===r).length}`).join(" · ");
       const partner=RANKS.map((x,i)=>{let a=RANKS.indexOf(r),b=i;if(a>b)[a,b]=[b,a];return {p:{a,b},n:DRAWS.slice(0,1000).filter(d=>pairIn(d,RANKS[a],RANKS[b])).length,e:a===b?78.9:144};}).sort((u,v)=>v.n/v.e-u.n/u.e)[0];
       return `<b>הקלף ${r}</b> ב־50 ההגרלות האחרונות, לפי צורה: ${rows}.<br>השותף שעלה איתו הכי הרבה ב־1,000 ההגרלות האחרונות: ${pn(partner.p)} (${partner.n} פעמים).<span class="sm">כתוב שני קלפים, למשל "${r} ו־K", כדי לבדוק זוג.</span>`;}
-    if(has(/עוגן|שותפים/)){const X=anchorPred(DRAWS);if(!X)return "אין מספיק נתונים.";
-      return `<b>עוגן + 2 שותפים</b><br>העוגן: <b>${X.a}</b> (בעלה בהגרלה ${X.from}). השותפים: <b>${X.p.join(" ו־")}</b> (${X.p.map(x=>X.c[x]).join(" ו־")} פעמים איתו ב־5 ההגרלות האחרונות).<ul>${X.tix.slice(0,3).map(q=>`<li>${hand(q.cards)}${tBtn(q.cards)}</li>`).join("")}</ul><span class="sm">הפירוט המלא בכפתור "עוגן + 2 שותפים" באתר.</span>`;}
+    if(has(/עוגן|שותפים/)){const X=anchorPred(DRAWS,has(/בלב|ללב| לב/)?"H":has(/ביהלום|ליהלום|יהלום/)?"D":has(/בתלתן|לתלתן|תלתן|תילתן/)?"C":"S");if(!X)return "אין מספיק נתונים.";
+      return `<b>עוגן + 2 שותפים</b><br>העוגן: <b>${X.a}</b> (ב${SUITS.find(s=>s[0]===X.suit)[2]} בהגרלה ${X.from}). השותפים: <b>${X.p.join(" ו־")}</b> (${X.p.map(x=>X.c[x]).join(" ו־")} פעמים איתו ב־5 ההגרלות האחרונות).<ul>${X.tix.slice(0,3).map(q=>`<li>${hand(q.cards)}${tBtn(q.cards)}</li>`).join("")}</ul><span class="sm">הפירוט המלא בכפתור "עוגן + 2 שותפים" באתר.</span>`;}
     if(has(/שלישיות חמות|שלישייה חמה|השלישיות החמות/)){const L=hotTri(DRAWS);if(!L.length)return "אין מספיק נתונים.";
       return `<b>6 השלישיות החמות להגרלה הבאה</b><ul>${L.map(x=>`<li>${hand(x.t.cards)}${tBtn(x.t.cards)}<br><span class="sm" style="display:inline">מהזוג ${pn({a:RANKS.indexOf(x.R.P.a),b:RANKS.indexOf(x.R.P.b)})} · יצאה בדיוק כך ${x.exact} פעמים החודש</span></li>`).join("")}</ul><span class="sm">הסבר מלא בכפתור "שלישיות חמות להגרלה הבאה" באתר. לכל טופס 1 ל־512.</span>`;}
     if(has(/שלישי/)&&!c3){const R=triAnalysis(DRAWS);if(!R)return "אין מספיק נתונים.";
@@ -1464,8 +1467,8 @@ document.getElementById("hotPanel").addEventListener("click",e=>{
 });
 renderHot();
 // ---- anchor + 2 partners: the ♠ card of the last draw "comes up" and brings 2 cards that came with it lately ----
-function anchorPred(base){
-  const L=base.slice(0,5);if(L.length<2)return null;const a=L[0].S;const c={},last={},seen={};
+function anchorPred(base,suit){
+  suit=suit||"S";const L=base.slice(0,5);if(L.length<2)return null;const a=L[0][suit];const c={},last={},seen={};
   for(const d of L){const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)continue;v.splice(i,1);
     for(const x of new Set(v)){if(x===a)continue;c[x]=(c[x]||0)+1;if(!last[x])last[x]=d.n;(seen[x]=seen[x]||[]).push(d.n);}}
   const ranked=Object.keys(c).sort((u,v)=>c[v]-c[u]||last[v]-last[u]);
@@ -1482,32 +1485,35 @@ function anchorPred(base){
       tix.push({cards,exact,sc});}
   tix.sort((x,y)=>y.exact-x.exact||y.sc-x.sc);
   const tieN=ranked.filter(x=>c[x]===c[p[1]]).length;
-  return {a,from:L[0].n,p,c,ranked,seen,tieN,L,tix:tix.slice(0,6),tri};
+  return {a,suit,from:L[0].n,p,c,ranked,seen,tieN,L,tix:tix.slice(0,6),tri};
 }
-var ancOpen=false;
+var ancOpen=false,ancSuit="S";
 function renderAnchor(){
   const el=document.getElementById("ancPanel"),bt=document.getElementById("ancBtn");if(!el)return;
   bt.textContent="עוגן + 2 שותפים"+(ancOpen?" ▴":" ▾");bt.classList.toggle("on",ancOpen);bt.setAttribute("aria-pressed",ancOpen);el.hidden=!ancOpen;if(!ancOpen)return;
-  const A=anchorPred(DRAWS);if(!A){el.innerHTML='<p class="tplNote">העוגן לא יצא עם מספיק קלפים אחרים ב־5 ההגרלות האחרונות.</p>';return;}
+  const SUITBAR=`<div class="tribars ancS">${SUITS.map(([k,sym,name,red])=>`<button type="button" class="trb${k===ancSuit?" now":""}" data-s="${k}" aria-pressed="${k===ancSuit}"><span class="${red?"r":""}">${sym}</span> עוגן ב${name}</button>`).join("")}</div>`;
+  const A=anchorPred(DRAWS,ancSuit);if(!A){el.innerHTML=SUITBAR+'<p class="tplNote">העוגן לא יצא עם מספיק קלפים אחרים ב־5 ההגרלות האחרונות.</p>';return;}
+  const SN=SUITS.find(s=>s[0]===A.suit);
   const sn=k=>SUITS.find(s=>s[0]===k);
   const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
   const cg=cs=>`<span class="cg">${cs.slice().sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>`;
   const rows=A.L.map(d=>{const v=SK.map(k=>d[k]);const on=v.includes(A.a);return `<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${SK.map(k=>{const s=sn(k),hl=on&&(d[k]===A.a||A.p.includes(d[k]));return `<span class="${s[3]?"r ":""}${hl?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${on?'<span class="mt">✓</span>':""}</div>`;}).join("");
   const exp=chanceTix(A.tix);
-  el.innerHTML=`<h3 class="tplH">עוגן + 2 שותפים להגרלה הבאה</h3>
-  <p class="tplNote"><b>הרוטינה:</b> הקלף הראשון (בעלה ♠) של ההגרלה האחרונה "עולה" להגרלה הבאה, ומביא איתו 2 קלפים שיצאו איתו הכי הרבה ב־5 ההגרלות האחרונות.</p>
+  el.innerHTML=`<h3 class="tplH">עוגן + 2 שותפים להגרלה הבאה</h3>${SUITBAR}
+  <p class="tplNote"><b>הרוטינה:</b> הקלף ב${SN[2]} ${SN[1]} של ההגרלה האחרונה "עולה" להגרלה הבאה, ומביא איתו 2 קלפים שיצאו איתו הכי הרבה ב־5 ההגרלות האחרונות.</p>
   <ol class="triSteps">
-   <li><b>העוגן: ${A.a}</b>. יצא כ־${ck(A.a,"S")} בהגרלה האחרונה (${A.from}).</li>
-   <li><b>השותפים: ${A.p.join(" ו־")}</b>. ב־5 ההגרלות האחרונות ה־${A.a} יצא עם: ${A.ranked.slice(0,5).map(x=>`<b>${x}</b> ${A.c[x]} פעמים (${A.seen[x].join(", ")})`).join(" · ")}.${A.tieN>1?` <b>תיקו של ${A.c[A.p[1]]}</b> על המקום השני, ונבחר מי שיצא עם העוגן מאוחר יותר.`:""}</li>
+   <li><b>העוגן: ${A.a}</b>. יצא כ־${ck(A.a,A.suit)} בהגרלה האחרונה (${A.from}).</li>
+   <li><b>השותפים: ${A.p.join(" ו־")}</b>. ב־5 ההגרלות האחרונות ה־${A.a} יצא עם: ${A.ranked.slice(0,5).map(x=>`<b>${x}</b> ${A.c[x]} פעמים (${A.seen[x].join(", ")})`).join(" · ")}.${(()=>{const v=A.c[A.p[1]],inP=A.p.filter(x=>A.c[x]===v).length;return A.tieN>inP?` <b>תיקו של ${v}</b> על המקום השני בין ${A.ranked.filter(x=>A.c[x]===v).join(", ")}, ונבחר מי שיצא עם העוגן מאוחר יותר.`:inP===2?` <b>תיקו של ${v}</b> בין ${A.p.join(" ו־")}, ושניהם נבחרו.`:"";})()}</li>
    <li><b>השלישייה: <bdi dir="ltr">${A.tri.join(" ")}</bdi></b>. המיקומים למטה מסודרים לפי כמה פעמים כל קלף יצא בכל צורה ב־200 ההגרלות האחרונות (ומי שיצאה בדיוק כך קודם).</li>
   </ol>
   <div class="mini">${rows}</div>
   <div class="tix">${A.tix.map((t,i)=>`<button type="button" class="tk3${i===0?" best":""}" data-t="${t.cards.map(q=>q.join(":")).join("|")}">${cg(t.cards)}<small>${t.exact?`יצאה בדיוק כך ${t.exact} פעמים החודש · `:""}לטופס</small></button>`).join("")}</div>
   <div class="odds"><div><b>3.8%</b><span>שהשלישייה תצא בכל סדר</span></div><div><b>${(exp*100).toFixed(1)}%</b><span>שאחד מ־${A.tix.length} הטפסים יזכה</span></div></div>
-  <div class="reality">בבדיקה על כל הארכיון (49,510 הגרלות) העוגן חזר ב־41.5% מהפעמים (במקרה 41.4%), והעוגן עם שני השותפים יצאו יחד 1,900 פעמים מול 1,863 במקרה. המעקב למטה סופר את הרוטינה בנפרד.</div>`;
+  <div class="reality">${A.suit==="S"?"בבדיקה על כל הארכיון (49,510 הגרלות) העוגן בעלה חזר ב־41.5% מהפעמים (במקרה 41.4%), והעוגן עם שני השותפים יצאו יחד 1,900 פעמים מול 1,863 במקרה.":A.suit==="H"?"בבדיקה על כל הארכיון (49,510 הגרלות) העוגן בלב חזר ב־41.3% מהפעמים (במקרה 41.4%), והעוגן עם שני השותפים יצאו יחד 1,911 פעמים מול 1,864 במקרה. ב־1,000 ההגרלות האחרונות: 45 מול 38.":"לכל שלישייה יש 3.8% לצאת בכל סדר, בכל שיטת בחירה."} המעקב למטה סופר את העוגן בעלה.</div>`;
 }
 document.getElementById("ancBtn").addEventListener("click",()=>{ancOpen=!ancOpen;renderAnchor();if(ancOpen)document.getElementById("ancPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 document.getElementById("ancPanel").addEventListener("click",e=>{
+  const s=e.target.closest(".ancS button");if(s){ancSuit=s.dataset.s;renderAnchor();return;}
   const b=e.target.closest("button.tk3");if(!b)return;
   mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
   save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
