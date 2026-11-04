@@ -218,6 +218,8 @@ table.pairs td.nn{font-family:var(--mono)}
 .tplNote{font-size:.85rem;color:var(--muted);line-height:1.5}
 .tplNote b{color:var(--ink)}
 /* ---- triples ---- */
+.triExp .triSteps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
+.triExp .triSteps ul{margin:4px 0;padding-inline-start:16px;font-size:.85rem}
 #triPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
 #triPanel .tix{display:grid;grid-template-columns:1fr;gap:6px}
 #triPanel .tk3{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.95rem;text-align:start}
@@ -1033,7 +1035,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="c2fe39cd49";
+const BUILD="a7ad916567";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1268,13 +1270,45 @@ function triAnalysis(base){ // base[0] = the newest draw; looks at the 200 draws
   const mine=mineK.map(k=>({k,n:cnt.get(k)})).sort((u,v)=>v.n-u.n);
   const bar=mine[0].n;
   const extra=[...cnt.entries()].filter(([k,n])=>!mineK.includes(k)&&n>=bar).sort((u,v)=>v[1]-u[1]).slice(0,4).map(([k,n])=>({k,n}));
-  return {P,fromNow,tl:tl.slice(0,6),tix,mine,extra,H};
+  return {P,fromNow,cands:cand,tl:tl.slice(0,6),tix,mine,extra,H};
 }
 function triHit(d,tix){return tix.some(t=>t.cards.every(([k,r])=>d[k]===r));}
 var _triExp;
 function chanceTix(tix){if(!_triExp)_triExp=new Map();const key=tix.map(t=>t.cards.map(q=>q.join("")).join("|")).join(",");if(_triExp.has(key))return _triExp.get(key);
   let ok=0;for(let m=0;m<4096;m++){const d={S:RANKS[m&7],H:RANKS[(m>>3)&7],D:RANKS[(m>>6)&7],C:RANKS[(m>>9)&7]};if(triHit(d,tix))ok++;}
   const v=ok/4096;_triExp.set(key,v);return v;}
+var triSel=0;
+function triExplain(R,i){
+  const t=R.tix[i];if(!t)return "";
+  const P=R.P,H=R.H,A=P.a,B=P.b;
+  const sn=k=>SUITS.find(s=>s[0]===k);
+  const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
+  const hand=cs=>`<span class="cg">${cs.slice().sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>`;
+  const full=d=>hand(SK.map(k=>[k,d[k]]));
+  const pn=`<bdi dir="ltr">${A}+${B}</bdi>`;
+  const tp=[[t.t.x,A],[t.t.y,B]];
+  // step 1: the pair, and the other candidates
+  const others=R.cands.filter(c=>c!==P).slice(0,4).map(c=>`<bdi dir="ltr">${c.a}+${c.b}</bdi> (${c.again} מתוך ${c.n})`).join(", ");
+  const reps=[];for(let j=1;j<H.length&&reps.length<8;j++)if(pairIn(H[j],A,B)&&pairIn(H[j-1],A,B))reps.push(`<bdi dir="ltr">${H[j].n}→${H[j-1].n}</bdi>`);
+  // step 2: the times this template came right after the pair
+  const aft=[];for(let j=1;j<H.length;j++){if(!pairIn(H[j],A,B))continue;const nd=H[j-1];if(nd[t.t.x]===A&&nd[t.t.y]===B)aft.push(`<li>${H[j].n} ${full(H[j])}<br>ובהגרלה שאחריה ${nd.n} ${full(nd)}</li>`);}
+  const rank=R.tl.indexOf(t.t)+1;
+  // step 3: draws with this template and what filled the free places
+  const free=SK.filter(k=>k!==t.t.x&&k!==t.t.y);
+  const sel=H.filter(d=>d[t.t.x]===A&&d[t.t.y]===B);
+  const c={};for(const d of sel)for(const k of free){const kk=k+":"+d[k];c[kk]=(c[kk]||0)+1;}
+  const ranked=Object.keys(c).sort((u,v)=>c[v]-c[u]).slice(0,3).map(kk=>{const [k,r]=kk.split(":");return `${ck(r,k)} ${c[kk]}`;}).join(" · ");
+  const rows=sel.slice(0,10).map(d=>`<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${SK.map(k=>{const s=sn(k),on=(k===t.comp[0]&&d[k]===t.comp[1]);return `<span class="${s[3]?"r ":""}${on?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${d[t.comp[0]]===t.comp[1]?'<span class="mt">✓</span>':""}</div>`).join("");
+  return `<h3>למה ${hand(t.cards)}?</h3>
+  <ol class="triSteps">
+   <li><b>הזוג החזק: ${pn}.</b> ${R.fromNow?`הוא יצא בהגרלה האחרונה, ${full(H[0])} (${H[0].n}), והוא חלק מהשלישיות שלך: ${P.tri.join(", ")}.`:`אף זוג מהשלישיות שלך לא יצא בהגרלה האחרונה, לכן נבחר הזוג החזק של החודש (${P.tri.join(", ")}).`} ב־200 ההגרלות האחרונות הוא יצא ${P.n} פעמים, ו<b>חזר בהגרלה שמיד אחרי ${P.again} פעמים</b>${reps.length?` (${reps.join(", ")})`:""}. במקרה זוג חוזר בכ־${A===B?8:14}% מהפעמים, וכאן ${Math.round(P.again/P.n*100)}%. ${others?`הזוגות האחרים שהיו מועמדים חזרו פחות: ${others}.`:""}</li>
+   <li><b>השבלונה ${hand(tp)}</b> (מקום ${rank} מתוך 6). בפעמים שהזוג חזר בהגרלה שאחריו, הוא הגיע בשבלונה הזאת <b>${t.t.after} פעמים</b>, ובכל החודש היא יצאה ${t.t.all} פעמים:${aft.length?`<ul>${aft.join("")}</ul>`:" (נבחרה לפי כמה פעמים יצאה בחודש)."}</li>
+   <li><b>הקלף המשלים ${ck(t.comp[1],t.comp[0])}.</b> בדקתי את ${sel.length} ההגרלות של החודש שבהן יצאה השבלונה הזאת, ומה נכנס במקומות הפנויים (${free.map(k=>sn(k)[2]).join(" ו")}). הכי הרבה: ${ranked}.</li>
+  </ol>
+  <div class="mini">${rows}</div>
+  <div class="acts"><button class="btn pri" type="button" id="triFill" data-t="${t.cards.map(q=>q.join(":")).join("|")}">לטופס</button></div>
+  <div class="reality">כך השלישייה נבנתה מהחודש האחרון. הסיכוי שלה בהגרלה הבאה הוא 1 ל־512 (כמו כל שלישייה), והמספרים כאן הם 2 עד 3 פעמים בחודש, כך שזה כיוון ולא תחזית.</div>`;
+}
 var triOpen=false;
 function renderTri(){
   const el=document.getElementById("triPanel"),bt=document.getElementById("triBtn");if(!el)return;
@@ -1283,12 +1317,15 @@ function renderTri(){
   const sn=k=>SUITS.find(s=>s[0]===k);
   const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
   const P=R.P,H=R.H;
-  const tixHtml=R.tix.map((t,i)=>`<button type="button" class="tk3${i===0?" best":""}" data-t="${t.cards.map(q=>q.join(":")).join("|")}"><span class="cg">${t.cards.map(([k,r])=>ck(r,k)).join("")}</span><small>שבלונה <span class="cg">${[[t.t.x,P.a],[t.t.y,P.b]].sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>: הגיעה ${t.t.after} פעמים אחרי הזוג · ${ck(t.comp[1],t.comp[0])} נכנס ${t.compN} מתוך ${t.selN} · לטופס</small></button>`).join("");
+  if(triSel>=R.tix.length)triSel=0;
+  const tixHtml=R.tix.map((t,i)=>`<button type="button" class="tk3${i===triSel?" best":""}" data-i="${i}" aria-pressed="${i===triSel}"><span class="cg">${t.cards.map(([k,r])=>ck(r,k)).join("")}</span><small>שבלונה <span class="cg">${[[t.t.x,P.a],[t.t.y,P.b]].sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>: הגיעה ${t.t.after} פעמים אחרי הזוג · ${ck(t.comp[1],t.comp[0])} נכנס ${t.compN} מתוך ${t.selN} · הסבר</small></button>`).join("");
   const exp=chanceTix(R.tix);
   el.innerHTML=`<h3 class="tplH">שלישיות להגרלה הבאה</h3>
   <p class="tplNote"><b>הזוג החזק:</b> <bdi dir="ltr">${P.a}+${P.b}</bdi> ${R.fromNow?`יצא בהגרלה האחרונה (${H[0].n})`:"(אף זוג מהשלישיות שלך לא יצא בהגרלה האחרונה, לכן נבחר הזוג החזק של החודש)"}. מתוך השלישיות שלך: ${P.tri.join(", ")}. ב־200 ההגרלות האחרונות יצא ${P.n} פעמים, וחזר בהגרלה שמיד אחרי ${P.again} פעמים (${Math.round(P.again/P.n*100)}%, במקרה כ־${P.a===P.b?8:14}%).</p>
   <p class="tplNote"><b>איך נבנו השלישיות:</b> 6 השבלונות של הזוג שהגיעו הכי הרבה בהגרלה שאחרי הזוג (בתיקו: מי שיצאה יותר בחודש), ולכל שבלונה הקלף שנכנס איתה הכי הרבה במקום הפנוי.</p>
+  <p class="tplNote">לחץ על שלישייה כדי לראות איך היא נמצאה.</p>
   <div class="tix">${tixHtml}</div>
+  <div class="explain triExp" id="triExplain">${triExplain(R,triSel)}</div>
   <div class="odds"><div><b>1 ל־512</b><span>סיכוי לכל טופס · פרס פי 300</span></div><div><b>${(exp*100).toFixed(1)}%</b><span>שאחד מ־${R.tix.length} הטפסים יזכה</span></div></div>
   <h3 class="tplH">השלישיות החמות של החודש</h3>
   <p class="tplNote">כמה פעמים כל שלישייה יצאה מלאה ב־200 ההגרלות האחרונות, בכל סדר (במקרה: כ־7.6 לשלישייה של 3 קלפים שונים).</p>
@@ -1298,8 +1335,9 @@ function renderTri(){
 }
 document.getElementById("triBtn").addEventListener("click",()=>{triOpen=!triOpen;renderTri();if(triOpen)document.getElementById("triPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 document.getElementById("triPanel").addEventListener("click",e=>{
-  const b=e.target.closest("button.tk3");if(!b)return;
-  mine={S:null,H:null,D:null,C:null};b.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
+  const f=e.target.closest("#triFill");
+  if(!f){const b=e.target.closest("button.tk3");if(!b)return;triSel=+b.dataset.i;renderTri();document.getElementById("triExplain").scrollIntoView({behavior:"smooth",block:"start"});return;}
+  mine={S:null,H:null,D:null,C:null};f.dataset.t.split("|").forEach(v=>{const [s,r]=v.split(":");mine[s]=r;});
   save();renderSlip();document.getElementById("res").hidden=true;document.getElementById("myHand").scrollIntoView({behavior:"smooth",block:"center"});
 });
 renderTri();
