@@ -153,6 +153,16 @@ table.pairs td.nn{font-family:var(--mono)}
 .c3 .tk3{border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:flex;justify-content:space-between;align-items:center;gap:6px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.85rem}
 .c3 .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
 .c3 .tk3 small{font-size:.7rem;color:var(--muted)}
+.futT{overflow-x:auto}
+.futT table{border-collapse:collapse;width:100%;min-width:260px;font-variant-numeric:tabular-nums}
+.futT th,.futT td{border:1px solid var(--line);padding:6px 4px;text-align:center}
+.futT th{background:var(--felt);color:var(--felt-ink);font-weight:600;font-size:.9rem}
+.futT th .r{color:#ffb3bd}
+.futT td{font-family:var(--mono);font-weight:700;font-size:1.05rem;background:var(--surface)}
+.futT td.r{color:var(--red)}
+.futT td.no{color:var(--muted);font-weight:400}
+.futT td.n{color:var(--muted);font-size:.8rem;font-weight:400;width:2.2em}
+.futT tr:nth-child(even) td{background:var(--bg)}
 .c3b{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
 .c3 .odds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .c3 .odds div{background:var(--chip);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:2px;min-width:0}
@@ -231,7 +241,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 /* ---- triples ---- */
 .triExp .triSteps{margin:0;padding-inline-start:20px;display:flex;flex-direction:column;gap:8px;font-size:.92rem}
 .triExp .triSteps ul{margin:4px 0;padding-inline-start:16px;font-size:.85rem}
-#triPanel:not([hidden]),#mypPanel:not([hidden]),#ancPanel:not([hidden]),#swpPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
+#futPanel:not([hidden]),#triPanel:not([hidden]),#mypPanel:not([hidden]),#ancPanel:not([hidden]),#swpPanel:not([hidden]),#hotPanel:not([hidden]){display:flex;flex-direction:column;gap:10px}
 #ancPanel .tix,#hotPanel .tix,#triPanel .tix{display:grid;grid-template-columns:1fr;gap:6px}
 #ancPanel .tk3,#hotPanel .tk3,#triPanel .tk3{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;background:var(--surface);color:var(--ink);cursor:pointer;font-family:var(--body);font-size:.95rem;text-align:start}
 #ancPanel .tk3.best,#hotPanel .tk3.best,#triPanel .tk3.best{border-color:var(--felt);box-shadow:inset 0 0 0 1px var(--felt)}
@@ -304,8 +314,9 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
-    <div class="tplBar"><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">תבניות ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
+    <div class="tplBar"><button class="btn pri" type="button" id="futBtn" aria-pressed="false">תוצאות להגרלה עתידית ▾</button><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">תבניות ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
     <p class="tplNote">שלישיות שמיועדות לבוא, לפי 200 ההגרלות האחרונות</p>
+    <div id="futPanel" class="c3" hidden></div>
     <div id="mypPanel" class="c3" hidden></div>
     <div id="triPanel" class="c3" hidden></div>
     <div id="hotPanel" class="c3" hidden></div>
@@ -1021,7 +1032,7 @@ function renderTrack(){
 renderTrack();renderTrack3();
 
 // ---- manual result entry ----
-function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();renderMyP();tick();showManNote();}
+function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();renderMyP();renderFut();tick();showManNote();}
 function showManNote(){const n=document.getElementById("manNote");let t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
   const wait=manualDraws.filter(m=>m.n>last.n+1);if(wait.length)t+=` ${wait.map(m=>`הגרלה ${m.n} (${m.time})`).join(", ")} שמורה וממתינה: היא תיכנס לניתוח ברגע שהגרלה ${last.n+1} תיכנס (רשמית או ידנית).`;
   n.textContent=[t.trim(),manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
@@ -1727,6 +1738,35 @@ function loadHist(){
     if(m.size)HIST=m;}).catch(()=>{});
   return histLoading;}
 function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);return [...m.values()].sort((a,b)=>b.n-a.n);}
+
+// ---- future draw: every ticket the site suggests, as plain tables ----
+var futOpen=false;
+function futureTix(){
+  const c2=[],c3=[],s2=new Set(),s3=new Set();
+  const add=(arr,set,cards)=>{if(!cards||!cards.length)return;const o={};for(const [k,r] of cards){if(o[k])return;o[k]=r;}const id=SK.map(k=>o[k]||"-").join("");if(set.has(id))return;set.add(id);arr.push(o);};
+  const last5=DRAWS.slice(0,5);
+  try{(preList||[]).forEach(p=>tplTickets(p,tplFor(p,DRAWS).keys).forEach(t=>add(c2,s2,t)));}catch(e){}
+  try{pickAll(last5).forEach(p=>{const A=RANKS[p.a],B=RANKS[p.b];const hotAt=(k,r)=>last5.filter(d=>d[k]===r).length;
+    for(const c of [thirdHot(p,last5),thirdLinked(p,last5)]){if(!c)continue;const free=SK.filter(k=>k!==c.k),t=[];
+      for(const x of free)for(const y of free){if(x===y||(A===B&&y<x))continue;t.push({x,y,sc:hotAt(x,A)+hotAt(y,B)});}
+      const top=Math.max(...t.map(q=>q.sc));t.filter(q=>q.sc===top).slice(0,2).forEach(q=>add(c3,s3,[[q.x,A],[q.y,B],[c.k,c.r]]));}});}catch(e){}
+  try{const R=triAnalysis(DRAWS,null,true);if(R)R.tix.forEach(t=>add(c3,s3,t.cards));}catch(e){}
+  try{hotTri(DRAWS).forEach(x=>add(c3,s3,x.t.cards));}catch(e){}
+  try{for(const s of SK){const A=anchorPred(DRAWS,s);if(A)A.tix.slice(0,2).forEach(t=>add(c3,s3,t.cards));}}catch(e){}
+  try{const M=myPatterns(DRAWS);if(M)M.cands.forEach(c=>add(c3,s3,c.tix));}catch(e){}
+  return {c2,c3};
+}
+function renderFut(){
+  const el=document.getElementById("futPanel"),bt=document.getElementById("futBtn");if(!el)return;
+  bt.textContent="תוצאות להגרלה עתידית"+(futOpen?" ▴":" ▾");bt.classList.toggle("on",futOpen);bt.setAttribute("aria-pressed",futOpen);el.hidden=!futOpen;if(!futOpen)return;
+  const F=futureTix(),nx=DRAWS[0]?DRAWS[0].n+1:"";
+  const head=`<tr>${SUITS.map(([k,sym,name,red])=>`<th>${name} <span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>#</th></tr>`;
+  const tbl=(rows)=>rows.length?`<div class="futT"><table><thead>${head}</thead><tbody>${rows.map((o,i)=>`<tr>${SUITS.map(([k,,,red])=>o[k]?`<td class="${red?"r":""}">${o[k]}</td>`:`<td class="no">—</td>`).join("")}<td class="n">${i+1}</td></tr>`).join("")}</tbody></table></div>`:`<div class="reality">אין כרגע טפסים.</div>`;
+  el.innerHTML=`<h3 class="tplH">תוצאות להגרלה עתידית${nx?` · <bdi dir="ltr">${nx}</bdi>`:""}</h3>
+  <h3>צ'אנס 3 (${F.c3.length})</h3>${tbl(F.c3)}
+  <h3>צ'אנס 2 (${F.c2.length})</h3>${tbl(F.c2)}`;
+}
+document.getElementById("futBtn").addEventListener("click",()=>{futOpen=!futOpen;renderFut();if(futOpen)document.getElementById("futPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 // ---- section menu (⋮) ----
 (function(){
   const secs=[...document.querySelectorAll("section")];
@@ -1734,6 +1774,7 @@ function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);
   const items=[
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
+    ["תוצאות להגרלה עתידית",()=>{if(!futOpen){futOpen=true;renderFut();}return document.getElementById("futBtn");}],
     ["תבניות",()=>{if(!mypOpen){mypOpen=true;renderMyP();}return document.getElementById("mypBtn");}],
     ["שלישיות להגרלה הבאה",()=>{if(!triOpen){triOpen=true;renderTri();}return document.getElementById("triBtn");}],
     ["שלישיות חמות להגרלה הבאה",()=>{if(!hotOpen){hotOpen=true;renderHot();}return document.getElementById("hotBtn");}],
