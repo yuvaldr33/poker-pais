@@ -719,7 +719,7 @@ function preDraw(){
   document.getElementById("preFor").textContent=`5 ההגרלות האחרונות: ${last5[4].n}–${last5[0].n}`;
   if(!preList.length){document.getElementById("preExplain").innerHTML="";chance3(null);document.getElementById("preWhy").textContent="אין כרגע זוג שחזר פעמיים או יותר ב־5 ההגרלות האחרונות.";document.getElementById("prePair").innerHTML="";document.getElementById("places").innerHTML="";document.getElementById("preCount").textContent="0";return;}
   document.getElementById("preWhy").textContent=`ארבעת הזוגות החזקים ביותר לפי השיטה, עד 2 זוגות שעלולים להתחבר (מסגרת מנוקדת) ועד 4 זוגות שלך (מסגרת מקווקוות): עלו יחד הכי הרבה פעמים ב־5 ההגרלות האחרונות, בכל צורה שהיא. בתיקו קובע מי עלה מאוחר יותר, ואחר כך מי עלה בשתי הגרלות ברצף. בחר זוג כדי לראות את כל המיקומים שלו.`;
-  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}${p.link?" link":""}" id="pc-${i}" data-i="${i}"><span class="rk" dir="ltr">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":p.link?"עלולים להתחבר · ":""}${p.hit.length} מתוך 5${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}<br>${repText(p,true)}</small></button>`).join("");
+  document.getElementById("prePair").innerHTML=preList.map((p,i)=>`<button type="button" class="pchip${i===preSel?" on":""}${p.mine?" mine":""}${p.link?" link":""}" id="pc-${i}" data-i="${i}"><span class="rk" dir="ltr">${RANKS[p.a]}+${RANKS[p.b]}</span><small>${p.mine?"הזוג שלי · ":p.link?"עלולים להתחבר · ":""}${p.hit.length} מתוך 5${!p.mine&&!p.link&&preList.filter(q=>!q.mine&&!q.link&&q.hit.length===p.hit.length).length>1?` · <b>תיקו של ${p.hit.length}</b>`:""}${p.hit.length?" · "+p.hit.map(n=>String(n).slice(-3)).join(", "):""}<br>${repText(p,true)}</small></button>`).join("");
   showPlaces();
   document.getElementById("preHonest").innerHTML=`בדקתי את השיטה הזאת על 10,000 ההגרלות האחרונות. הזוג שחזר הכי הרבה ב־5 ההגרלות האחרונות עלה בהגרלה הבאה ב־14.0% מהפעמים, וזוג שנבחר באקראי עלה ב־13.6%. זה בתוך טווח המקרה. בבדיקה נוספת של 96 גרסאות של השיטה על כל 50,837 ההגרלות, אף גרסה לא שיפרה את האחוזים בהגרלות שלא נבחרה עליהן. בצ'אנס 2 ההחזר הממוצע הוא בערך 58 אגורות על כל שקל (כולל החזר של חצי כשפוגעים רק בקלף אחד), בכל שיטת בחירה.`;
 }
@@ -746,10 +746,10 @@ function explainPair(p,idx){
   if(!p.mine&&!p.link&&preList.filter(x=>!x.mine&&!x.link).length>1){const o=preList[idx===0?1:0],oA=RANKS[o.a],oB=RANKS[o.b];
     if(idx===0){
       if(p.hit.length>o.hit.length)items.push(`דורג ראשון כי עלה יותר פעמים מ־${oA}+${oB}.`);
-      else if(Math.max(...p.hit)>Math.max(...o.hit))items.push(`דורג ראשון כי עלה מאוחר יותר מ־${oA}+${oB}.`);
-      else if(consec)items.push(`דורג ראשון כי <bdi dir="ltr">${oA}+${oB}</bdi> עלה אותו מספר פעמים ובאותה הגרלה אחרונה, אבל לא ברצף.`);
-      else items.push(`דורג ראשון כי ההופעות שלו קרובות יותר להגרלה האחרונה מאלה של ${oA}+${oB}.`);
-    } else items.push(`דורג שני, אחרי <bdi dir="ltr">${oA}+${oB}</bdi>, לפי אותם כללים.`);}
+      else if(Math.max(...p.hit)>Math.max(...o.hit))items.push(`<b>תיקו של ${p.hit.length} מתוך 5</b> עם <bdi dir="ltr">${oA}+${oB}</bdi>. דורג ראשון כי עלה מאוחר יותר.`);
+      else if(consec)items.push(`<b>תיקו של ${p.hit.length} מתוך 5</b> עם <bdi dir="ltr">${oA}+${oB}</bdi>, ובאותה הגרלה אחרונה. דורג ראשון כי עלה ברצף.`);
+      else items.push(`<b>תיקו של ${p.hit.length} מתוך 5</b> עם <bdi dir="ltr">${oA}+${oB}</bdi>. דורג ראשון כי ההופעות שלו קרובות יותר להגרלה האחרונה.`);
+    } else items.push(p.hit.length===o.hit.length?`<b>תיקו של ${p.hit.length} מתוך 5</b> עם <bdi dir="ltr">${oA}+${oB}</bdi>, שדורג לפניו לפי הכללים (מי עלה מאוחר יותר, ואז מי עלה ברצף).`:`דורג אחרי <bdi dir="ltr">${oA}+${oB}</bdi>, שעלה יותר פעמים.`);}
   const rows=last5.map(d=>{const on=appears(d);return `<div class="mrow"><span class="mn">${d.n} ${d.time||""}</span><span class="mc">${K.map(k=>{const s=sn(k);const hl=on&&(d[k]===A||d[k]===B);return `<span class="${s[3]?"r ":""}${hl?"on":""}">${d[k]}${s[1]}</span>`;}).join("")}</span>${on?'<span class="mt">✓</span>':""}</div>`;}).join("");
   items.push(repText(p)+` <span class="tplNote">צמודים = במקומות סמוכים בטופס (עלה־לב, לב־יהלום, יהלום־תלתן); מפוצלים = עם רווח ביניהם (עלה־יהלום, עלה־תלתן, לב־תלתן). במקרה כל צורה יוצאת בערך חצי מהפעמים, וזוג חוזר בהגרלה שאחרי בכ־${p.a===p.b?"8":"14"}% מהפעמים.</span>`);
   {const st=stickyFor(p,1000),s2=st.list[1];
@@ -783,7 +783,7 @@ function showPlaces(){
     const keep=pl.filter(([s1,,s2])=>tf.keys.includes([s1[0],s2[0]].sort((u,v)=>SK.indexOf(u)-SK.indexOf(v)).join("")));
     pl.length=0;pl.push(...keep);
     const ex=tf.seen.slice(0,5).map(x=>`${x.d.n} (${x.s.map(k=>TPL_NAME[k]).join(", ")})`).join(" · ");
-    tn.innerHTML=`<b>הצמצום לפי סטטיסטיקה:</b> השבלונות שבהן <bdi dir="ltr">${A}+${B}</bdi> עלה הכי הרבה ב־${Math.min(5,tf.seen.length)} ההופעות האחרונות שלו: ${tf.keys.map(k=>`<b>${TPL_NAME[k]}</b> (${tf.cnt[k]})`).join(", ")}. בתיקו קובעת ההופעה המאוחרת יותר.<br>ההופעות: ${ex}.<br>${pl.length} טפסים במקום ${A===B?6:12}. הזוג עולה בשתי השבלונות האלה בכ־${A===B?"37":"41"}% מהפעמים שהוא עולה, בדיוק כמו 2 שבלונות אקראיות: הצמצום חוסך טפסים ולא מגדיל סיכוי. המעקב למטה סופר אותו בנפרד.`;
+    tn.innerHTML=`<b>הצמצום לפי סטטיסטיקה:</b> השבלונות שבהן <bdi dir="ltr">${A}+${B}</bdi> עלה הכי הרבה ב־${Math.min(5,tf.seen.length)} ההופעות האחרונות שלו: ${tf.keys.map(k=>`<b>${TPL_NAME[k]}</b> (${tf.cnt[k]})`).join(", ")}.${(()=>{const c0=tf.cnt[tf.keys[1]];const n=Object.values(tf.cnt).filter(v=>v===c0).length;const both=tf.cnt[tf.keys[0]]===c0;return n>2?` <b>תיקו של ${c0}</b> בין ${n} שבלונות, ונבחרה זו שהופיעה מאוחר יותר.`:n===2&&both?` שתיהן ב<b>תיקו של ${c0}</b>.`:"";})()}<br>ההופעות: ${ex}.<br>${pl.length} טפסים במקום ${A===B?6:12}. הזוג עולה בשתי השבלונות האלה בכ־${A===B?"37":"41"}% מהפעמים שהוא עולה, בדיוק כמו 2 שבלונות אקראיות: הצמצום חוסך טפסים ולא מגדיל סיכוי. המעקב למטה סופר אותו בנפרד.`;
     tn.hidden=false;document.getElementById("plLab").textContent="המיקומים בצמצום";
   }else{tn.hidden=true;document.getElementById("plLab").textContent="כל המיקומים";}
   document.getElementById("preCount").textContent=pl.length;
@@ -1050,7 +1050,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="c0179a4acd";
+const BUILD="d4792a8816";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1321,7 +1321,8 @@ function triAnalysis(base,forced,lite){ // base[0] = the newest draw; looks at t
     if(!best){const h={};for(const d of H)for(const k of free){const kk=k+":"+d[k];h[kk]=(h[kk]||0)+1;}best=Object.keys(h).sort((u,v)=>h[v]-h[u])[0];}
     const [k,r]=best.split(":");const cards=[[t.x,A],[t.y,B],[k,r]].sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0]));
     const id=cards.map(q=>q.join("")).join("|");if(keys.has(id))continue;keys.add(id);
-    tix.push({cards,t,comp:[k,r],compN:c[best]||0,selN:sel.length});}
+    const compTie=Object.keys(c).filter(x=>c[x]===c[best]).length;
+    tix.push({cards,t,comp:[k,r],compN:c[best]||0,compTie,selN:sel.length});}
   if(lite)return {P,fromNow,forced:!!forced,cands:cand,tl:tl.slice(0,6),tix,mine:[],extra:[],H};
   // hot rank-triples in the window (any order); mine vs others that beat mine
   const cnt=new Map();
@@ -1379,7 +1380,7 @@ function renderTri(){
   const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
   const P=R.P,H=R.H;
   if(triSel>=R.tix.length)triSel=0;
-  const tixHtml=R.tix.map((t,i)=>`<button type="button" class="tk3${i===triSel?" best":""}" data-i="${i}" aria-pressed="${i===triSel}"><span class="cg">${t.cards.map(([k,r])=>ck(r,k)).join("")}</span><small>שבלונה <span class="cg">${[[t.t.x,P.a],[t.t.y,P.b]].sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>: הגיעה ${t.t.after} פעמים אחרי הזוג · ${ck(t.comp[1],t.comp[0])} נכנס ${t.compN} מתוך ${t.selN} · הסבר</small></button>`).join("");
+  const tixHtml=R.tix.map((t,i)=>`<button type="button" class="tk3${i===triSel?" best":""}" data-i="${i}" aria-pressed="${i===triSel}"><span class="cg">${t.cards.map(([k,r])=>ck(r,k)).join("")}</span><small>שבלונה <span class="cg">${[[t.t.x,P.a],[t.t.y,P.b]].sort((u,v)=>SK.indexOf(u[0])-SK.indexOf(v[0])).map(([k,r])=>ck(r,k)).join("")}</span>: הגיעה ${t.t.after} פעמים אחרי הזוג${R.tl.filter(u=>u.after===t.t.after).length>1?` (<b>תיקו של ${t.t.after}</b>)`:""} · ${ck(t.comp[1],t.comp[0])} נכנס ${t.compN} מתוך ${t.selN}${t.compTie>1?` (<b>תיקו של ${t.compN}</b> עם עוד ${t.compTie-1})`:""} · הסבר</small></button>`).join("");
   const exp=chanceTix(R.tix);
   el.innerHTML=`<h3 class="tplH">שלישיות להגרלה הבאה</h3>
   ${R.forced?`<p class="tplNote"><b>הזוג שבחרת:</b> <bdi dir="ltr">${P.a}+${P.b}</bdi>${P.tri.length?` (מתוך השלישיות שלך: ${P.tri.join(", ")})`:""}. ב־200 ההגרלות האחרונות יצא ${P.n} פעמים, וחזר בהגרלה שמיד אחרי ${P.again} פעמים${P.n?` (${Math.round(P.again/P.n*100)}%, במקרה כ־${P.a===P.b?8:14}%)`:""}. <button type="button" class="chT" id="triAuto">חזרה לזוג החזק</button></p>`:`<p class="tplNote"><b>הזוג החזק:</b> <bdi dir="ltr">${P.a}+${P.b}</bdi> ${R.fromNow?`יצא בהגרלה האחרונה (${H[0].n})`:"(אף זוג מהשלישיות שלך לא יצא בהגרלה האחרונה, לכן נבחר הזוג החזק של החודש)"}. מתוך השלישיות שלך: ${P.tri.join(", ")}. ב־200 ההגרלות האחרונות יצא ${P.n} פעמים, וחזר בהגרלה שמיד אחרי ${P.again} פעמים (${Math.round(P.again/P.n*100)}%, במקרה כ־${P.a===P.b?8:14}%). לחיצה על זוג למעלה תבנה שלישיות לזוג הזה.</p>`}
@@ -1430,7 +1431,7 @@ function renderHot(){
   const h=L[hotSel];
   el.innerHTML=`<h3 class="tplH">6 השלישיות החמות להגרלה הבאה</h3>
   <p class="tplNote"><b>איך הן נבחרו:</b> לכל אחד מהזוגות שיצאו בהגרלה האחרונה (${DRAWS[0].n}) בניתי שלישיות באותה דרך כמו בכפתור "שלישיות": 6 השבלונות שהגיעו הכי הרבה אחרי הזוג, ולכל אחת הקלף המשלים. מכל השלישיות שיצאו, אלה 6 החזקות: קודם לפי כמה פעמים השבלונה הגיעה אחרי הזוג, אחר כך לפי כמה פעמים השלישייה בדיוק הזאת יצאה החודש, ואז לפי הקלף המשלים. מתעדכן אחרי כל הגרלה.</p>
-  <div class="tix">${L.map((x,i)=>`<button type="button" class="tk3${i===hotSel?" best":""}" data-i="${i}" aria-pressed="${i===hotSel}">${cg(x.t.cards)}<small>מהזוג <bdi dir="ltr">${x.R.P.a}+${x.R.P.b}</bdi> · שבלונה ${cg([[x.t.t.x,x.R.P.a],[x.t.t.y,x.R.P.b]])} הגיעה ${x.t.t.after} פעמים אחריו · יצאה בדיוק כך ${x.exact} פעמים החודש · הסבר</small></button>`).join("")}</div>
+  <div class="tix">${L.map((x,i)=>`<button type="button" class="tk3${i===hotSel?" best":""}" data-i="${i}" aria-pressed="${i===hotSel}">${cg(x.t.cards)}<small>מהזוג <bdi dir="ltr">${x.R.P.a}+${x.R.P.b}</bdi> · שבלונה ${cg([[x.t.t.x,x.R.P.a],[x.t.t.y,x.R.P.b]])} הגיעה ${x.t.t.after} פעמים אחריו · יצאה בדיוק כך ${x.exact} פעמים החודש${L.filter(y=>y.t.t.after===x.t.t.after&&y.exact===x.exact).length>1?` · <b>תיקו</b> (${x.t.t.after} אחרי הזוג, ${x.exact} החודש)`:""} · הסבר</small></button>`).join("")}</div>
   <div class="odds"><div><b>1 ל־512</b><span>סיכוי לכל טופס · פרס פי 300</span></div><div><b>${(exp*100).toFixed(1)}%</b><span>שאחד מ־${L.length} הטפסים יזכה</span></div></div>
   <div class="explain triExp" id="hotExplain"><p class="tplNote"><b>למה היא בין 6 החמות:</b> היא נבנתה מהזוג <bdi dir="ltr">${h.R.P.a}+${h.R.P.b}</bdi> שיצא בהגרלה האחרונה. השבלונה שלה הגיעה ${h.t.t.after} פעמים בהגרלה שאחרי הזוג, והשלישייה בדיוק הזאת יצאה ${h.exact} פעמים ב־200 ההגרלות האחרונות.</p>${triExplain(h.R,h.idx).replace('id="triFill"','id="hotFill"')}</div>`;
 }
