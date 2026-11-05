@@ -11,5 +11,6 @@ jobs:
           grep -oiE '(api|ajax|fetch|json)[^"'"'"' ]{0,80}' m.html | sort -u | head -40
           python3 - <<'PY'
           import re;h=open('m.html',encoding='utf-8',errors='ignore').read()
-          i=h.find('53860');print(h[max(0,i-1500):i+1500])
+          import re
+for m in re.finditer('5386[0-9]',h):print('=====',m.start());print(h[max(0,m.start()-300):m.start()+1800])
           PY
