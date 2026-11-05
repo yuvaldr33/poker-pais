@@ -5,12 +5,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          curl -sSL -A "Mozilla/5.0" "https://www.myloto.co.il/%D7%A6%D7%90%D7%A0%D7%A1" -o m.html -w "code %{http_code} size %{size_download}\n"
-          grep -o '5386[0-9]' m.html | sort | uniq -c
-          grep -oE '(src|href)="[^"]*\.(js|json)[^"]*"' m.html | head -30
-          grep -oiE '(api|ajax|fetch|json)[^"'"'"' ]{0,80}' m.html | sort -u | head -40
-          python3 - <<'PY'
-          import re;h=open('m.html',encoding='utf-8',errors='ignore').read()
-          import re
-for m in re.finditer('5386[0-9]',h):print('=====',m.start());print(h[max(0,m.start()-300):m.start()+1800])
-          PY
+          curl -sSL -A "Mozilla/5.0" "https://www.myloto.co.il/%D7%A6%D7%90%D7%A0%D7%A1" -o m.html
+          python3 -c "import re;h=open('m.html',encoding='utf-8',errors='ignore').read();[print('=====',m.start(),h[max(0,m.start()-300):m.start()+1800]) for m in re.finditer('5386[0-9]',h)]"
