@@ -1090,17 +1090,35 @@ document.getElementById("manOk").addEventListener("click",()=>{
 });
 showManNote();
 // ---- live refresh: pull new results without reloading ----
+// results straight from the public results feed (raw GitHub file, open to browsers), when the site's own file lags
+let _feedAt=0;
+async function addFromFeed(d){
+  try{
+    const g=slotsAfter(d[0]);const nx=g.next().value;
+    if(!nx||nx.ms+10*60000>Date.now()||Date.now()-_feedAt<3*60000)return d;
+    _feedAt=Date.now();
+    const r=await fetch("https://raw.githubusercontent.com/laly100/chance-feed/main/chance.csv?t="+Date.now(),{cache:"no-store"});
+    if(!r.ok)return d;
+    const lines=(await r.text()).split("\n").slice(1,40);const V=["7","8","9","10","J","Q","K","A"];
+    const rows={};for(const ln of lines){const c=ln.split(",").map(x=>x.trim());const n=+c[1];if(!n||n<=d[0].n)continue;
+      const o={C:c[2],D:c[3],H:c[4],S:c[5]};if(["S","H","D","C"].every(k=>V.includes(o[k])))rows[n]=o;}
+    const add=[];let s=nx;const g2=slotsAfter(d[0]);
+    for(let k=0;k<20;k++){s=g2.next().value;const o=rows[s.n];if(!o)break;
+      add.unshift({n:s.n,date:`${s.y}-${pad(s.m)}-${pad(s.d)}`,time:s.time,S:o.S,H:o.H,D:o.D,C:o.C});}
+    return add.length?add.concat(d):d;
+  }catch(e){return d;}
+}
 async function refreshDraws(){
   try{
     const r=await fetch("draws.json?t="+Date.now(),{cache:"no-store"});
     if(!r.ok)return;
-    const d=await r.json();
-    if(Array.isArray(d)&&d.length){const merged=mergeManual(d);
+    let d=await r.json();
+    if(Array.isArray(d)&&d.length){d=await addFromFeed(d);const merged=mergeManual(d);
       if(merged[0].n!==DRAWS[0].n||merged[0].manual!==DRAWS[0].manual||["S","H","D","C"].some(k=>merged[0][k]!==DRAWS[0][k])){DRAWS=merged;rerenderAll();}}
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="484d926c1d";
+const BUILD="de6dedbd43";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
