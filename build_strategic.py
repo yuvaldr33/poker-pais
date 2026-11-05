@@ -60,7 +60,9 @@ def main():
     canon = json.load(open(CANON, encoding="utf-8")) if os.path.exists(CANON) else []
     by_n = {r["n"]: r for r in canon if valid(r)}
     for r in from_feed():                       # הארכיון ממלא חורים; לא דורס שורות קיימות
-        if r["n"] not in by_n:
+        if r["n"] not in by_n or by_n[r["n"]].get("src") == "m":   # תוצאה שהוזנה ידנית מוחלפת ברשמית
+            if r["n"] in by_n and not r.get("time"):
+                r["time"] = by_n[r["n"]].get("time", "")
             by_n[r["n"]] = r
         elif not by_n[r["n"]].get("time") and r["time"]:
             by_n[r["n"]]["time"] = r["time"]

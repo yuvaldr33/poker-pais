@@ -186,6 +186,10 @@ table.pairs td.nn{font-family:var(--mono)}
 .pchip.mine{border-style:dashed}
 .crit{display:flex;flex-direction:column;gap:8px;border-bottom:1px solid var(--line);padding-bottom:10px}
 .crit ul{list-style:none;padding-inline-start:0}
+.ghSet{display:flex;flex-direction:column;gap:8px}
+.ghSet[hidden]{display:none}
+.ghSet input{font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);width:100%;box-sizing:border-box}
+.ghLink{background:none;border:0;padding:0;color:var(--felt);text-decoration:underline;font:inherit;cursor:pointer}
 .manual{border:1px solid var(--felt);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
 .mansel{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;direction:ltr}
 .mansel label{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:.85rem;direction:rtl}
@@ -408,7 +412,13 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
         <button class="btn pri" type="button" id="manOk">אישור ועדכון הניתוח</button>
         <button class="btn" type="button" id="manCancel">ביטול</button>
       </div>
-      <div class="gnote">התוצאה נשמרת אצלך בטלפון וכל הניתוחים מתעדכנים מיד. כשהתוצאה הרשמית תיכנס לאתר, היא תחליף את מה שהזנת.</div>
+      <div class="gnote" id="ghState"></div>
+      <div class="ghSet" id="ghSet" hidden>
+        <label for="ghTok">מפתח GitHub (מדביקים פעם אחת בכל מכשיר):</label>
+        <input id="ghTok" type="password" autocomplete="off" spellcheck="false" dir="ltr" placeholder="github_pat_…">
+        <div class="acts"><button class="btn pri" type="button" id="ghSave">שמירת המפתח</button><button class="btn" type="button" id="ghDel">מחיקת המפתח</button></div>
+        <div class="gnote">המפתח נשמר רק בטלפון הזה ומשמש רק כדי לכתוב תוצאות לאתר.</div>
+      </div>
     </div>
     <div class="gnote" id="manNote" hidden></div>
   </section>
@@ -1069,11 +1079,47 @@ document.getElementById("manOk").addEventListener("click",()=>{
   manualDraws=manualDraws.filter(x=>x.n!==m.n);manualDraws.push(m);
   try{localStorage.setItem("chance-manual",JSON.stringify(manualDraws));}catch(e){}
   DRAWS=mergeManual(DRAWS);document.getElementById("manForm").hidden=true;rerenderAll();
+  if(ghTok()){const pend=manualDraws.slice();ghSaveDraws(pend).then(t=>{if(!t)return;const n=document.getElementById("manNote");n.textContent=t;n.hidden=false;ghShowState(t);}).catch(()=>{});}
   const more=manOpenSlots().filter(x=>!manualDraws.some(q=>q.n===x.n));
   if(more.length&&more[0].ms<=Date.now()){document.getElementById("manBtn").click();const t=document.getElementById("manTitle");t.insertAdjacentHTML("afterbegin",`<div class="gnote">הגרלה ${m.n} נשמרה ✓ עכשיו הזן את הבאה:</div>`);document.getElementById("manForm").scrollIntoView({behavior:"smooth",block:"center"});return;}
   document.getElementById("lHand").scrollIntoView({behavior:"smooth",block:"center"});
 });
 showManNote();
+
+// ---- saving typed-in results into the site itself (GitHub), so every device sees them ----
+const GH_FILE="https://api.github.com/repos/yuvaldr33/poker-pais/contents/strategic/draws.json";
+function ghTok(){try{return localStorage.getItem("chance-gh")||"";}catch(e){return "";}}
+function ghShowState(msg){const el=document.getElementById("ghState");if(!el)return;
+  el.innerHTML=(msg?msg+" ":"")+(ghTok()?`התוצאה תישמר גם באתר עצמו, וכל מי שנכנס יראה אותה תוך כ־2 דקות. <button type="button" class="ghLink" id="ghOpen">הגדרות</button>`:`כרגע התוצאה נשמרת רק בטלפון הזה. <button type="button" class="ghLink" id="ghOpen">לשמירה באתר עצמו</button>`);}
+function b64dec(t){const bin=atob(t.replace(/\s/g,""));return new TextDecoder().decode(Uint8Array.from(bin,c=>c.charCodeAt(0)));}
+function b64enc(t){const u=new TextEncoder().encode(t);let bin="";for(let i=0;i<u.length;i+=8192)bin+=String.fromCharCode.apply(null,u.subarray(i,i+8192));return btoa(bin);}
+async function ghSaveDraws(list){ // list: manual draws to write; returns text for the user
+  const tok=ghTok();if(!tok)return "";
+  const H={Authorization:"Bearer "+tok,Accept:"application/vnd.github+json"};
+  for(let attempt=0;attempt<3;attempt++){
+    const g=await fetch(GH_FILE+"?ref=main&t="+Date.now(),{headers:H,cache:"no-store"});
+    if(g.status===401||g.status===403)return "המפתח לא התקבל ב־GitHub (אולי פג תוקף או חסרה הרשאה). התוצאה נשמרה רק בטלפון.";
+    if(!g.ok)return "לא הצלחתי להגיע ל־GitHub. התוצאה נשמרה רק בטלפון.";
+    const j=await g.json();const cur=JSON.parse(b64dec(j.content));
+    const add=list.filter(m=>!cur.some(d=>d.n===m.n)).sort((a,b)=>b.n-a.n);
+    // only draws that continue the file with no gap
+    const ok=[];let top=cur[0].n;for(const m of add.slice().reverse()){if(m.n===top+1){ok.unshift(m);top=m.n;}}
+    if(!ok.length)return "";
+    const rows=ok.map(m=>({n:m.n,date:m.date,time:m.time,S:m.S,H:m.H,D:m.D,C:m.C,src:"m"})).concat(cur);
+    const put=await fetch(GH_FILE,{method:"PUT",headers:Object.assign({"Content-Type":"application/json"},H),body:JSON.stringify({message:"הזנה ידנית: הגרלה "+ok.map(m=>m.n).join(", "),content:b64enc(JSON.stringify(rows)),sha:j.sha,branch:"main"})});
+    if(put.ok)return `נשמר באתר ✓ (הגרלה ${ok.map(m=>m.n).join(", ")}). בעוד כ־2 דקות כל מי שנכנס יראה אותה.`;
+    if(put.status===409||put.status===422)continue;
+    if(put.status===401||put.status===403||put.status===404)return "למפתח אין הרשאת כתיבה לאתר. התוצאה נשמרה רק בטלפון.";
+    return "השמירה באתר נכשלה. התוצאה נשמרה רק בטלפון.";
+  }
+  return "השמירה באתר נכשלה. התוצאה נשמרה רק בטלפון.";
+}
+document.getElementById("manForm").addEventListener("click",e=>{
+  if(e.target.closest("#ghOpen")){const s=document.getElementById("ghSet");s.hidden=!s.hidden;}
+  else if(e.target.closest("#ghSave")){const v=document.getElementById("ghTok").value.trim();if(!v)return;try{localStorage.setItem("chance-gh",v);}catch(err){}document.getElementById("ghTok").value="";document.getElementById("ghSet").hidden=true;ghShowState("המפתח נשמר ✓");}
+  else if(e.target.closest("#ghDel")){try{localStorage.removeItem("chance-gh");}catch(err){}document.getElementById("ghSet").hidden=true;ghShowState("המפתח נמחק.");}
+});
+ghShowState();
 // ---- live refresh: pull new results without reloading ----
 // results straight from the public results feed (raw GitHub file, open to browsers), when the site's own file lags
 let _feedAt=0;
