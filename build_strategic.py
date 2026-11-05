@@ -3,7 +3,8 @@
 רשימת ההגרלות הקבועה: strategic/draws.json (מהחדשה לישנה).
 היא מתעדכנת משני מקורות:
   1. המשימה המתוזמנת של Claude, שמוסיפה כל הגרלה חדשה כמה דקות אחרי שהיא נערכת.
-  2. הארכיון הציבורי github.com/laly100/chance-feed (גיבוי, מתעדכן באיחור).
+  2. myloto.co.il (מתעדכן כמה דקות אחרי ההגרלה; מציג את ההגרלה האחרונה ואת זו שלפניה).
+  3. הארכיון הציבורי github.com/laly100/chance-feed (גיבוי, מתעדכן באיחור).
 האתר עצמו בודק כל דקה אם יש draws.json חדש ומעדכן את הניתוח בלי רענון.
 הרצה ידנית: python build_strategic.py
 """
@@ -23,6 +24,38 @@ SCHEDULE[6] = ["21:30", "23:30"]
 
 def valid(r):
     return all(r.get(k) in VALUES for k in "SHDC") and isinstance(r.get("n"), int)
+
+
+MYLOTO = "https://www.myloto.co.il/%D7%A6%D7%90%D7%A0%D7%A1"
+SUITW = {"פיק": "S", "עלה": "S", "לב": "H", "יהלום": "D", "תלתן": "C"}
+
+
+def from_myloto():
+    """ההגרלה האחרונה (ואת זו שלפניה) מעמוד הצ'אנס של myloto, רק אם robots.txt מתיר."""
+    try:
+        import re, requests, urllib.robotparser
+        rp = urllib.robotparser.RobotFileParser()
+        rr = requests.get("https://www.myloto.co.il/robots.txt", timeout=20)
+        rp.parse(rr.text.splitlines() if rr.status_code == 200 else [])
+        if not rp.can_fetch("*", MYLOTO):
+            print("myloto: robots.txt לא מתיר, מדלג")
+            return []
+        h = requests.get(MYLOTO, timeout=30, headers={"User-Agent": "chance-site-updater"}).content.decode("utf-8", "ignore")
+    except Exception as e:
+        print("myloto לא זמין:", e)
+        return []
+    rows = {}
+    for m in re.finditer(r"תוצאות הגרלה:\s*(\d+)</div>\s*<div>מתאריך\s*(\d\d)/(\d\d)/(\d{4})\s*\|\s*(\d\d:\d\d)</div>(.{0,900}?)</div></div>", h, re.S):
+        n, d, mo, y, t, body = int(m[1]), m[2], m[3], m[4], m[5], m[6]
+        r = dict(n=n, date=f"{y}-{mo}-{d}", time=t)
+        for name, v in re.findall(r"<span class='cardname'>([^:<]+):</span>\s*([0-9JQKA]+)", body):
+            if name.strip() in SUITW:
+                r[SUITW[name.strip()]] = v.strip()
+        if valid(r):
+            rows[n] = r
+    out = sorted(rows.values(), key=lambda r: -r["n"])
+    print("myloto:", ", ".join(str(r["n"]) for r in out) or "לא נמצאו תוצאות")
+    return out
 
 
 def from_feed():
@@ -59,6 +92,9 @@ def main():
     sys.stdout.reconfigure(encoding="utf-8")
     canon = json.load(open(CANON, encoding="utf-8")) if os.path.exists(CANON) else []
     by_n = {r["n"]: r for r in canon if valid(r)}
+    for r in from_myloto():                     # הכי מהיר; מחליף הזנה ידנית אם יש
+        if r["n"] not in by_n or by_n[r["n"]].get("src") == "m":
+            by_n[r["n"]] = r
     for r in from_feed():                       # הארכיון ממלא חורים; לא דורס שורות קיימות
         if r["n"] not in by_n or by_n[r["n"]].get("src") == "m":   # תוצאה שהוזנה ידנית מוחלפת ברשמית
             if r["n"] in by_n and not r.get("time"):
