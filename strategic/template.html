@@ -176,12 +176,19 @@ table.pairs td.nn{font-family:var(--mono)}
 .futH.top{cursor:default}
 .futA.won .futH small{color:var(--felt);font-weight:600}
 .futB{display:flex;flex-direction:column;gap:8px;padding:10px}
+.itzC{display:flex;flex-direction:column;gap:8px}
+.itzK{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:4px;font-size:.88rem}
+.itzKh{display:flex;align-items:center;gap:10px}.itzKt{flex:1;min-width:0}
+.itzR{background:var(--felt);color:var(--felt-ink);border-radius:999px;padding:2px 8px;font-weight:700;font-size:.85rem}
+.itzNx{margin-top:2px}.itzK svg .gl{stroke:var(--ink)}.itzK svg .bx{fill:var(--surface)}
 .itzT{overflow-x:auto}
 .itzT table{border-collapse:collapse;font-size:.82rem;width:100%}
 .itzT th{background:var(--felt);color:var(--felt-ink);padding:5px 3px;font-weight:600;font-size:.8rem}
 .itzT td{border:1px solid var(--line);padding:3px 4px;text-align:center;background:var(--surface)}
 .itzT td.itp{text-align:start;font-size:.74rem;line-height:1.5;white-space:nowrap}
 .itzT td.itp i{font-style:normal;color:var(--muted)}
+.itzT td.itp{white-space:normal}
+.itzT .itzN{font-size:1.05rem;direction:ltr;unicode-bidi:isolate;display:inline-block}
 .itzT tr:nth-child(even) td{background:var(--bg)}
 .itzT td.b{font-weight:700} .itzT td.n{color:var(--muted)} .itzT td.g{padding:2px}
 .itzT svg .gl{stroke:var(--ink)} .itzT svg .bx{fill:var(--surface)}
@@ -1897,22 +1904,49 @@ function itzSvg(p){const c=rc=>[rc[1]*30+15,rc[0]*30+15];let s='<svg width="40" 
   const [x,y]=c(p[0]);return s+`<circle cx="${x}" cy="${y}" r="5" fill="currentColor"/></svg>`;}
 function itzCalc(){
   const A=allDraws();if(_itzCache&&_itzCache.top===A[0].n&&_itzCache.len===A.length)return _itzCache;
-  const SN={S:"עלה",H:"לב",D:"יהלום",C:"תלתן"};const has=(d,cards)=>{const v=SK.map(k=>d[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
-  const T=[];for(let i=0;i+2<A.length&&T.length<5000;i++){if(A[i+1].n!==A[i].n-1||A[i+2].n!==A[i].n-2)continue;T.push(i);}
+  const SN={S:"עלה",H:"לב",D:"יהלום",C:"תלתן"},ORD=["7","8","9","10","J","Q","K","A"];
+  const has=(d,cards)=>{const v=SK.map(k=>d[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
+  const T=[];for(let i=0;i+2<A.length&&T.length<10000;i++){if(A[i+1].n!==A[i].n-1||A[i+2].n!==A[i].n-2)continue;T.push(i);}
+  const T5=T.slice(0,5000),N5=T5.length,N10=T.length;
+  // distinct variants: the same 3 cells at the same columns give the same cards, whatever the arrows' order
+  const V=new Map();
+  for(const [num,p] of ITZ)for(let b=0;b<3;b++){const key=p.map(([r,c])=>r+""+(b+c)).sort().join(",");
+    if(!V.has(key))V.set(key,{key,cells:p.map(([r,c])=>[r,b+c]),nums:[],rep:null});const v=V.get(key);v.nums.push(num);if(!v.rep)v.rep={num,p,b};}
+  for(const v of V.values()){let h5=0,h10=0;const cm=new Map();
+    v.cells.sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
+    T.forEach((i,j)=>{const t=A[i],L=[A[i+1],A[i+2]];const cards=v.cells.map(([r,c])=>L[r][SK[c]]);if(!has(t,cards))return;h10++;if(j<N5)h5++;
+      const k=cards.slice().sort((x,y)=>ORD.indexOf(x)-ORD.indexOf(y)).join(" · ");if(!cm.has(k))cm.set(k,[]);cm.get(k).push(t.n);});
+    v.h5=h5;v.h10=h10;v.combos=[...cm.entries()].sort((x,y)=>y[1].length-x[1].length||y[1][0]-x[1][0]).slice(0,2);
+    v.lastHit=A[2]?has(A[0],v.cells.map(([r,c])=>[A[1],A[2]][r][SK[c]])):false;
+    v.next=v.rep.p.map(([r,c])=>({card:[A[0],A[1]][r][SK[v.rep.b+c]],k:SK[v.rep.b+c],r}));
+    v.start=SN[SK[v.rep.b+v.rep.p[0][1]]];}
+  const VL=[...V.values()];
+  const r5=[...VL].sort((x,y)=>y.h5-x.h5),r10=[...VL].sort((x,y)=>y.h10-x.h10);
+  VL.forEach(v=>{v.rk5=r5.indexOf(v)+1;v.rk10=r10.indexOf(v)+1;v.score=v.rk5+v.rk10;});
+  const top=[...VL].sort((x,y)=>x.score-y.score||y.h5-x.h5).slice(0,5);const topKeys=new Set(top.map(v=>v.key));
   const res=ITZ.map(([num,p])=>{let any=0;const B=[0,0,0];
-    for(const i of T){const t=A[i],L=[A[i+1],A[i+2]];let h=false;for(let b=0;b<3;b++){if(has(t,p.map(([r,c])=>L[r][SK[b+c]]))){B[b]++;h=true;}}if(h)any++;}
-    const vs=[0,1,2].sort((x,y)=>B[y]-B[x]).map(b=>({s:SN[SK[b+p[0][1]]],h:B[b],e:B[b]?Math.round(T.length/B[b]):0}));
-    return {num,p,any,ev:any?(T.length/any):0,vs};}).sort((x,y)=>y.any-x.any||x.num-y.num);
-  _itzCache={top:A[0].n,len:A.length,n:T.length,from:A[T[T.length-1]].n,to:A[T[0]].n,res};return _itzCache;}
+    for(const i of T5){const t=A[i],L=[A[i+1],A[i+2]];let h=false;for(let b=0;b<3;b++){if(has(t,p.map(([r,c])=>L[r][SK[b+c]]))){B[b]++;h=true;}}if(h)any++;}
+    const keyOf=b=>p.map(([r,c])=>r+""+(b+c)).sort().join(",");
+    const vs=[0,1,2].sort((x,y)=>B[y]-B[x]).map(b=>({s:SN[SK[b+p[0][1]]],h:B[b],e:B[b]?Math.round(N5/B[b]):0,star:topKeys.has(keyOf(b))}));
+    return {num,p,any,ev:any?(N5/any):0,vs,star:vs.some(v=>v.star)};}).sort((x,y)=>y.any-x.any||x.num-y.num);
+  _itzCache={top:A[0].n,len:A.length,n:N5,n10:N10,from:A[T5[N5-1]].n,to:A[T5[0]].n,from10:A[T[N10-1]].n,res,top5:top,last:A[0],prev:A[1]};return _itzCache;}
 function renderItz(){
   const el=document.getElementById("itzPanel"),bt=document.getElementById("itzBtn");if(!el)return;
   bt.textContent="התבניות של איציק"+(itzOpen?" ▴":" ▾");bt.classList.toggle("on",itzOpen);bt.setAttribute("aria-pressed",itzOpen);el.hidden=!itzOpen;if(!itzOpen)return;
   if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(itzOpen)renderItz();});return;}
-  const R=itzCalc();
+  const R=itzCalc();const sn=k=>SUITS.find(x=>x[0]===k);const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
+  const nx=R.last.n+1;
   el.innerHTML=`<h3 class="tplH">התבניות של איציק</h3>
-  <p class="tplNote">${R.n.toLocaleString("he-IL")} הגרלות (${R.from}–${R.to}), מתעדכן אחרי כל הגרלה. בכל מקום: מאיזה קלף מתחילה · כמה פגעה · כל כמה הגרלות. בשבלונה: שורה עליונה = הגרלה אחרונה, תחתונה = קודמת, נקודה = התחלה. "פגעה" = שלושת הקלפים יצאו בהגרלה שאחריה.</p>
-  <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr><td class="n">${k+1}</td><td class="b">${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> <b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>`).join("")}</table></div>
-  <div class="reality">שלישיות אקראיות פוגעות בקצב דומה (כ־9% מההגרלות לכל תבנית), כך שהדירוג מראה מה קרה בעבר ולא מבטיח יתרון.</div>`;
+  <h3>★ 5 התבניות הכי חזקות · להגרלה ${nx}</h3>
+  <p class="tplNote">הדירוג משלב את 5,000 ואת ${R.n10.toLocaleString("he-IL")} ההגרלות האחרונות: תבנית שחזקה בשני הטווחים מקבלת ★. "להגרלה הבאה" = שלושת הקלפים שהתבנית מביאה עכשיו, מההגרלות ${R.last.n} (שורה עליונה) ו־${R.prev.n} (שורה תחתונה). הקלפים יכולים לצאת בכל צורה.</p>
+  <div class="itzC">${R.top5.map((v,k)=>`<div class="itzK"><div class="itzKh"><span class="itzR">★${k+1}</span><div class="itzKt"><b>תבנית ${v.rep.num}</b> · מתחילה מ${v.start}<div class="itzNx">להגרלה הבאה: <b class="itzN">${v.next.map(x=>x.card).join(" · ")}</b></div></div>${itzSvg(v.rep.p)}</div>
+   <div>פגעה <b>${v.h5}</b> ב־5,000 (מקום ${v.rk5}) · <b>${v.h10}</b> ב־10,000 (מקום ${v.rk10}) · ${v.lastHit?"פגעה בהגרלה האחרונה ✓":"לא פגעה בהגרלה האחרונה"}</div>
+   <div>חזרה הכי הרבה עם: ${v.combos.map(([c,ns])=>`<b class="itzN">${c}</b> (${ns.length} פעמים, אחרונות: ${ns.slice(0,3).join(", ")})`).join(" · ")}</div>
+   <div class="tplNote">אותם קלפים בדיוק גם בתבניות ${v.nums.join(", ")}.</div></div>`).join("")}</div>
+  <h3>כל התבניות</h3>
+  <p class="tplNote">${R.n.toLocaleString("he-IL")} הגרלות (${R.from}–${R.to}), מתעדכן אחרי כל הגרלה. ★ = שיטה מתוך 5 החזקות. בכל מקום: מאיזה קלף מתחילה · כמה פגעה · כל כמה הגרלות. בשבלונה: שורה עליונה = הגרלה אחרונה, תחתונה = קודמת, נקודה = התחלה. "פגעה" = שלושת הקלפים יצאו בהגרלה שאחריה.</p>
+  <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr><td class="n">${k+1}</td><td class="b">${r.star?"★ ":""}${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> ${v.star?"★ ":""}<b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>`).join("")}</table></div>
+  <div class="reality">כל שיטה פוגעת בערך ב־3–4% מההגרלות, וגם שלישיות אקראיות פוגעות בקצב הזה. ההבדלים בין התבניות קטנים, ולכן ★ מסמנת מה היה חזק בעבר ולא מבטיחה את ההגרלה הבאה.</div>`;
 }
 document.getElementById("itzBtn").addEventListener("click",()=>{itzOpen=!itzOpen;renderItz();if(itzOpen)document.getElementById("itzPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 // ---- section menu (⋮) ----
