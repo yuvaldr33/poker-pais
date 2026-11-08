@@ -615,7 +615,16 @@ function mergeManual(base){
   if(keep.length!==manualDraws.length){manualDraws=keep;try{localStorage.setItem("chance-manual",JSON.stringify(keep));}catch(e){}}
   return out;
 }
-DRAWS=mergeManual(DRAWS);
+// never step back: keep the newest results this device has already seen (a stale cached file must not undo them)
+function unionDraws(a,b){ // b wins for the same draw number; manual entries are left to mergeManual
+  const m=new Map();for(const x of a)if(!x.manual)m.set(x.n,x);for(const x of b)if(!x.manual)m.set(x.n,x);
+  const all=[...m.values()].sort((x,y)=>y.n-x.n);const out=[all[0]];
+  for(let i=1;i<all.length;i++){if(all[i].n!==out[out.length-1].n-1)break;out.push(all[i]);}
+  if(out.length>=Math.min(200,all.length))return out;
+  const fa=a.filter(x=>!x.manual),fb=b.filter(x=>!x.manual);return (fb[0]&&(!fa[0]||fb[0].n>=fa[0].n))?fb:fa;}
+function saveRecent(){try{localStorage.setItem("chance-recent",JSON.stringify(DRAWS.filter(x=>!x.manual).slice(0,60)));}catch(e){}}
+try{const v=JSON.parse(localStorage.getItem("chance-recent")||"[]");if(Array.isArray(v)&&v.length&&v[0].n>DRAWS[0].n)DRAWS=unionDraws(DRAWS,v);}catch(e){}
+DRAWS=mergeManual(DRAWS);saveRecent();
 let last=DRAWS[0];
 function dayLabel(s,nowP){
   const today=Date.UTC(nowP.year,nowP.month-1,nowP.day), that=Date.UTC(s.y,s.m-1,s.d);
@@ -1144,8 +1153,9 @@ async function refreshDraws(){
     const r=await fetch("draws.json?t="+Date.now(),{cache:"no-store"});
     if(!r.ok)return;
     let d=await r.json();
-    if(Array.isArray(d)&&d.length){d=await addFromFeed(d);const merged=mergeManual(d);
-      if(merged[0].n!==DRAWS[0].n||merged[0].manual!==DRAWS[0].manual||["S","H","D","C"].some(k=>merged[0][k]!==DRAWS[0][k])){DRAWS=merged;rerenderAll();}}
+    if(Array.isArray(d)&&d.length){d=unionDraws(DRAWS,d);d=await addFromFeed(d);const merged=mergeManual(d);
+      if(merged[0].n<DRAWS[0].n)return; // an older file (cache) never replaces newer results
+      if(merged[0].n!==DRAWS[0].n||merged[0].manual!==DRAWS[0].manual||["S","H","D","C"].some(k=>merged[0][k]!==DRAWS[0][k])){DRAWS=merged;saveRecent();rerenderAll();}}
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
