@@ -191,6 +191,15 @@ table.pairs td.nn{font-family:var(--mono)}
 .futH.top{cursor:default}
 .futA.won .futH small{color:var(--felt);font-weight:600}
 .futB{display:flex;flex-direction:column;gap:8px;padding:10px}
+.itzTabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.itzTb{flex:none;border:1px solid var(--felt);background:var(--surface);color:var(--felt);border-radius:999px;padding:7px 14px;font:inherit;font-size:.9rem;cursor:pointer}
+.itzTb.on{background:var(--felt);color:var(--felt-ink)}
+.itzG{min-width:0}.itzG td{font-size:1.25rem;font-weight:700;font-family:var(--mono)}
+.itzG td.r,.itzG th .r{color:var(--red)} .itzG th .r{color:#ffb3bd}
+.itzG td.itzE{color:var(--muted);font-weight:400}
+.itzS{display:flex;align-items:center;gap:6px;direction:rtl;font-family:var(--body);font-weight:400}
+.itzS small{font-size:.7rem;line-height:1.3;color:var(--muted);text-align:start}
+.itzList{display:flex;flex-direction:column;gap:6px;font-size:.85rem}
 .itzC{display:flex;flex-direction:column;gap:8px}
 .itzK{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--surface);display:flex;flex-direction:column;gap:4px;font-size:.88rem}
 .itzKh{display:flex;align-items:center;gap:10px}.itzKt{flex:1;min-width:0}
@@ -203,7 +212,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .itzT td.itp{text-align:start;font-size:.74rem;line-height:1.5;white-space:nowrap}
 .itzT td.itp i{font-style:normal;color:var(--muted)}
 .itzT td.itp{white-space:normal}
-.itzT .itzN{font-size:1.05rem;direction:ltr;unicode-bidi:isolate;display:inline-block}
+.itzN{font-size:1.05rem;direction:ltr;unicode-bidi:isolate;display:inline-block}
 .itzT tr:nth-child(even) td{background:var(--bg)}
 .itzT td.b{font-weight:700} .itzT td.n{color:var(--muted)} .itzT td.g{padding:2px}
 .itzT svg .gl{stroke:var(--ink)} .itzT svg .bx{fill:var(--surface)}
@@ -257,6 +266,7 @@ table.pairs td.nn{font-family:var(--mono)}
 /* ---- template narrowing ---- */
 .tplH{font-family:var(--display);font-weight:400;font-size:1.15rem;margin:6px 0 0;padding-top:12px;border-top:1px solid var(--line)}
 .tplBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+@media (max-width:700px){.tplScroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}.tplScroll .btn{flex:none}}
 .btn.on{background:var(--felt);border-color:var(--felt);color:var(--felt-ink)}
 .tplNote{font-size:.85rem;color:var(--muted);line-height:1.5}
 .tplNote b{color:var(--ink)}
@@ -362,7 +372,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
-    <div class="tplBar"><button class="btn pri" type="button" id="futBtn" aria-pressed="false">תוצאות להגרלה עתידית ▾</button><button class="btn pri" type="button" id="itzBtn" aria-pressed="false">התבניות של איציק ▾</button><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">תבניות ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
+    <div class="tplBar tplScroll"><button class="btn pri" type="button" id="futBtn" aria-pressed="false">תוצאות להגרלה עתידית ▾</button><button class="btn pri" type="button" id="itzBtn" aria-pressed="false">התבניות של איציק ▾</button><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">תבניות ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
     <p class="tplNote">שלישיות שמיועדות לבוא, לפי 200 ההגרלות האחרונות</p>
     <div id="futPanel" class="c3" hidden></div>
     <div id="itzPanel" class="c3" hidden></div>
@@ -1191,7 +1201,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="3c9c3cc6db";
+const BUILD="66361174b5";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -1934,7 +1944,15 @@ function itzCalc(){
     v.h5=h5;v.h10=h10;v.combos=[...cm.entries()].sort((x,y)=>y[1].length-x[1].length||y[1][0]-x[1][0]).slice(0,2);
     v.lastHit=A[2]?has(A[0],v.cells.map(([r,c])=>[A[1],A[2]][r][SK[c]])):false;
     v.next=v.rep.p.map(([r,c])=>({card:[A[0],A[1]][r][SK[v.rep.b+c]],k:SK[v.rep.b+c],r}));
-    v.start=SN[SK[v.rep.b+v.rep.p[0][1]]];}
+    v.start=SN[SK[v.rep.b+v.rep.p[0][1]]];
+    // where the 3 cards landed in the next draw (over the last 5,000), in the order of the template's arrows
+    const land=new Map(),rp=v.rep.p.map(([r,c])=>[r,v.rep.b+c]);
+    for(const i of T5){const t=A[i],L=[A[i+1],A[i+2]];const cards=rp.map(([r,c])=>L[r][SK[c]]);if(!has(t,cards))continue;
+      const opts=[];for(const x of SK)for(const y of SK)for(const z of SK){if(x===y||x===z||y===z)continue;if(t[x]===cards[0]&&t[y]===cards[1]&&t[z]===cards[2])opts.push(x+y+z);}
+      for(const o of opts)land.set(o,(land.get(o)||0)+1/opts.length);}
+    const bestL=[...land.entries()].sort((x,y)=>y[1]-x[1])[0]||["SHD",0];
+    v.landKey=bestL[0];v.landN=Math.round(bestL[1]);
+    v.ticket={};v.next.forEach((x,j)=>{v.ticket[bestL[0][j]]=x.card;});}
   const VL=[...V.values()];
   const r5=[...VL].sort((x,y)=>y.h5-x.h5),r10=[...VL].sort((x,y)=>y.h10-x.h10);
   VL.forEach(v=>{v.rk5=r5.indexOf(v)+1;v.rk10=r10.indexOf(v)+1;v.score=v.rk5+v.rk10;});
@@ -1945,24 +1963,31 @@ function itzCalc(){
     const vs=[0,1,2].sort((x,y)=>B[y]-B[x]).map(b=>({s:SN[SK[b+p[0][1]]],h:B[b],e:B[b]?Math.round(N5/B[b]):0,star:topKeys.has(keyOf(b))}));
     return {num,p,any,ev:any?(N5/any):0,vs,star:vs.some(v=>v.star)};}).sort((x,y)=>y.any-x.any||x.num-y.num);
   _itzCache={top:A[0].n,len:A.length,n:N5,n10:N10,from:A[T5[N5-1]].n,to:A[T5[0]].n,from10:A[T[N10-1]].n,res,top5:top,last:A[0],prev:A[1]};return _itzCache;}
+var itzTab="top";
 function renderItz(){
   const el=document.getElementById("itzPanel"),bt=document.getElementById("itzBtn");if(!el)return;
   bt.textContent="התבניות של איציק"+(itzOpen?" ▴":" ▾");bt.classList.toggle("on",itzOpen);bt.setAttribute("aria-pressed",itzOpen);el.hidden=!itzOpen;if(!itzOpen)return;
   if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(itzOpen)renderItz();});return;}
-  const R=itzCalc();const sn=k=>SUITS.find(x=>x[0]===k);const ck=(r,k)=>`<span class="ck${sn(k)[3]?" r":""}">${r}${sn(k)[1]}</span>`;
-  const nx=R.last.n+1;
-  el.innerHTML=`<h3 class="tplH">התבניות של איציק</h3>
-  <h3>★ 5 התבניות הכי חזקות · להגרלה ${nx}</h3>
-  <p class="tplNote">הדירוג משלב את 5,000 ואת ${R.n10.toLocaleString("he-IL")} ההגרלות האחרונות: תבנית שחזקה בשני הטווחים מקבלת ★. "להגרלה הבאה" = שלושת הקלפים שהתבנית מביאה עכשיו, מההגרלות ${R.last.n} (שורה עליונה) ו־${R.prev.n} (שורה תחתונה). הקלפים יכולים לצאת בכל צורה.</p>
-  <div class="itzC">${R.top5.map((v,k)=>`<div class="itzK"><div class="itzKh"><span class="itzR">★${k+1}</span><div class="itzKt"><b>תבנית ${v.rep.num}</b> · מתחילה מ${v.start}<div class="itzNx">להגרלה הבאה: <b class="itzN">${v.next.map(x=>x.card).join(" · ")}</b></div></div>${itzSvg(v.rep.p)}</div>
-   <div>פגעה <b>${v.h5}</b> ב־5,000 (מקום ${v.rk5}) · <b>${v.h10}</b> ב־10,000 (מקום ${v.rk10}) · ${v.lastHit?"פגעה בהגרלה האחרונה ✓":"לא פגעה בהגרלה האחרונה"}</div>
-   <div>חזרה הכי הרבה עם: ${v.combos.map(([c,ns])=>`<b class="itzN">${c}</b> (${ns.length} פעמים, אחרונות: ${ns.slice(0,3).join(", ")})`).join(" · ")}</div>
-   <div class="tplNote">אותם קלפים בדיוק גם בתבניות ${v.nums.join(", ")}.</div></div>`).join("")}</div>
-  <h3>כל התבניות</h3>
-  <p class="tplNote">${R.n.toLocaleString("he-IL")} הגרלות (${R.from}–${R.to}), מתעדכן אחרי כל הגרלה. ★ = שיטה מתוך 5 החזקות. בכל מקום: מאיזה קלף מתחילה · כמה פגעה · כל כמה הגרלות. בשבלונה: שורה עליונה = הגרלה אחרונה, תחתונה = קודמת, נקודה = התחלה. "פגעה" = שלושת הקלפים יצאו בהגרלה שאחריה.</p>
-  <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr><td class="n">${k+1}</td><td class="b">${r.star?"★ ":""}${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> ${v.star?"★ ":""}<b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>`).join("")}</table></div>
-  <div class="reality">כל שיטה פוגעת בערך ב־3–4% מההגרלות, וגם שלישיות אקראיות פוגעות בקצב הזה. ההבדלים בין התבניות קטנים, ולכן ★ מסמנת מה היה חזק בעבר ולא מבטיחה את ההגרלה הבאה.</div>`;
+  const R=itzCalc();const nx=R.last.n+1;
+  const tabs=[["top","5 החזקות"],["all","כל התבניות"],["cards","הקלפים שחזרו"]];
+  let body="";
+  if(itzTab==="top"){
+    body=`<p class="tplNote">להגרלה <b>${nx}</b>, לפי ההגרלות ${R.last.n} (שורה עליונה בשבלונה) ו־${R.prev.n} (שורה תחתונה). מתעדכן לבד אחרי כל הגרלה. כל שורה היא טופס צ'אנס 3: הקלפים במקומות שבהם השבלונה נחתה הכי הרבה ב־5,000 ההגרלות האחרונות.</p>
+    <div class="itzT"><table class="itzG" dir="ltr"><tr><th>שבלונה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${R.top5.map((v,k)=>`<tr><td class="g"><div class="itzS"><span class="itzR">★${k+1}</span>${itzSvg(v.rep.p)}<small>תבנית ${v.rep.num}<br>מ${v.start}</small></div></td>${SUITS.map(([sk,,,red])=>v.ticket[sk]?`<td class="itzC1${red?" r":""}">${v.ticket[sk]}</td>`:`<td class="itzE">—</td>`).join("")}</tr>`).join("")}</table></div>
+    <div class="itzList">${R.top5.map((v,k)=>`<div><b>★${k+1} · תבנית ${v.rep.num}</b> מתחילה מ${v.start}: פגעה ${v.h5} ב־5,000 (מקום ${v.rk5}) ו־${v.h10} ב־10,000 (מקום ${v.rk10}). הקלפים נחתו בדיוק במקומות האלה ${v.landN} פעמים. ${v.lastHit?"פגעה בהגרלה האחרונה ✓":""}</div>`).join("")}</div>`;
+  }else if(itzTab==="all"){
+    body=`<p class="tplNote">${R.n.toLocaleString("he-IL")} הגרלות (${R.from}–${R.to}). ★ = שיטה מתוך 5 החזקות. בכל מקום: מאיזה קלף מתחילה · כמה פגעה · כל כמה הגרלות.</p>
+    <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr><td class="n">${k+1}</td><td class="b">${r.star?"★ ":""}${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> ${v.star?"★ ":""}<b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>`).join("")}</table></div>`;
+  }else{
+    body=`<p class="tplNote">ב־${R.n10.toLocaleString("he-IL")} ההגרלות האחרונות: עם אילו קלפים כל אחת מ־5 החזקות חזרה הכי הרבה, ובאילו הגרלות.</p>
+    <div class="itzC">${R.top5.map((v,k)=>`<div class="itzK"><div class="itzKh"><span class="itzR">★${k+1}</span><div class="itzKt"><b>תבנית ${v.rep.num}</b> · מתחילה מ${v.start}</div>${itzSvg(v.rep.p)}</div>
+     ${v.combos.map(([c,ns])=>`<div><b class="itzN">${c}</b>: ${ns.length} פעמים · הגרלות ${ns.slice(0,5).join(", ")}</div>`).join("")}
+     <div class="tplNote">אותם קלפים בדיוק גם בתבניות ${v.nums.join(", ")}.</div></div>`).join("")}</div>`;
+  }
+  el.innerHTML=`<h3 class="tplH">התבניות של איציק</h3><div class="itzTabs" role="tablist">${tabs.map(([k,t])=>`<button type="button" role="tab" class="itzTb${itzTab===k?" on":""}" data-t="${k}" aria-selected="${itzTab===k}">${t}</button>`).join("")}</div>${body}
+  <div class="reality">כל שיטה פוגעת בערך ב־3–4% מההגרלות, כמו שלישייה אקראית, וטופס צ'אנס 3 מדויק פוגע ב־1 מ־512. ★ מראה מה היה חזק בעבר ולא מבטיח את ההגרלה הבאה.</div>`;
 }
+document.getElementById("itzPanel").addEventListener("click",e=>{const b=e.target.closest(".itzTb");if(!b)return;itzTab=b.dataset.t;renderItz();});
 document.getElementById("itzBtn").addEventListener("click",()=>{itzOpen=!itzOpen;renderItz();if(itzOpen)document.getElementById("itzPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 // ---- section menu (⋮) ----
 (function(){
