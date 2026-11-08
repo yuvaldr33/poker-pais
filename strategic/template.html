@@ -205,6 +205,9 @@ table.pairs td.nn{font-family:var(--mono)}
 .itzG{min-width:0}.itzG td{font-size:1.25rem;font-weight:700;font-family:var(--mono)}
 .itzG td.r,.itzG th .r{color:var(--red)} .itzG th .r{color:#ffb3bd}
 .itzG td.itzE{color:var(--muted);font-weight:400}
+.itzG .itzSt5{color:var(--felt)}
+.itzG .itzI{font-size:.8rem;color:var(--muted);min-width:1.2em;text-align:center}
+.itzG tr.tp td{background:var(--win)}
 .itzS{display:flex;align-items:center;gap:6px;direction:rtl;font-family:var(--body);font-weight:400}
 .itzS small{font-size:.7rem;line-height:1.3;color:var(--muted);text-align:start}
 .itzList{display:flex;flex-direction:column;gap:6px;font-size:.85rem}
@@ -1963,7 +1966,9 @@ function itzCalc(){
       for(const o of opts)land.set(o,(land.get(o)||0)+1/opts.length);}
     const bestL=[...land.entries()].sort((x,y)=>y[1]-x[1])[0]||["SHD",0];
     v.landKey=bestL[0];v.landN=Math.round(bestL[1]);
-    v.ticket={};v.next.forEach((x,j)=>{v.ticket[bestL[0][j]]=x.card;});}
+    v.ticket={};v.next.forEach((x,j)=>{v.ticket[bestL[0][j]]=x.card;});
+    const L2=[...land.entries()].sort((x,y)=>y[1]-x[1])[1];v.ticket2=null;
+    if(L2){v.ticket2={};v.land2N=Math.round(L2[1]);v.next.forEach((x,j)=>{v.ticket2[L2[0][j]]=x.card;});}}
   const VL=[...V.values()];
   const r5=[...VL].sort((x,y)=>y.h5-x.h5),r10=[...VL].sort((x,y)=>y.h10-x.h10);
   VL.forEach(v=>{v.rk5=r5.indexOf(v)+1;v.rk10=r10.indexOf(v)+1;v.score=v.rk5+v.rk10;});
@@ -1978,7 +1983,7 @@ function itzCalc(){
     const keyOf=b=>p.map(([r,c])=>r+""+(b+c)).sort().join(",");
     const vs=[0,1,2].sort((x,y)=>B[y]-B[x]).map(b=>({b,key:keyOf(b),s:SN[SK[b+p[0][1]]],h:B[b],e:B[b]?Math.round(N5/B[b]):0,star:topKeys.has(keyOf(b))}));
     return {num,p,any,ev:any?(N5/any):0,vs,star:vs.some(v=>v.star)};}).sort((x,y)=>y.any-x.any||x.num-y.num);
-  _itzCache={V,top:A[0].n,len:A.length,n:N5,n10:N10,from:A[T5[N5-1]].n,to:A[T5[0]].n,from10:A[T[N10-1]].n,res,top5:top,last:A[0],prev:A[1]};return _itzCache;}
+  _itzCache={V,all:[...VL].sort((x,y)=>y.fit-x.fit||x.score-y.score),top:A[0].n,len:A.length,n:N5,n10:N10,from:A[T5[N5-1]].n,to:A[T5[0]].n,from10:A[T[N10-1]].n,res,top5:top,last:A[0],prev:A[1]};return _itzCache;}
 
 // a worked example: the last two draws as a grid, the template's arrows drawn on it, the 3 cards and the ticket
 function itzExample(num,p,b,v,R,title){
@@ -2039,7 +2044,11 @@ function renderItz(){
   let body="";
   if(itzTab==="top"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>, לפי ההגרלות ${R.last.n} (שורה עליונה בשבלונה) ו־${R.prev.n} (שורה תחתונה). אחרי כל הגרלה המערכת בודקת מחדש את כל 12 השיטות: כמה כל אחת חזקה בכלל, וכמה היא פגעה בעבר עם הקלפים המדויקים שהיא מביאה עכשיו. 5 המתאימות ביותר להגרלה הזו נכנסות לכאן, גם אם בדירוג הכללי הן במקום 7 או 8. כל שורה היא טופס צ'אנס 3: הקלפים במקומות שבהם השבלונה נחתה הכי הרבה ב־5,000 ההגרלות האחרונות.</p>
-    <div class="itzT"><table class="itzG" dir="ltr"><tr><th>שבלונה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${R.top5.map((v,k)=>`<tr><td class="g"><div class="itzS"><span class="itzR">★${k+1}</span>${itzSvg(v.rep.p)}<small>תבנית ${v.rep.num}<br>מ${v.start}</small></div></td>${SUITS.map(([sk,,,red])=>v.ticket[sk]?`<td class="itzC1${red?" r":""}">${v.ticket[sk]}</td>`:`<td class="itzE">—</td>`).join("")}</tr>`).join("")}</table></div>
+    <h3>15 טפסים להגרלה ${nx}</h3>
+    <p class="tplNote">כל שבלונה מונחת בכל המקומות האפשריים. יש בדיוק 12 שלישיות שונות, כי כמה תבניות לוקחות את אותם קלפים. אז 12 הטפסים הראשונים מכסים את כולן, מסודרים מהמתאימה ביותר. 3 הטפסים האחרונים הם סידור נוסף של 3 החזקות, לפי המקום השני שבו הקלפים נחתו הכי הרבה.</p>
+    <div class="itzT"><table class="itzG" dir="ltr"><tr><th>שבלונה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${(()=>{const L=R.all.map((v,k)=>({v,k,t:v.ticket,sec:false}));R.all.slice(0,3).forEach((v,k)=>{if(v.ticket2)L.push({v,k,t:v.ticket2,sec:true});});
+      return L.slice(0,15).map((x,i)=>`<tr class="${R.top5.includes(x.v)?"tp":""}"><td class="g"><div class="itzS"><b class="itzI">${i+1}</b>${itzSvg(x.v.rep.p)}<small>${R.top5.includes(x.v)?`<b class="itzSt5">★${R.top5.indexOf(x.v)+1}</b> `:""}תבנית ${x.v.rep.num}<br>מ${x.v.start}${x.sec?"<br>סידור נוסף":""}</small></div></td>${SUITS.map(([sk,,,red])=>x.t[sk]?`<td class="itzC1${red?" r":""}">${x.t[sk]}</td>`:`<td class="itzE">—</td>`).join("")}</tr>`).join("");})()}</table></div>
+    <p class="tplNote">15 טפסי צ'אנס 3 מכסים יחד בערך 15 מתוך 512 תוצאות אפשריות לכל צורה (~2.9%). ★ = אחת מ־5 הנבחרות, ומתחת יש דוגמה מצוירת לכל אחת.</p>
     <h3>איך כל אחת נבנתה – על שתי ההגרלות האחרונות</h3>
     ${R.top5.map((v,k)=>itzExample(v.rep.num,v.rep.p,v.rep.b,v,R,`★${k+1} · תבנית ${v.rep.num} · מתחילה מ${v.start}</div><div class="itzWhy">למה נבחרה: בדירוג הכללי מקום ${v.rk5} ב־5,000 (${v.h5} פגיעות) ומקום ${v.rk10} ב־10,000 (${v.h10}). עם השלישייה של עכשיו (<b class="itzN">${v.nk}</b>) היא פגעה ${v.nHits} מתוך ${v.nTries} פעמים שיצרה אותה${v.nLast.length?` (לאחרונה: ${v.nLast.join(", ")})`:""}. סיכוי משוער להגרלה הבאה: ${(v.fit*100).toFixed(1)}%.${v.lastHit?" פגעה בהגרלה האחרונה ✓":""}`)).join("")}`;
   }else if(itzTab==="all"){
