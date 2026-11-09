@@ -259,6 +259,9 @@ table.pairs td.nn{font-family:var(--mono)}
 .fTbl td.fm{font-family:var(--body);font-size:.8rem;font-weight:600;color:var(--muted)}
 .fTbl tr.fRes td{background:var(--chip);border-bottom:2px solid var(--felt)}.fTbl tr.fRes td:first-child{font-family:var(--body);font-size:.8rem}
 .fTbl tr.fWin td{background:var(--win)!important}.fTbl tr.fWin td.fm{color:var(--felt)}
+.cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
+.cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
+.crLeg{margin:8px 0;padding:10px;border:1.5px solid var(--line,#ccc);border-radius:10px;line-height:1.9;font-size:.95em}.crLeg small{opacity:.8;line-height:1.5;display:block}
 .ftop{display:inline-block;min-width:1.5em;padding:0 3px;border:2.5px solid #8b2fc9;border-radius:4px;background:rgba(139,47,201,.16)}
 .fRuns{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:10px;border:1.5px solid #8b2fc9;border-radius:10px;font-size:.95em;line-height:1.7}
 .fRuns small{opacity:.8}
@@ -1278,7 +1281,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="8d13723616";
+const BUILD="538475d337";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2147,8 +2150,8 @@ function renderItz(){
     <h3>15 טפסים להגרלה ${nx}</h3>
     <p class="tplNote">כל שבלונה מונחת בכל המקומות האפשריים. יש בדיוק 12 שלישיות שונות, כי כמה תבניות לוקחות את אותם קלפים. אז 12 הטפסים הראשונים מכסים את כולן, מסודרים מהמתאימה ביותר. 3 הטפסים האחרונים הם סידור נוסף של 3 החזקות, לפי המקום השני שבו הקלפים נחתו הכי הרבה.</p>
     <!--RUNBOX--><div class="itzT"><table class="itzG" dir="ltr"><tr><th>שבלונה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${(()=>{const L=R.all.map((v,k)=>({v,k,t:v.ticket,sec:false}));R.all.slice(0,3).forEach((v,k)=>{if(v.ticket2)L.push({v,k,t:v.ticket2,sec:true});});
-      const LL=L.slice(0,15),RT=runTop(LL.map(x=>x.t));itzRunBox=RT.box;
-      return LL.map((x,i)=>`<tr class="${R.top5.includes(x.v)?"tp":""}"><td class="g"><div class="itzS"><b class="itzI">${i+1}</b>${itzSvg(x.v.rep.p)}<small>${R.top5.includes(x.v)?`<b class="itzSt5">★${R.top5.indexOf(x.v)+1}</b> `:""}תבנית ${x.v.rep.num}<br>מ${x.v.start}${x.sec?"<br>סידור נוסף":""}<br><span class="itzB">${x.v.likes?"♥":""}${x.v.due?"⏱":""}</span></small></div></td>${SUITS.map(([sk,,,red])=>x.t[sk]?`<td class="itzC1${red?" r":""}"><span class="${RT.is(x.t,sk)?"ftop":""}">${x.t[sk]}</span></td>`:`<td class="itzE">—</td>`).join("")}</tr>`).join("");})()}</table></div>
+      const LL=L.slice(0,15);itzRunBox=CR_LEGEND;
+      return LL.map((x,i)=>`<tr class="${R.top5.includes(x.v)?"tp":""}"><td class="g"><div class="itzS"><b class="itzI">${i+1}</b>${itzSvg(x.v.rep.p)}<small>${R.top5.includes(x.v)?`<b class="itzSt5">★${R.top5.indexOf(x.v)+1}</b> `:""}תבנית ${x.v.rep.num}<br>מ${x.v.start}${x.sec?"<br>סידור נוסף":""}<br><span class="itzB">${x.v.likes?"♥":""}${x.v.due?"⏱":""}</span></small></div></td>${SUITS.map(([sk,,,red])=>x.t[sk]?`<td class="itzC1${red?" r":""}"><span class="${crCls(x.v.rep.num,x.v.rep.b,x.t,sk,0)}">${x.t[sk]}</span></td>`:`<td class="itzE">—</td>`).join("")}</tr>`).join("");})()}</table></div>
     <p class="tplNote">♥ = היא אוהבת את הקלפים של עכשיו · ⏱ = לפי הספירה אמורה לחזור. 5 הנבחרות (★) הן קודם אלה עם שני הסימנים, אחר כך עם אחד, ואז לפי ההתאמה לקלפים – גם אם בדירוג הכללי הן במקום נמוך.</p>
     <p class="tplNote">15 טפסי צ'אנס 3 מכסים יחד בערך 15 מתוך 512 תוצאות אפשריות לכל צורה (~2.9%). ★ = אחת מ־5 הנבחרות, ומתחת יש דוגמה מצוירת לכל אחת.</p>
     <h3>איך כל אחת נבנתה – על שתי ההגרלות האחרונות</h3>
@@ -2162,11 +2165,11 @@ function renderItz(){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>: אותם 54 טפסים כמו ב"כל התבניות", אבל כל טופס מונח בצורה שבה שלושת הקלפים נחתו הכי הרבה ב־5,000 ההגרלות האחרונות – גם אם יש רווח (קלף חסר) באמצע. ההבדלים בין הצורות קטנים וקרובים למזל.</p>${formItz({skip:0,d:null,free:true})}`;
   }else if(itzTab==="sep"){
     const S=itzSept(),rows=allTplRows(0,null);const sn=k=>SUITS.find(x=>x[0]===k);
-    const SR=rows.map(r=>{const st=S.by[r.num],o=r.opts[st.b];const tk={};if(st.land)o.cards.forEach((c,j)=>{tk[st.land[j]]=c;});else Object.assign(tk,o.ticket);return {r,st,o,tk};});const SRT=runTop(SR.map(x=>x.tk));
+    const SR=rows.map(r=>{const st=S.by[r.num],o=r.opts[st.b];const tk={};if(st.land)o.cards.forEach((c,j)=>{tk[st.land[j]]=c;});else Object.assign(tk,o.ticket);return {r,st,o,tk};});
     body=`<p class="tplNote">להגרלה <b>${nx}</b>: לכל אחת מ־18 התבניות, נקודת ההתחלה שפגעה הכי הרבה בספטמבר 2026 (${S.n} הגרלות, ${S.from}–${S.to}), גם אם ב־5,000 הגרלות נקודה אחרת חזקה יותר. פגיעה = שלושת הקלפים יצאו.</p>
-    ${SRT.box}<div class="fTbl"><table dir="ltr"><tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>שבוע הכי חזק</th></tr>${SR.map(({r,st,o,tk})=>{
+    ${CR_LEGEND}<div class="fTbl"><table dir="ltr"><tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>שבוע הכי חזק</th></tr>${SR.map(({r,st,o,tk})=>{
       const qm=Math.max(...st.Q),qi=st.Q.indexOf(qm);
-      return `<tr class="fFirst ${itzTierCls(r.num)}"><td class="fi">${itzSvg(r.p)}<b>${r.num}</b><small class="fSp">מ${o.start} · ${st.h} בספט׳${st.tie?" (תיקו)":""}</small></td>${SK.map(k=>{const v=tk[k],red=sn(k)[3];return v?`<td class="${red?"r":""}"><span class="${SRT.is(tk,k)?"ftop":""}">${v}</span></td>`:`<td class="fe">—</td>`;}).join("")}<td class="fq"><b>${["1–7","8–15","16–22","23–30"][qi]}</b><small>${st.Q.join(" · ")}</small></td></tr>`;}).join("")}</table></div>
+      return `<tr class="fFirst ${itzTierCls(r.num)}"><td class="fi">${itzSvg(r.p)}<b>${r.num}</b><small class="fSp">מ${o.start} · ${st.h} בספט׳${st.tie?" (תיקו)":""}</small></td>${SK.map(k=>{const v=tk[k],red=sn(k)[3];return v?`<td class="${red?"r":""}"><span class="${crCls(r.num,st.b,tk,k,0)}">${v}</span></td>`:`<td class="fe">—</td>`;}).join("")}<td class="fq"><b>${["1–7","8–15","16–22","23–30"][qi]}</b><small>${st.Q.join(" · ")}</small></td></tr>`;}).join("")}</table></div>
     <p class="tplNote">הקלפים מונחים בצורות שבהן התבנית נחתה בספטמבר. "שבוע הכי חזק" = באיזה חלק של ספטמבר התבנית פגעה הכי הרבה (ימים 1–7 · 8–15 · 16–22 · 23–30), ומתחת – כמה פגיעות בכל אחד מהם.</p>
     <p class="tplNote">בספטמבר: בסך הכול ${S.total} פגיעות של תבניות, ב־${S.draws} הגרלות שונות. "תיקו" = שתי נקודות התחלה פגעו אותו מספר פעמים, ונבחרה זו שחזקה יותר ב־5,000 ההגרלות.</p>`;
   }else if(itzTab==="track"){
@@ -2208,6 +2211,18 @@ const RUNS=["SHD","HDC"];
 function pickRun(cnt,b){const g=k=>cnt?(cnt.get(k)||0):0;const def=b>=1?"HDC":"SHD",o=def==="SHD"?"HDC":"SHD";return g(o)>g(def)?[o,g(o)]:[def,g(def)];}
 // purple squares: in each run (עלה-לב-יהלום / לב-יהלום-תלתן) the card that shows up most in each column
 function runOf(t){return Object.keys(t).filter(k=>t[k]).sort((x,y)=>SK.indexOf(x)-SK.indexOf(y)).join("");}
+// strength colours: for this template (start b), over the last 5,000 draws in which it hit (all 3 cards came out),
+// how often each card value came out in each suit. Rank 1 = purple, 2 = yellow, 3 = green, 4 = red.
+const _cr=new Map();
+function cellRank(num,b,skip){const AA=allDraws(),A=skip?AA.slice(skip):AA;const key=A[0].n+"|"+num+"|"+b;if(_cr.has(key))return _cr.get(key);
+  const e=ITZ.find(x=>x[0]===num);if(!e)return null;const p=e[1];
+  const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
+  const cnt={S:{},H:{},D:{},C:{}};let n=0,h=0;
+  for(let i=0;i+2<A.length&&n<5000;i++){if(A[i+1].n!==A[i].n-1||A[i+2].n!==A[i].n-2)continue;n++;const t=A[i],cs=p.map(([r,c])=>[A[i+1],A[i+2]][r][SK[b+c]]);if(!has(t,cs))continue;h++;for(const k of SK)cnt[k][t[k]]=(cnt[k][t[k]]||0)+1;}
+  const rk={};for(const k of SK){const lv=[...new Set(Object.values(cnt[k]))].sort((x,y)=>y-x);rk[k]={};for(const v in cnt[k])rk[k][v]=lv.indexOf(cnt[k][v])+1;}
+  const out={h,cnt,rk};_cr.set(key,out);return out;}
+function crCls(num,b,t,k,skip){const v=t[k];if(!v)return "";const R=cellRank(num,b,skip);const r=R&&R.rk[k][v];return r&&r<=4?"cr"+r:"";}
+const CR_LEGEND=`<div class="crLeg"><b>חוזק כל קלף במקום שלו:</b> <span class="cr1">סגול</span> מקום 1 · <span class="cr2">צהוב</span> מקום 2 · <span class="cr3">ירוק</span> מקום 3 · <span class="cr4">אדום</span> מקום 4 · בלי צבע = מקום 5 ומטה.<br><small>לכל תבנית לחוד: בכל הפעמים שהיא פגעה ב־5,000 ההגרלות האחרונות, כמה פעמים כל קלף יצא בכל צורה (עלה/לב/יהלום/תלתן). ככה רואים כמה הקלף "מתאים" למקום שבו הוא מונח בטופס. שים לב: ההבדלים בין המקומות קטנים, וזה לא משנה את הסיכוי של ההגרלה הבאה.</small></div>`;
 function runTop(tks){const sn=k=>SUITS.find(x=>x[0]===k),TOP={};let box="";
   for(const run of ["SHD","HDC","SHC","SDC"]){const os=tks.filter(t=>runOf(t)===run);if(!os.length)continue;TOP[run]={};const parts=[];
     for(const k of run){const c=new Map();os.forEach(t=>c.set(t[k],(c.get(t[k])||0)+1));const mx=Math.max(...c.values());const w=[...c.keys()].filter(x=>c.get(x)===mx);TOP[run][k]=w;
@@ -2254,8 +2269,8 @@ function formItz(it){
   const head=`<tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>פגעה</th>":""}</tr>`;
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
   const all=rows.flatMap(r=>r.opts),nh=all.filter(o=>o.hit).length,nw=all.filter(o=>o.win).length;
-  const RT=runTop(all.map(o=>o.ticket)),runBox=RT.box;
-  const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.hit?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi ${itzTierCls(r.num)}" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=RT.is(o.ticket,k);return `<td class="${red?"r":""}"><span class="${ok?"fhit":""}${tp?" ftop":""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
+  const runBox=CR_LEGEND;
+  const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.hit?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi ${itzTierCls(r.num)}" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=crCls(r.num,j,o.ticket,k,it.skip);return `<td class="${red?"r":""}"><span class="${ok?"fhit":""}${tp?" "+tp:""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} אפשרויות פגעו ✓ (כל הקלפים יצאו)</b>`:"אף תבנית לא פגעה בהגרלה הזו."}${nw?` · <b class="fOk">${nw} טפסים תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
   <p class="tplNote">18 תבניות × 3 אפשרויות (מעלה/מלב/מיהלום או לפי הציור), לפי סדר התבניות. כל שורה היא טופס: הקלפים בצורות שבהן האפשרות הזו נחתה הכי הרבה ב־5,000 ההגרלות. ✓ ושורה ירוקה = כל הקלפים של האפשרות יצאו בהגרלה.</p>
   ${runBox}<div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;
