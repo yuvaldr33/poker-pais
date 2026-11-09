@@ -219,6 +219,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .fTbl td.fi{vertical-align:middle;background:var(--bg)}.fTbl td.fi svg{width:34px;height:34px;display:block;margin:0 auto 2px}.fTbl td.fi b{font-size:.85rem;color:var(--ink)}
 .fTbl td.fi svg .gl{stroke:var(--ink)}.fTbl td.fi svg .bx{fill:var(--surface)}
 .fTbl tr.fFirst td{border-top:2px solid var(--felt)}
+.fTbl td.fi small.fSp{display:block;font-size:.66rem;font-weight:400;color:var(--muted);white-space:nowrap}
 .fMt{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;position:sticky;top:44px;background:var(--bg);z-index:1}
 .fMb{flex:none;border:1px solid var(--felt);background:var(--surface);color:var(--felt);border-radius:999px;padding:7px 12px;font:inherit;font-size:.85rem;cursor:pointer}
 .fMb.on{background:var(--felt);color:var(--felt-ink)}
@@ -1268,7 +1269,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="59165256f2";
+const BUILD="12a18d940c";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2099,13 +2100,25 @@ function itzTrack(){
     exp+=1-pick.reduce((p,x)=>p*(1-x.base),1);
     rows.push({n:A[i].n,time:A[i].time,d:A[i],hits});}
   _itzTrk={top:A[0].n,len:A.length,rows,dyn,sta,tk,exp};return _itzTrk;}
+
+// September 2026: for every template, the start that hit most (3 cards came out, any suit)
+var _itzSep=null;
+function itzSept(){
+  const A=allDraws();if(_itzSep&&_itzSep.len===A.length)return _itzSep;
+  const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
+  const idx=[];for(let i=0;i+2<A.length;i++){if(A[i].date&&A[i].date.startsWith("2026-09")&&A[i+1].n===A[i].n-1&&A[i+2].n===A[i].n-2)idx.push(i);}
+  const R=itzCalc(),by={};let total=0;const hitDraws=new Set();
+  for(const [num,p] of ITZ){const B=[0,0,0];for(const i of idx){for(let b=0;b<3;b++){if(has(A[i],p.map(([r,c])=>[A[i+1],A[i+2]][r][SK[b+c]]))){B[b]++;total++;hitDraws.add(i);}}}
+    const keyOf=b=>p.map(([r,c])=>r+""+(b+c)).sort().join(",");const v5=b=>{const v=R.V.get(keyOf(b));return v?v.h5:0;};
+    const best=[0,1,2].sort((x,y)=>B[y]-B[x]||v5(y)-v5(x))[0];by[num]={b:best,h:B[best],tie:[0,1,2].filter(b=>B[b]===B[best]).length>1};}
+  _itzSep={len:A.length,n:idx.length,from:idx.length?A[idx[idx.length-1]].n:0,to:idx.length?A[idx[0]].n:0,by,total,draws:hitDraws.size};return _itzSep;}
 var itzTab="top",itzOpenRow=null;
 function renderItz(){
   const el=document.getElementById("itzPanel"),bt=document.getElementById("itzBtn");if(!el)return;
   bt.textContent="התבניות של איציק"+(itzOpen?" ▴":" ▾");bt.classList.toggle("on",itzOpen);bt.setAttribute("aria-pressed",itzOpen);el.hidden=!itzOpen;if(!itzOpen)return;
   if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(itzOpen)renderItz();});return;}
   const R=itzCalc();const nx=R.last.n+1;
-  const tabs=[["top","5 החזקות"],["every","כל התבניות"],["track","מעקב"],["all","דירוג"],["cards","הקלפים שחזרו"]];
+  const tabs=[["top","5 החזקות"],["every","כל התבניות"],["sep","ספטמבר"],["track","מעקב"],["all","דירוג"],["cards","הקלפים שחזרו"]];
   let body="";
   if(itzTab==="top"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>, לפי ההגרלות ${R.last.n} (שורה עליונה בשבלונה) ו־${R.prev.n} (שורה תחתונה). אחרי כל הגרלה המערכת בודקת מחדש את כל 12 השיטות: כמה כל אחת חזקה בכלל, וכמה היא פגעה בעבר עם הקלפים המדויקים שהיא מביאה עכשיו. 5 המתאימות ביותר להגרלה הזו נכנסות לכאן, גם אם בדירוג הכללי הן במקום 7 או 8. כל שורה היא טופס צ'אנס 3: הקלפים במקומות שבהם השבלונה נחתה הכי הרבה ב־5,000 ההגרלות האחרונות.</p>
@@ -2122,6 +2135,12 @@ function renderItz(){
     <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr class="itzRow" data-num="${r.num}"><td class="n">${k+1}</td><td class="b">${r.star?"★ ":""}${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> ${v.star?"★ ":""}<b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>${itzOpenRow===r.num?`<tr><td colspan="5">${itzExample(r.num,r.p,r.vs[0].b,R.V.get(r.vs[0].key),R,`תבנית ${r.num} · מתחילה מ${r.vs[0].s} (המקום הכי חזק)`)}</td></tr>`:""}`).join("")}</table></div><p class="tplNote">לחץ על שורה כדי לראות איך התבנית נבנית על שתי ההגרלות האחרונות.</p>`;
   }else if(itzTab==="every"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>: כל 18 התבניות, עם 3 האפשרויות של כל אחת – 54 טפסים, לפי סדר התבניות. אחרי ההגרלה אפשר לראות איך כל אחד יצא ב"בדיקת טפסים".</p>${formItz({skip:0,d:null})}`;
+  }else if(itzTab==="sep"){
+    const S=itzSept(),rows=allTplRows(0,null);const sn=k=>SUITS.find(x=>x[0]===k);
+    body=`<p class="tplNote">להגרלה <b>${nx}</b>: לכל אחת מ־18 התבניות, נקודת ההתחלה שפגעה הכי הרבה בספטמבר 2026 (${S.n} הגרלות, ${S.from}–${S.to}). זה נכון גם אם ב־5,000 הגרלות נקודה אחרת חזקה יותר. פגיעה = שלושת הקלפים יצאו. הקלפים מונחים בצורות שבהן הם נחתו הכי הרבה.</p>
+    <div class="fTbl"><table dir="ltr"><tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${rows.map(r=>{const st=S.by[r.num],o=r.opts[st.b];
+      return `<tr class="fFirst"><td class="fi">${itzSvg(r.p)}<b>${r.num}</b><small class="fSp">מ${o.start} · ${st.h} בספט׳${st.tie?" (תיקו)":""}</small></td>${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];return v?`<td class="${red?"r":""}">${v}</td>`:`<td class="fe">—</td>`;}).join("")}</tr>`;}).join("")}</table></div>
+    <p class="tplNote">בספטמבר: בסך הכול ${S.total} פגיעות של תבניות, ב־${S.draws} הגרלות שונות. "תיקו" = שתי נקודות התחלה פגעו אותו מספר פעמים, ונבחרה זו שחזקה יותר ב־5,000 ההגרלות.</p>`;
   }else if(itzTab==="track"){
     const K=itzTrack();
     if(!K){body='<p class="tplNote">אין מספיק היסטוריה למעקב.</p>';}else{
