@@ -2015,11 +2015,10 @@ function itzCalc(skip,lite){
     for(const i of T5){const t=A[i],L=[A[i+1],A[i+2]];const cards=rp.map(([r,c])=>L[r][SK[c]]);if(!has(t,cards))continue;
       const opts=[];for(const x of SK)for(const y of SK)for(const z of SK){if(x===y||x===z||y===z)continue;if(t[x]===cards[0]&&t[y]===cards[1]&&t[z]===cards[2])opts.push(x+y+z);}
       for(const o of opts)land.set(o,(land.get(o)||0)+1/opts.length);}
-    const bestL=[...land.entries()].sort((x,y)=>y[1]-x[1])[0]||["SHD",0];
+    const bestL=pickRun(land,v.rep.b),L2k=bestL[0]==="SHD"?"HDC":"SHD";
     v.landKey=bestL[0];v.landN=Math.round(bestL[1]);
     v.ticket={};v.next.forEach((x,j)=>{v.ticket[bestL[0][j]]=x.card;});
-    const L2=[...land.entries()].sort((x,y)=>y[1]-x[1])[1];v.ticket2=null;
-    if(L2){v.ticket2={};v.land2N=Math.round(L2[1]);v.next.forEach((x,j)=>{v.ticket2[L2[0][j]]=x.card;});}}
+    v.ticket2={};v.land2N=Math.round(land.get(L2k)||0);v.next.forEach((x,j)=>{v.ticket2[L2k[j]]=x.card;});}
   const VL=[...V.values()];
   const r5=[...VL].sort((x,y)=>y.h5-x.h5),r10=[...VL].sort((x,y)=>y.h10-x.h10);
   VL.forEach(v=>{v.rk5=r5.indexOf(v)+1;v.rk10=r10.indexOf(v)+1;v.score=v.rk5+v.rk10;});
@@ -2105,8 +2104,8 @@ function itzSept(){
       const t=A[i],opts=[];const rec=(j,used,acc)=>{if(j===cs.length){opts.push(acc.join(""));return;}for(const k of SK){if(used.includes(k)||t[k]!==cs[j])continue;rec(j+1,[...used,k],[...acc,k]);}};rec(0,[],[]);
       for(const o of opts)land[b].set(o,(land[b].get(o)||0)+1/opts.length);}}
     const keyOf=b=>p.map(([r,c])=>r+""+(b+c)).sort().join(",");const v5=b=>{const v=R.V.get(keyOf(b));return v?v.h5:0;};
-    const best=[0,1,2].sort((x,y)=>B[y]-B[x]||v5(y)-v5(x))[0];const L=[...land[best].entries()].sort((x,y)=>y[1]-x[1])[0];
-    by[num]={b:best,h:B[best],tie:[0,1,2].filter(b=>B[b]===B[best]).length>1,land:L?L[0]:null,landN:L?Math.round(L[1]):0,Q,all:B[0]+B[1]+B[2]};}
+    const best=[0,1,2].sort((x,y)=>B[y]-B[x]||v5(y)-v5(x))[0];const L=pickRun(land[best],best);
+    by[num]={b:best,h:B[best],tie:[0,1,2].filter(b=>B[b]===B[best]).length>1,land:L[0],landN:Math.round(L[1]),Q,all:B[0]+B[1]+B[2]};}
   _itzSep={len:A.length,n:idx.length,from:idx.length?A[idx[idx.length-1]].n:0,to:idx.length?A[idx[0]].n:0,by,total,draws:hitDraws.size};return _itzSep;}
 
 // strength tiers for colouring: templates ranked by hits in the last 5,000 draws, then in September; equal strength = same colour
@@ -2182,6 +2181,9 @@ document.getElementById("trk3").addEventListener("click",e=>{if(!e.target.closes
 
 // every template (the 18 of three cards + the 2 of four), from every start, for the draw after A[skip]
 const ITZ4=[[5,[[0,1],[0,0],[1,0],[1,1]]],[9,[[0,1],[1,1],[1,0],[0,0]]]];
+// a template's 3 cards always go on 3 neighbouring suits, in arrow order: עלה-לב-יהלום or לב-יהלום-תלתן
+const RUNS=["SHD","HDC"];
+function pickRun(cnt,b){const g=k=>cnt?(cnt.get(k)||0):0;const def=b>=1?"HDC":"SHD",o=def==="SHD"?"HDC":"SHD";return g(o)>g(def)?[o,g(o)]:[def,g(def)];}
 function allTplRows(skip,d){
   const AA=allDraws(),A=skip?AA.slice(skip):AA,L=[A[0],A[1]],SN={S:"עלה",H:"לב",D:"יהלום",C:"תלתן"};
   const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
@@ -2190,9 +2192,7 @@ function allTplRows(skip,d){
     for(let i=0;i+2<A.length&&n<5000;i++){if(A[i+1].n!==A[i].n-1||A[i+2].n!==A[i].n-2)continue;n++;const t=A[i],cs=p.map(([r,c])=>[A[i+1],A[i+2]][r][SK[b+c]]);if(!has(t,cs))continue;
       const opts=[];const rec=(j,used,acc)=>{if(j===cs.length){opts.push(acc.join(""));return;}for(const k of SK){if(used.includes(k)||t[k]!==cs[j])continue;rec(j+1,[...used,k],[...acc,k]);}};rec(0,[],[]);
       for(const o of opts)cnt.set(o,(cnt.get(o)||0)+1/opts.length);}
-    let best=[...cnt.entries()].sort((x,y)=>y[1]-x[1])[0];
-    if(!best){const used=[],perm=[];p.forEach(([r,c])=>{let k=SK[b+c];if(used.includes(k))k=SK.find(x=>!used.includes(x));used.push(k);perm.push(k);});best=[perm.join(""),0];}
-    LC.set(key,best);return best;};
+    const best=pickRun(cnt,b);LC.set(key,best);return best;};
   return [...ITZ].sort((x,y)=>x[0]-y[0]).map(([num,p])=>({num,p,four:p.length===4,opts:[0,1,2].map(b=>{const cards=p.map(([r,c])=>L[r][SK[b+c]]);
     const [perm,ln]=land(num,p,b);const ticket={};cards.forEach((c,j)=>{ticket[perm[j]]=c;});
     const hit=d?has(d,cards):false,inPlace=d?SK.filter(k=>ticket[k]&&d[k]===ticket[k]).length:0;
