@@ -259,6 +259,9 @@ table.pairs td.nn{font-family:var(--mono)}
 .fTbl td.fm{font-family:var(--body);font-size:.8rem;font-weight:600;color:var(--muted)}
 .fTbl tr.fRes td{background:var(--chip);border-bottom:2px solid var(--felt)}.fTbl tr.fRes td:first-child{font-family:var(--body);font-size:.8rem}
 .fTbl tr.fWin td{background:var(--win)!important}.fTbl tr.fWin td.fm{color:var(--felt)}
+.ftop{display:inline-block;min-width:1.5em;padding:0 3px;border:2.5px solid #8b2fc9;border-radius:4px;background:rgba(139,47,201,.16)}
+.fRuns{display:flex;flex-direction:column;gap:6px;margin:8px 0;padding:10px;border:1.5px solid #8b2fc9;border-radius:10px;font-size:.95em;line-height:1.7}
+.fRuns small{opacity:.8}
 .fhit{display:inline-block;min-width:1.7em;padding:0 3px;border:2px solid var(--felt);border-radius:999px}
 .itzTabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .itzTb{flex:none;border:1px solid var(--felt);background:var(--surface);color:var(--felt);border-radius:999px;padding:7px 14px;font:inherit;font-size:.9rem;cursor:pointer}
@@ -1275,7 +1278,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="8bffcc9038";
+const BUILD="4245ca61fa";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2240,10 +2243,18 @@ function formItz(it){
   const head=`<tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>פגעה</th>":""}</tr>`;
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
   const all=rows.flatMap(r=>r.opts),nh=all.filter(o=>o.hit).length,nw=all.filter(o=>o.win).length;
-  const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.hit?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi ${itzTierCls(r.num)}" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v;return `<td class="${red?"r":""}"><span class="${ok?"fhit":""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
+  // purple squares: in each run (עלה-לב-יהלום / לב-יהלום-תלתן) the card that shows up most in each column
+  const runOf=o=>Object.keys(o.ticket).filter(k=>o.ticket[k]).sort((x,y)=>SK.indexOf(x)-SK.indexOf(y)).join("");
+  const TOP={};let runBox="";
+  if(!it.free){for(const run of ["SHD","HDC"]){const os=all.filter(o=>runOf(o)===run);if(!os.length)continue;TOP[run]={};const parts=[];
+    for(const k of run){const c=new Map();os.forEach(o=>c.set(o.ticket[k],(c.get(o.ticket[k])||0)+1));const mx=Math.max(...c.values());const w=[...c.keys()].filter(x=>c.get(x)===mx);TOP[run][k]=w;
+      parts.push(`${sn(k)[2]} <b class="ftop${sn(k)[3]?" r":""}">${w.join(" / ")}</b> <small>(×${mx})</small>`);}
+    runBox+=`<div><b>${[...run].map(k=>sn(k)[2]).join("-")}</b> · ${os.length} טפסים:<br>${parts.join(" · ")}</div>`;}
+    runBox=`<div class="fRuns">${runBox}<small>ריבוע סגול = הקלף שהכי חוזר בעמודה הזו בטפסים של אותו רצף.</small></div>`;}
+  const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.hit?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi ${itzTierCls(r.num)}" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=TOP[runOf(o)]&&TOP[runOf(o)][k]&&TOP[runOf(o)][k].includes(v);return `<td class="${red?"r":""}"><span class="${ok?"fhit":""}${tp?" ftop":""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} אפשרויות פגעו ✓ (כל הקלפים יצאו)</b>`:"אף תבנית לא פגעה בהגרלה הזו."}${nw?` · <b class="fOk">${nw} טפסים תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
   <p class="tplNote">18 תבניות × 3 אפשרויות (מעלה/מלב/מיהלום או לפי הציור), לפי סדר התבניות. כל שורה היא טופס: הקלפים בצורות שבהן האפשרות הזו נחתה הכי הרבה ב־5,000 ההגרלות. ✓ ושורה ירוקה = כל הקלפים של האפשרות יצאו בהגרלה.</p>
-  <div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;
+  ${runBox}<div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;
 }
 
 // what every other method offered for the draw after DRAWS[skip]: tickets as {suit:card}
