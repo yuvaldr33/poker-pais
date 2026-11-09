@@ -1,0 +1,57 @@
+name: שומר תוצאות
+
+# רץ ברצף: בודק את myloto כל 4 דקות ומכניס הגרלה חדשה לאתר.
+# כל ריצה נמשכת כ-5.5 שעות ובסופה מפעילה את עצמה מחדש.
+# הטיימר השעתי הוא רק גיבוי, למקרה שהשרשרת נקטעה.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7 * * * *"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: watcher
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -q requests tzdata
+      - name: בדיקה כל 4 דקות
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          end=$(( $(date +%s) + 330*60 ))
+          while [ "$(date +%s)" -lt "$end" ]; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            python build_strategic.py || true
+            if ! git diff --quiet -- strategic/draws.json; then
+              git add docs strategic/draws.json
+              git commit -q -m "עדכון הגרלות (שומר)"
+              for i in 1 2 3 4; do
+                if git push -q origin HEAD:main; then break; fi
+                git fetch -q origin main && git reset -q --hard origin/main
+                python build_strategic.py || true
+                git add docs strategic/draws.json
+                git diff --cached --quiet && break
+                git commit -q -m "עדכון הגרלות (שומר)"
+              done
+            fi
+            sleep 240
+          done
+      - name: הפעלה מחדש
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST repos/${{ github.repository }}/actions/workflows/watcher.yml/dispatches -f ref=main
