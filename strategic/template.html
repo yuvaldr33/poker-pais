@@ -201,6 +201,9 @@ table.pairs td.nn{font-family:var(--mono)}
 .itzTr .c{font-family:var(--mono);direction:ltr;unicode-bidi:isolate}.itzTr .h{color:var(--muted)}.itzTr .w .h{color:var(--ink);font-weight:700}
 .itzCr{padding:2px 0}.itzCr.ok{color:var(--felt);font-weight:600}
 .itzB{color:var(--felt);font-size:.85rem;letter-spacing:2px}
+.fTbl td.fi{vertical-align:middle;background:var(--bg)}.fTbl td.fi svg{width:34px;height:34px;display:block;margin:0 auto 2px}.fTbl td.fi b{font-size:.85rem;color:var(--ink)}
+.fTbl td.fi svg .gl{stroke:var(--ink)}.fTbl td.fi svg .bx{fill:var(--surface)}
+.fTbl tr.fFirst td{border-top:2px solid var(--felt)}
 .fH3{margin:8px 0 0;font-size:1.05rem;font-family:var(--display);font-weight:400}
 .fAll{display:flex;flex-direction:column;gap:6px}
 .fA{border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:6px 8px;display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:6px;align-items:stretch}
@@ -2134,16 +2137,20 @@ const ITZ4=[[5,[[0,1],[0,0],[1,0],[1,1]]],[9,[[0,1],[1,1],[1,0],[0,0]]]];
 function allTplRows(skip,d){
   const AA=allDraws(),A=skip?AA.slice(skip):AA,L=[A[0],A[1]],SN={S:"עלה",H:"לב",D:"יהלום",C:"תלתן"};
   const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
+  const ck=A[0].n+":"+A.length;if(!_tplLand.has(ck)){_tplLand.clear();_tplLand.set(ck,new Map());}const LC=_tplLand.get(ck);
+  const land=(num,p,b)=>{const key=num+"|"+b;if(LC.has(key))return LC.get(key);const cnt=new Map();let n=0;
+    for(let i=0;i+2<A.length&&n<5000;i++){if(A[i+1].n!==A[i].n-1||A[i+2].n!==A[i].n-2)continue;n++;const t=A[i],cs=p.map(([r,c])=>[A[i+1],A[i+2]][r][SK[b+c]]);if(!has(t,cs))continue;
+      const opts=[];const rec=(j,used,acc)=>{if(j===cs.length){opts.push(acc.join(""));return;}for(const k of SK){if(used.includes(k)||t[k]!==cs[j])continue;rec(j+1,[...used,k],[...acc,k]);}};rec(0,[],[]);
+      for(const o of opts)cnt.set(o,(cnt.get(o)||0)+1/opts.length);}
+    let best=[...cnt.entries()].sort((x,y)=>y[1]-x[1])[0];
+    if(!best){const used=[],perm=[];p.forEach(([r,c])=>{let k=SK[b+c];if(used.includes(k))k=SK.find(x=>!used.includes(x));used.push(k);perm.push(k);});best=[perm.join(""),0];}
+    LC.set(key,best);return best;};
   return [...ITZ,...ITZ4].sort((x,y)=>x[0]-y[0]).map(([num,p])=>({num,p,four:p.length===4,opts:[0,1,2].map(b=>{const cards=p.map(([r,c])=>L[r][SK[b+c]]);
-    const inPlace=d?p.filter(([r,c],j)=>d[SK[b+c]]===cards[j]).length:0,hit=!!d&&inPlace===cards.length; // a hit = every card in its exact suit
-    return {start:SN[SK[b+p[0][1]]],cards,hit,inPlace};})}));
+    const [perm,ln]=land(num,p,b);const ticket={};cards.forEach((c,j)=>{ticket[perm[j]]=c;});
+    const hit=d?has(d,cards):false,inPlace=d?SK.filter(k=>ticket[k]&&d[k]===ticket[k]).length:0;
+    return {start:SN[SK[b+p[0][1]]],cards,ticket,ln:Math.round(ln),hit,inPlace,win:!!d&&inPlace===cards.length};})}));
 }
-function allTplHtml(skip,d){
-  const rows=allTplRows(skip,d);const nh=rows.reduce((s,r)=>s+r.opts.filter(o=>o.hit).length,0);
-  return `<h3 class="fH3">כל התבניות – כל האפשרויות (${rows.length} תבניות × 3)</h3>
-  <p class="tplNote">${d?`✓ = כל הקלפים של האפשרות יצאו בדיוק בצורות שלהם – רק זה נחשב פגיעה. ${nh?`<b class="fOk">${nh} אפשרויות פגעו.</b>`:"אף אפשרות לא פגעה."}`:"הקלפים שכל תבנית מביאה מכל נקודת התחלה, כל קלף בצורה שממנה נלקח. אחרי ההגרלה יסומן ✓ רק ליד אפשרות שכל הקלפים שלה יצאו בדיוק בצורות האלה."} (4) = תבנית של 4 קלפים.</p>
-  <div class="fAll">${rows.map(r=>`<div class="fA"><div class="fAh">${itzSvg(r.p)}<b>תבנית ${r.num}${r.four?" (4)":""}</b></div>${r.opts.map(o=>`<div class="fAo${o.hit?" hit":""}"><small>מ${o.start}</small><b class="itzN">${o.cards.join(" · ")}</b>${o.hit?`<span>✓ פגעה</span>`:""}</div>`).join("")}</div>`).join("")}</div>`;
-}
+var _tplLand=new Map();
 // ---- "בדיקת טפסים": a page with the form for the coming draw and the forms of the last 5 draws, marked against the result ----
 var formsSel=null;
 function formsHtml(){
@@ -2153,24 +2160,24 @@ function formsHtml(){
   const nxs=(()=>{try{const g=slotsAfter(AA[0]);const x=g.next().value;return `${pad(x.d)}/${pad(x.m)} · ${x.time}`;}catch(e){return "";}})();
   const sel=formsSel==null?0:formsSel;
   const rows=list.map((it,idx)=>{let sum="";
-    if(it.d){const R=itzCalc(it.skip,true),T=itzTickets(R);let full=0,best=0;T.forEach(x=>{const m=SK.filter(k=>x.t[k]&&x.t[k]===it.d[k]).length;if(m===3)full++;if(m>best)best=m;});
-      const th=allTplRows(it.skip,it.d).filter(r=>r.opts.some(o=>o.hit)).map(r=>r.num);
+    if(it.d){const rows=allTplRows(it.skip,it.d);const all=rows.flatMap(r=>r.opts);const full=all.filter(o=>o.win).length;const best=Math.max(...all.map(o=>o.inPlace));
+      const th=rows.filter(r=>r.opts.some(o=>o.hit)).map(r=>r.num);
       sum=`<span>${full?`<b class="fOk">טופס תפס ✓ (${full})</b>`:`הכי קרוב: ${best} במקום`}${th.length?`<b class="fOk">תבניות שפגעו: ${th.join(", ")}</b>`:""}</span>`;}
     else sum=`<span class="fNx">הטופס הבא</span>`;
     return `<button type="button" class="fRow${sel===idx?" on":""}" data-i="${idx}"><span><b>טופס הגרלה ${it.n}</b><small>${it.d?fmt(it.d):nxs}</small></span>${sum}</button>${sel===idx?formDetail(it):""}`;}).join("");
   return `<div class="fHead"><button type="button" class="fBack" id="formsClose" aria-label="חזרה לאתר">→ חזרה</button><h2>בדיקת טפסים</h2></div>
-  <p class="tplNote">הטופס הוא 15 הטפסים של "התבניות של איציק", ומתחתיו כל 20 התבניות. לכל הגרלה מאז 53875 (8/11 19:00) רואים מה המערכת נתנה לפניה, מסומן מול מה שיצא. פגיעה = כל הקלפים בצורה המדויקת. לחיצה על הגרלה פותחת את הטופס שלה.</p>
+  <p class="tplNote">הטופס הוא כל 20 התבניות של איציק, 3 אפשרויות לכל אחת – 60 שורות. לכל הגרלה מאז 53875 (8/11 19:00) רואים מה המערכת נתנה לפניה, מסומן מול מה שיצא. פגיעה = כל הקלפים בצורה המדויקת. לחיצה על הגרלה פותחת את הטופס שלה.</p>
   <div class="fList">${rows}</div>`;
 }
 function formDetail(it){
-  const R=itzCalc(it.skip,true),T=itzTickets(R),d=it.d;const sn=k=>SUITS.find(x=>x[0]===k);
-  const head=`<tr><th>#</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>במקום</th>":""}</tr>`;
+  const d=it.d,rows=allTplRows(it.skip,d);const sn=k=>SUITS.find(x=>x[0]===k);const AA=allDraws(),A=it.skip?AA.slice(it.skip):AA;
+  const head=`<tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>פגעה</th>":""}</tr>`;
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
-  let hits=0;
-  const body=T.map((x,i)=>{const m=d?SK.filter(k=>x.t[k]&&x.t[k]===d[k]).length:0;if(m===3)hits++;
-    return `<tr class="${d&&m===3?"fWin":""}"><td class="fi">${i+1}<small>ת׳${x.v.rep.num}${x.sec?"*":""}</small></td>${SK.map(k=>{const v=x.t[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v;return `<td class="${red?"r":""}"><span class="${ok?"fhit":""}">${v}</span></td>`;}).join("")}${d?`<td class="fm">${m}/3</td>`:""}</tr>`;}).join("");
-  return `<div class="fDet">${d?`<div class="fSum">${hits?`<b class="fOk">${hits} טפסים תפסו את ההגרלה ✓</b>`:"אף טופס לא תפס את ההגרלה הזו."} עיגול = קלף נכון בצורה הנכונה.</div>`:`<div class="fSum">להגרלה הבאה, לפי ההגרלות ${R.last.n} ו־${R.prev.n}. אחרי ההגרלה הטופס יסומן כאן מול התוצאה.</div>`}
-  <div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div><p class="tplNote">* = סידור נוסף של אותה תבנית.</p>${allTplHtml(it.skip,d)}</div>`;
+  const all=rows.flatMap(r=>r.opts),nh=all.filter(o=>o.hit).length,nw=all.filter(o=>o.win).length;
+  const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.hit?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v;return `<td class="${red?"r":""}"><span class="${ok?"fhit":""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
+  return `<div class="fDet"><div class="fSum">${d?`${nh?`<b class="fOk">${nh} אפשרויות פגעו ✓ (כל הקלפים יצאו)</b>`:"אף תבנית לא פגעה בהגרלה הזו."}${nw?` · <b class="fOk">${nw} טפסים תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
+  <p class="tplNote">20 תבניות × 3 אפשרויות (מעלה/מלב/מיהלום או לפי הציור), לפי סדר התבניות. כל שורה היא טופס: הקלפים בצורות שבהן האפשרות הזו נחתה הכי הרבה ב־5,000 ההגרלות. ✓ ושורה ירוקה = כל הקלפים של האפשרות יצאו בהגרלה.</p>
+  <div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div></div>`;
 }
 function renderForms(){const el=document.getElementById("formsPage");if(!el||el.hidden)return;
   if(!HIST){el.innerHTML='<p class="tplNote" style="padding:16px">טוען…</p>';loadHist().then(renderForms);return;}
