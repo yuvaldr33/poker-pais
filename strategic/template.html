@@ -199,6 +199,8 @@ table.pairs td.nn{font-family:var(--mono)}
 .itzTr>div{display:grid;grid-template-columns:auto auto 1fr;gap:8px;padding:6px 8px;font-size:.82rem;border-top:1px solid var(--line);align-items:center}
 .itzTr>div:first-child{border-top:0}.itzTr>div.w{background:var(--win)}
 .itzTr .c{font-family:var(--mono);direction:ltr;unicode-bidi:isolate}.itzTr .h{color:var(--muted)}.itzTr .w .h{color:var(--ink);font-weight:700}
+.itzCr{padding:2px 0}.itzCr.ok{color:var(--felt);font-weight:600}
+.itzB{color:var(--felt);font-size:.85rem;letter-spacing:2px}
 .itzTabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .itzTb{flex:none;border:1px solid var(--felt);background:var(--surface);color:var(--felt);border-radius:999px;padding:7px 14px;font:inherit;font-size:.9rem;cursor:pointer}
 .itzTb.on{background:var(--felt);color:var(--felt-ink)}
@@ -1953,8 +1955,8 @@ function itzCalc(){
     const tries=new Map();
     T.forEach((i,j)=>{const t=A[i],L=[A[i+1],A[i+2]];const cards=v.cells.map(([r,c])=>L[r][SK[c]]);
       const k=cards.slice().sort((x,y)=>ORD.indexOf(x)-ORD.indexOf(y)).join(" · ");tries.set(k,(tries.get(k)||0)+1);
-      if(!has(t,cards))return;h10++;if(j<N5)h5++;if(!cm.has(k))cm.set(k,[]);cm.get(k).push(t.n);});
-    v.tries=tries;
+      if(!has(t,cards))return;h10++;if(j<N5)h5++;if(v.gap==null)v.gap=j;if(!cm.has(k))cm.set(k,[]);cm.get(k).push(t.n);});
+    v.tries=tries;if(v.gap==null)v.gap=N10;
     v.cm=cm;v.h5=h5;v.h10=h10;v.combos=[...cm.entries()].sort((x,y)=>y[1].length-x[1].length||y[1][0]-x[1][0]).slice(0,2);
     v.lastHit=A[2]?has(A[0],v.cells.map(([r,c])=>[A[1],A[2]][r][SK[c]])):false;
     v.next=v.rep.p.map(([r,c])=>({card:[A[0],A[1]][r][SK[v.rep.b+c]],k:SK[v.rep.b+c],r}));
@@ -1976,14 +1978,17 @@ function itzCalc(){
   VL.forEach(v=>{const nk=v.next.map(x=>x.card).sort((x,y)=>ORD.indexOf(x)-ORD.indexOf(y)).join(" · ");
     const tr=v.tries.get(nk)||0,hi=(cm=>cm?cm.length:0)(v.combos.find(c=>c[0]===nk)?v.combos.find(c=>c[0]===nk)[1]:null);
     v.nk=nk;v.nTries=tr;v.nHits=v.cm.has(nk)?v.cm.get(nk).length:0;v.nLast=v.cm.has(nk)?v.cm.get(nk).slice(0,3):[];
-    const base=v.h10/N10,K=40;v.fit=(v.nHits+K*base)/(tr+K);v.base=base;});
-  const top=[...VL].sort((x,y)=>y.fit-x.fit||x.score-y.score).slice(0,5);const topKeys=new Set(top.map(v=>v.key));
+    const base=v.h10/N10,K=40;v.fit=(v.nHits+K*base)/(tr+K);v.base=base;
+    // two criteria: (1) it likes the cards it brings now, (2) by the count it is due (no hit for longer than its average interval)
+    v.avg=v.h5?N5/v.h5:N5;v.likes=v.nHits>=2&&v.nTries>0&&v.nHits/v.nTries>base;v.due=v.gap>=v.avg;v.crit=(v.likes?1:0)+(v.due?1:0);});
+  const pickSort=(x,y)=>y.crit-x.crit||y.fit-x.fit||x.score-y.score;
+  const top=[...VL].sort(pickSort).slice(0,5);const topKeys=new Set(top.map(v=>v.key));
   const res=ITZ.map(([num,p])=>{let any=0;const B=[0,0,0];
     for(const i of T5){const t=A[i],L=[A[i+1],A[i+2]];let h=false;for(let b=0;b<3;b++){if(has(t,p.map(([r,c])=>L[r][SK[b+c]]))){B[b]++;h=true;}}if(h)any++;}
     const keyOf=b=>p.map(([r,c])=>r+""+(b+c)).sort().join(",");
     const vs=[0,1,2].sort((x,y)=>B[y]-B[x]).map(b=>({b,key:keyOf(b),s:SN[SK[b+p[0][1]]],h:B[b],e:B[b]?Math.round(N5/B[b]):0,star:topKeys.has(keyOf(b))}));
     return {num,p,any,ev:any?(N5/any):0,vs,star:vs.some(v=>v.star)};}).sort((x,y)=>y.any-x.any||x.num-y.num);
-  _itzCache={V,all:[...VL].sort((x,y)=>y.fit-x.fit||x.score-y.score),top:A[0].n,len:A.length,n:N5,n10:N10,from:A[T5[N5-1]].n,to:A[T5[0]].n,from10:A[T[N10-1]].n,res,top5:top,last:A[0],prev:A[1]};return _itzCache;}
+  _itzCache={V,all:[...VL].sort(pickSort),top:A[0].n,len:A.length,n:N5,n10:N10,from:A[T5[N5-1]].n,to:A[T5[0]].n,from10:A[T[N10-1]].n,res,top5:top,last:A[0],prev:A[1]};return _itzCache;}
 
 // a worked example: the last two draws as a grid, the template's arrows drawn on it, the 3 cards and the ticket
 function itzExample(num,p,b,v,R,title){
@@ -2022,13 +2027,14 @@ function itzTrack(){
     return {key,hit,land,cards};});
   const rows=[];let dyn=0,sta=0,tk=0,exp=0;
   for(let i=0;i<N&&i<M;i++){if(!ok[i])continue;
-    const st=VA.map((a,vi)=>{let n10=0,h10=0,h5=0,n5=0,tr=0,th=0;const lc=new Map();
-      for(let j=i+1;j<M&&n10<WIN;j++){if(a.key[j]==null)continue;n10++;const h=a.hit[j];if(h)h10++;if(n5<W5){n5++;if(h){h5++;for(const o of a.land[j])lc.set(o,(lc.get(o)||0)+1/a.land[j].length);}}
+    const st=VA.map((a,vi)=>{let n10=0,h10=0,h5=0,n5=0,tr=0,th=0,gap=null;const lc=new Map();
+      for(let j=i+1;j<M&&n10<WIN;j++){if(a.key[j]==null)continue;n10++;const h=a.hit[j];if(h){h10++;if(gap==null)gap=n10-1;}if(n5<W5){n5++;if(h){h5++;for(const o of a.land[j])lc.set(o,(lc.get(o)||0)+1/a.land[j].length);}}
         if(a.key[j]===a.key[i]){tr++;if(h)th++;}}
-      const base=n10?h10/n10:0;const bl=[...lc.entries()].sort((x,y)=>y[1]-x[1])[0];
-      return {vi,h5,h10,base,fit:(th+40*base)/(tr+40),land:bl?bl[0]:null};});
+      const base=n10?h10/n10:0;const bl=[...lc.entries()].sort((x,y)=>y[1]-x[1])[0];const avg=h5?n5/h5:n5;
+      const crit=((th>=2&&tr>0&&th/tr>base)?1:0)+(((gap==null?n10:gap)>=avg)?1:0);
+      return {vi,h5,h10,base,crit,fit:(th+40*base)/(tr+40),land:bl?bl[0]:null};});
     const r5=[...st].sort((x,y)=>y.h5-x.h5),r10=[...st].sort((x,y)=>y.h10-x.h10);st.forEach(x=>x.sc=r5.indexOf(x)+r10.indexOf(x));
-    const pick=[...st].sort((x,y)=>y.fit-x.fit||x.sc-y.sc).slice(0,5),stat=[...st].sort((x,y)=>x.sc-y.sc).slice(0,5);
+    const pick=[...st].sort((x,y)=>y.crit-x.crit||y.fit-x.fit||x.sc-y.sc).slice(0,5),stat=[...st].sort((x,y)=>x.sc-y.sc).slice(0,5);
     const hits=[];pick.forEach((x,k)=>{const a=VA[x.vi];if(a.hit[i]){const t=A[i];const tkHit=!!x.land&&a.cards[i].every((c,j)=>t[x.land[j]]===c);hits.push({k:k+1,num:V[x.vi].rep.num,tk:tkHit});if(tkHit)tk++;}});
     if(hits.length)dyn++;if(stat.some(x=>VA[x.vi].hit[i]))sta++;
     exp+=1-pick.reduce((p,x)=>p*(1-x.base),1);
@@ -2047,10 +2053,11 @@ function renderItz(){
     <h3>15 טפסים להגרלה ${nx}</h3>
     <p class="tplNote">כל שבלונה מונחת בכל המקומות האפשריים. יש בדיוק 12 שלישיות שונות, כי כמה תבניות לוקחות את אותם קלפים. אז 12 הטפסים הראשונים מכסים את כולן, מסודרים מהמתאימה ביותר. 3 הטפסים האחרונים הם סידור נוסף של 3 החזקות, לפי המקום השני שבו הקלפים נחתו הכי הרבה.</p>
     <div class="itzT"><table class="itzG" dir="ltr"><tr><th>שבלונה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${(()=>{const L=R.all.map((v,k)=>({v,k,t:v.ticket,sec:false}));R.all.slice(0,3).forEach((v,k)=>{if(v.ticket2)L.push({v,k,t:v.ticket2,sec:true});});
-      return L.slice(0,15).map((x,i)=>`<tr class="${R.top5.includes(x.v)?"tp":""}"><td class="g"><div class="itzS"><b class="itzI">${i+1}</b>${itzSvg(x.v.rep.p)}<small>${R.top5.includes(x.v)?`<b class="itzSt5">★${R.top5.indexOf(x.v)+1}</b> `:""}תבנית ${x.v.rep.num}<br>מ${x.v.start}${x.sec?"<br>סידור נוסף":""}</small></div></td>${SUITS.map(([sk,,,red])=>x.t[sk]?`<td class="itzC1${red?" r":""}">${x.t[sk]}</td>`:`<td class="itzE">—</td>`).join("")}</tr>`).join("");})()}</table></div>
+      return L.slice(0,15).map((x,i)=>`<tr class="${R.top5.includes(x.v)?"tp":""}"><td class="g"><div class="itzS"><b class="itzI">${i+1}</b>${itzSvg(x.v.rep.p)}<small>${R.top5.includes(x.v)?`<b class="itzSt5">★${R.top5.indexOf(x.v)+1}</b> `:""}תבנית ${x.v.rep.num}<br>מ${x.v.start}${x.sec?"<br>סידור נוסף":""}<br><span class="itzB">${x.v.likes?"♥":""}${x.v.due?"⏱":""}</span></small></div></td>${SUITS.map(([sk,,,red])=>x.t[sk]?`<td class="itzC1${red?" r":""}">${x.t[sk]}</td>`:`<td class="itzE">—</td>`).join("")}</tr>`).join("");})()}</table></div>
+    <p class="tplNote">♥ = היא אוהבת את הקלפים של עכשיו · ⏱ = לפי הספירה אמורה לחזור. 5 הנבחרות (★) הן קודם אלה עם שני הסימנים, אחר כך עם אחד, ואז לפי ההתאמה לקלפים – גם אם בדירוג הכללי הן במקום נמוך.</p>
     <p class="tplNote">15 טפסי צ'אנס 3 מכסים יחד בערך 15 מתוך 512 תוצאות אפשריות לכל צורה (~2.9%). ★ = אחת מ־5 הנבחרות, ומתחת יש דוגמה מצוירת לכל אחת.</p>
     <h3>איך כל אחת נבנתה – על שתי ההגרלות האחרונות</h3>
-    ${R.top5.map((v,k)=>itzExample(v.rep.num,v.rep.p,v.rep.b,v,R,`★${k+1} · תבנית ${v.rep.num} · מתחילה מ${v.start}</div><div class="itzWhy">למה נבחרה: בדירוג הכללי מקום ${v.rk5} ב־5,000 (${v.h5} פגיעות) ומקום ${v.rk10} ב־10,000 (${v.h10}). עם השלישייה של עכשיו (<b class="itzN">${v.nk}</b>) היא פגעה ${v.nHits} מתוך ${v.nTries} פעמים שיצרה אותה${v.nLast.length?` (לאחרונה: ${v.nLast.join(", ")})`:""}. סיכוי משוער להגרלה הבאה: ${(v.fit*100).toFixed(1)}%.${v.lastHit?" פגעה בהגרלה האחרונה ✓":""}`)).join("")}`;
+    ${R.top5.map((v,k)=>itzExample(v.rep.num,v.rep.p,v.rep.b,v,R,`★${k+1} · תבנית ${v.rep.num} · מתחילה מ${v.start}</div><div class="itzWhy"><div class="itzCr ${v.likes?"ok":""}">${v.likes?"✓":"✗"} קריטריון 1 · קלפים שהיא אוהבת: עם השלישייה של עכשיו (<b class="itzN">${v.nk}</b>) היא פגעה ${v.nHits} מתוך ${v.nTries} פעמים${v.nTries?` (${(v.nHits/v.nTries*100).toFixed(1)}% מול ${(v.base*100).toFixed(1)}% בדרך כלל)`:""}${v.nLast.length?`, לאחרונה ${v.nLast.join(", ")}`:""}.</div><div class="itzCr ${v.due?"ok":""}">${v.due?"✓":"✗"} קריטריון 2 · לפי הספירה: חוזרת בממוצע כל ${Math.round(v.avg)} הגרלות, ועברו ${v.gap} הגרלות מאז הפגיעה האחרונה${v.due?" – אמורה לחזור":` – עוד ${Math.max(0,Math.round(v.avg-v.gap))} הגרלות לממוצע`}.</div><div>דירוג כללי: מקום ${v.rk5} ב־5,000 (${v.h5}) ומקום ${v.rk10} ב־10,000 (${v.h10}).${v.lastHit?" פגעה בהגרלה האחרונה ✓":""}</div>`)).join("")}`;
   }else if(itzTab==="all"){
     body=`<p class="tplNote">${R.n.toLocaleString("he-IL")} הגרלות (${R.from}–${R.to}). ★ = נבחרה ל־5 של ההגרלה הבאה. בכל מקום: מאיזה קלף מתחילה · כמה פגעה · כל כמה הגרלות.</p>
     <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr class="itzRow" data-num="${r.num}"><td class="n">${k+1}</td><td class="b">${r.star?"★ ":""}${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> ${v.star?"★ ":""}<b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>${itzOpenRow===r.num?`<tr><td colspan="5">${itzExample(r.num,r.p,r.vs[0].b,R.V.get(r.vs[0].key),R,`תבנית ${r.num} · מתחילה מ${r.vs[0].s} (המקום הכי חזק)`)}</td></tr>`:""}`).join("")}</table></div><p class="tplNote">לחץ על שורה כדי לראות איך התבנית נבנית על שתי ההגרלות האחרונות.</p>`;
