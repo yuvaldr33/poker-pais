@@ -1261,7 +1261,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="7cf655f79e";
+const BUILD="a33ffa873a";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2150,20 +2150,20 @@ function allTplRows(skip,d){
   const AA=allDraws(),A=skip?AA.slice(skip):AA,L=[A[0],A[1]],SN={S:"עלה",H:"לב",D:"יהלום",C:"תלתן"};
   const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
   return [...ITZ,...ITZ4].sort((x,y)=>x[0]-y[0]).map(([num,p])=>({num,p,four:p.length===4,opts:[0,1,2].map(b=>{const cards=p.map(([r,c])=>L[r][SK[b+c]]);
-    const hit=d?has(d,cards):false,inPlace=d?p.filter(([r,c],j)=>d[SK[b+c]]===cards[j]).length:0;
+    const inPlace=d?p.filter(([r,c],j)=>d[SK[b+c]]===cards[j]).length:0,hit=!!d&&inPlace===cards.length; // a hit = every card in its exact suit
     return {start:SN[SK[b+p[0][1]]],cards,hit,inPlace};})}));
 }
 function allTplHtml(skip,d){
   const rows=allTplRows(skip,d);const nh=rows.reduce((s,r)=>s+r.opts.filter(o=>o.hit).length,0);
   return `<h3 class="fH3">כל התבניות – כל האפשרויות (${rows.length} תבניות × 3)</h3>
-  <p class="tplNote">${d?`✓ = הקלפים של האפשרות יצאו בהגרלה (בכל צורה) – כלומר התבנית פגעה. ${nh?`<b class="fOk">${nh} אפשרויות פגעו.</b>`:"אף אפשרות לא פגעה."}`:"הקלפים שכל תבנית מביאה מכל נקודת התחלה. אחרי ההגרלה יסומן ✓ ליד כל אפשרות שהקלפים שלה יצאו."} (4) = תבנית של 4 קלפים.</p>
-  <div class="fAll">${rows.map(r=>`<div class="fA"><div class="fAh">${itzSvg(r.p)}<b>תבנית ${r.num}${r.four?" (4)":""}</b></div>${r.opts.map(o=>`<div class="fAo${o.hit?" hit":""}"><small>מ${o.start}</small><b class="itzN">${o.cards.join(" · ")}</b>${o.hit?`<span>✓ פגעה${o.inPlace===o.cards.length?" · בצורות המדויקות!":` · ${o.inPlace} במקום`}</span>`:""}</div>`).join("")}</div>`).join("")}</div>`;
+  <p class="tplNote">${d?`✓ = כל הקלפים של האפשרות יצאו בדיוק בצורות שלהם – רק זה נחשב פגיעה. ${nh?`<b class="fOk">${nh} אפשרויות פגעו.</b>`:"אף אפשרות לא פגעה."}`:"הקלפים שכל תבנית מביאה מכל נקודת התחלה, כל קלף בצורה שממנה נלקח. אחרי ההגרלה יסומן ✓ רק ליד אפשרות שכל הקלפים שלה יצאו בדיוק בצורות האלה."} (4) = תבנית של 4 קלפים.</p>
+  <div class="fAll">${rows.map(r=>`<div class="fA"><div class="fAh">${itzSvg(r.p)}<b>תבנית ${r.num}${r.four?" (4)":""}</b></div>${r.opts.map(o=>`<div class="fAo${o.hit?" hit":""}"><small>מ${o.start}</small><b class="itzN">${o.cards.join(" · ")}</b>${o.hit?`<span>✓ פגעה</span>`:""}</div>`).join("")}</div>`).join("")}</div>`;
 }
 // ---- "בדיקת טפסים": a page with the form for the coming draw and the forms of the last 5 draws, marked against the result ----
 var formsSel=null;
 function formsHtml(){
   const AA=allDraws(),nx=AA[0].n+1;const sn=k=>SUITS.find(x=>x[0]===k);
-  const list=[{skip:0,n:nx,d:null}];for(let i=0;i<5;i++)list.push({skip:i+1,n:AA[i].n,d:AA[i]});
+  const FORMS_FROM=53875;const list=[{skip:0,n:nx,d:null}];for(let i=0;i<AA.length&&(AA[i].n>=FORMS_FROM||i<5);i++)list.push({skip:i+1,n:AA[i].n,d:AA[i]});
   const fmt=d=>d?`${(d.date||"").split("-").reverse().slice(0,2).join("/")} · ${d.time||""}`:"";
   const nxs=(()=>{try{const g=slotsAfter(AA[0]);const x=g.next().value;return `${pad(x.d)}/${pad(x.m)} · ${x.time}`;}catch(e){return "";}})();
   const sel=formsSel==null?0:formsSel;
@@ -2174,7 +2174,7 @@ function formsHtml(){
     else sum=`<span class="fNx">הטופס הבא</span>`;
     return `<button type="button" class="fRow${sel===idx?" on":""}" data-i="${idx}"><span><b>טופס הגרלה ${it.n}</b><small>${it.d?fmt(it.d):nxs}</small></span>${sum}</button>${sel===idx?formDetail(it):""}`;}).join("");
   return `<div class="fHead"><button type="button" class="fBack" id="formsClose" aria-label="חזרה לאתר">→ חזרה</button><h2>בדיקת טפסים</h2></div>
-  <p class="tplNote">הטופס הוא 15 הטפסים של "התבניות של איציק". לכל הגרלה רואים את הטופס שהמערכת נתנה לפניה, מסומן מול מה שיצא. לחיצה על הגרלה פותחת את הטופס שלה.</p>
+  <p class="tplNote">הטופס הוא 15 הטפסים של "התבניות של איציק", ומתחתיו כל 20 התבניות. לכל הגרלה מאז 53875 (8/11 19:00) רואים מה המערכת נתנה לפניה, מסומן מול מה שיצא. פגיעה = כל הקלפים בצורה המדויקת. לחיצה על הגרלה פותחת את הטופס שלה.</p>
   <div class="fList">${rows}</div>`;
 }
 function formDetail(it){
