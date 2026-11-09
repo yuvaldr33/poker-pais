@@ -1278,7 +1278,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="3ea85d5396";
+const BUILD="8d13723616";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2209,7 +2209,7 @@ function pickRun(cnt,b){const g=k=>cnt?(cnt.get(k)||0):0;const def=b>=1?"HDC":"S
 // purple squares: in each run (עלה-לב-יהלום / לב-יהלום-תלתן) the card that shows up most in each column
 function runOf(t){return Object.keys(t).filter(k=>t[k]).sort((x,y)=>SK.indexOf(x)-SK.indexOf(y)).join("");}
 function runTop(tks){const sn=k=>SUITS.find(x=>x[0]===k),TOP={};let box="";
-  for(const run of ["SHD","HDC"]){const os=tks.filter(t=>runOf(t)===run);if(!os.length)continue;TOP[run]={};const parts=[];
+  for(const run of ["SHD","HDC","SHC","SDC"]){const os=tks.filter(t=>runOf(t)===run);if(!os.length)continue;TOP[run]={};const parts=[];
     for(const k of run){const c=new Map();os.forEach(t=>c.set(t[k],(c.get(t[k])||0)+1));const mx=Math.max(...c.values());const w=[...c.keys()].filter(x=>c.get(x)===mx);TOP[run][k]=w;
       parts.push(`${sn(k)[2]} <b class="ftop${sn(k)[3]?" r":""}">${w.join(" / ")}</b> <small>(×${mx})</small>`);}
     box+=`<div><b>${[...run].map(k=>sn(k)[2]).join("-")}</b> · ${os.length} טפסים:<br>${parts.join(" · ")}</div>`;}
@@ -2254,7 +2254,7 @@ function formItz(it){
   const head=`<tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>פגעה</th>":""}</tr>`;
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
   const all=rows.flatMap(r=>r.opts),nh=all.filter(o=>o.hit).length,nw=all.filter(o=>o.win).length;
-  const RT=it.free?{box:"",is:()=>false}:runTop(all.map(o=>o.ticket)),runBox=RT.box;
+  const RT=runTop(all.map(o=>o.ticket)),runBox=RT.box;
   const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.hit?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi ${itzTierCls(r.num)}" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=RT.is(o.ticket,k);return `<td class="${red?"r":""}"><span class="${ok?"fhit":""}${tp?" ftop":""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} אפשרויות פגעו ✓ (כל הקלפים יצאו)</b>`:"אף תבנית לא פגעה בהגרלה הזו."}${nw?` · <b class="fOk">${nw} טפסים תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
   <p class="tplNote">18 תבניות × 3 אפשרויות (מעלה/מלב/מיהלום או לפי הציור), לפי סדר התבניות. כל שורה היא טופס: הקלפים בצורות שבהן האפשרות הזו נחתה הכי הרבה ב־5,000 ההגרלות. ✓ ושורה ירוקה = כל הקלפים של האפשרות יצאו בהגרלה.</p>
