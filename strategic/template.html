@@ -972,6 +972,7 @@ function renderTrack3(){
   const LR=R3.filter(x=>x.hasLp),lh=LR.filter(x=>x.lp).length,le=LR.reduce((s,x)=>s+x.elp,0);
   const lbox=`<button type="button" class="tk tkb" data-k="lp" aria-expanded="false"><span class="lb">זוגות שעלולים להתחבר · <u>פירוט</u></span><span class="big">${lh} / ${LR.length}</span><span class="cmp">${LR.length?`פגיעה ${(lh/LR.length*100).toFixed(1)}% · במקרה ${(le/LR.length*100).toFixed(1)}%`:"יתחיל אחרי ההגרלה הבאה"}</span></button>`;
   document.getElementById("trk3").innerHTML=lbox+box("זוגות השיטה","pair","ep")+box("זוג + קלף חם","hot","eh")+box("זוג + קלף מקושר","lnk","el")+box("זוגות בצמצום ל־2 שבלונות","tpl","et")+box("שלישיות (6 טפסי צ'אנס 3)","tri","etri")+box("שלישיות חמות (6 טפסים)","ht","eht")+box("עוגן + 2 שותפים (שלישייה בכל סדר)","anc","eanc")+box("תבניות: שלישייה מובילה","cv","ecv")+box("אזור עניין: 3 קלפים מהאזור","ar","ear")+mineBox;
+  itzTrkBox();
   const m=v=>v?'<span class="hitm">✓</span>':'<span class="missm">–</span>';
   if(typeof trkKey!=="undefined"&&trkKey)setTimeout(()=>trkDetail(trkKey),0);
   document.getElementById("trk3Rows").innerHTML=R3.length?R3.slice(0,10).map(x=>`<tr><td class="nn">${x.d.n}<br><small class="missm">${x.d.time||""}</small></td><td>${m(x.pair)}</td><td>${m(x.hot)}</td><td>${m(x.lnk)}</td><td>${m(x.tpl)}</td></tr>`).join(""):`<tr><td colspan="5" class="missm">הספירה מתחילה מהגרלה 53839.</td></tr>`;
@@ -2082,6 +2083,14 @@ function renderItz(){
 document.getElementById("itzPanel").addEventListener("click",e=>{const b=e.target.closest(".itzTb");if(b){itzTab=b.dataset.t;renderItz();return;}
   const r=e.target.closest(".itzRow");if(r){const n=+r.dataset.num;itzOpenRow=itzOpenRow===n?null:n;renderItz();const x=document.querySelector(`.itzRow[data-num="${n}"]`);if(x)x.scrollIntoView({block:"start",behavior:"smooth"});}});
 document.getElementById("itzBtn").addEventListener("click",()=>{itzOpen=!itzOpen;renderItz();if(itzOpen)document.getElementById("itzPanel").scrollIntoView({behavior:"smooth",block:"start"});});
+
+function itzTrkBox(){
+  const host=document.getElementById("trk3");if(!host)return;
+  const put=()=>{const old=document.getElementById("itzTkBox");if(old)old.remove();const K=itzTrack();if(!K)return;const n=K.rows.length;
+    host.insertAdjacentHTML("beforeend",`<button type="button" class="tk" id="itzTkBox"><span class="lb">התבניות של איציק (5 הנבחרות, ${n} ההגרלות האחרונות) · <u>פירוט</u></span><span class="big">${K.dyn} / ${n}</span><span class="cmp">פגיעה ${(K.dyn/n*100).toFixed(1)}% · במקרה ${(K.exp/n*100).toFixed(1)}% · טפסים מדויקים ${K.tk}</span></button>`);};
+  if(HIST)put();else loadHist().then(put);
+}
+document.getElementById("trk3").addEventListener("click",e=>{if(!e.target.closest("#itzTkBox"))return;e.stopPropagation();itzOpen=true;itzTab="track";renderItz();document.getElementById("itzPanel").scrollIntoView({behavior:"smooth",block:"start"});},true);
 // ---- section menu (⋮) ----
 (function(){
   const secs=[...document.querySelectorAll("section")];
