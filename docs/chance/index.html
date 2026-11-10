@@ -1286,7 +1286,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="988c480c41";
+const BUILD="b9a42ea718";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2346,7 +2346,7 @@ function cardsHtml(){const A=allDraws().slice(0,cardsN),N=A.length,VALS=["7","8"
   const top=SK.map(k=>{const s=SUITS.find(x=>x[0]===k);const best=VALS.filter(v=>rk[k][v]===1);return `${s[2]}: <b class="cr1">${best.join(" / ")}</b>`;}).join(" · ");
   return `<div class="fHead"><button type="button" class="fBack" id="cardsClose" aria-label="חזרה לאתר">→ חזרה</button><h2>טבלת קלפים</h2></div>
   <p class="tplNote">כמה פעמים כל קלף, מ־7 עד A, יצא בכל צורה, ב־${N.toLocaleString("he-IL")} ההגרלות האחרונות (${A[N-1].n}–${A[0].n}). מתעדכן לבד בכל הגרלה.</p>
-  <div class="itzTabs cdTabs">${[100,500,1000,5000].map(n=>`<button type="button" class="cdN${n===cardsN?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")}</button>`).join("")}</div>
+  <div class="itzTabs cdTabs">${[100,500,1000,2000,5000,10000].map(n=>`<button type="button" class="cdN${n===cardsN?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")}</button>`).join("")}</div>
   <div class="crLeg"><b>בכל עמודה לחוד:</b> <span class="cr1">סגול</span> מקום 1 · <span class="cr2">צהוב</span> מקום 2 · <span class="cr3">ירוק</span> מקום 3 · <span class="cr4">אדום</span> מקום 4 · בלי צבע = מקום 5 ומטה.<br><small>הכי הרבה עכשיו – ${top}. בממוצע כל קלף יוצא בכל צורה ${exp.toFixed(0)} פעמים (12.5%); הבדלים של כמה אחוזים הם בגבולות המזל.</small></div>
   <div class="fTbl cdTbl"><table dir="ltr">${head}${rows}</table></div>`;}
 function renderCards(){const el=document.getElementById("cardsPage");if(!el||el.hidden)return;
