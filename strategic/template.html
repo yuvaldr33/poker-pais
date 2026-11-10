@@ -250,6 +250,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .cdTbl td{font-size:1.05em;padding:6px 4px}.cdTbl td.cdV{font-weight:800;font-size:1.15em}
 .cdP{display:block;font-size:.62em;opacity:.7;margin-top:2px}
 .cdTabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.cdN{border:1px solid var(--felt);background:var(--surface);color:var(--felt);border-radius:999px;padding:5px 12px;font:inherit;cursor:pointer}.cdN.on{background:var(--felt);color:#fff}
+.fAgg{margin:8px 0 10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);line-height:1.8;font-size:.92em}.fAgg small{display:block;opacity:.8;line-height:1.5}.fPend{opacity:.6}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -707,7 +708,11 @@ function slotsFor(y,m,d){
 // generate slots after the last known draw
 function* slotsAfter(last){
   let [y,m,d]=last.date.split("-").map(Number);
-  let list=slotsFor(y,m,d), i=list.indexOf(last.time)+1, n=last.n;
+  let list=slotsFor(y,m,d), n=last.n;
+  // the published time can be off by a minute or two (e.g. 11:01): snap to the nearest slot of that day
+  const tm=x=>{const [h,mi]=String(x||"").split(":").map(Number);return h*60+(mi||0);};
+  let i=list.indexOf(last.time);if(i<0){let bd=1e9;list.forEach((x,j)=>{const dd=Math.abs(tm(x)-tm(last.time));if(dd<bd){bd=dd;i=j;}});}
+  i++;
   while(true){
     if(i>=list.length){const t=new Date(Date.UTC(y,m-1,d+1));y=t.getUTCFullYear();m=t.getUTCMonth()+1;d=t.getUTCDate();list=slotsFor(y,m,d);i=0;}
     const [h,mi]=list[i].split(":").map(Number); n++;
@@ -1941,7 +1946,9 @@ function loadHist(){
       if(c.length===4)m.set(n,{n,S:c[0],H:c[1],D:c[2],C:c[3]});}
     if(m.size)HIST=m;}).catch(()=>{});
   return histLoading;}
-function allDraws(){const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);return [...m.values()].sort((a,b)=>b.n-a.n);}
+var _adC=null;
+function allDraws(){const d0=DRAWS[0]||{},key=(HIST?HIST.length:0)+"|"+DRAWS.length+"|"+d0.n+d0.S+d0.H+d0.D+d0.C;if(_adC&&_adC.key===key&&_adC.H===HIST&&_adC.D===DRAWS)return _adC.v;
+  const m=new Map(HIST||[]);for(const d of DRAWS)m.set(d.n,d);const v=[...m.values()].sort((a,b)=>b.n-a.n);_adC={key,H:HIST,D:DRAWS,v};return v;}
 
 // ---- future draw: every ticket the site suggests, as plain tables ----
 var futOpen=false;
@@ -2233,34 +2240,53 @@ function allTplRows(skip,d,free){
   const AA=allDraws(),A=skip?AA.slice(skip):AA,L=[A[0],A[1]],SN={S:"עלה",H:"לב",D:"יהלום",C:"תלתן"};
   const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
   const ck=A[0].n+":"+A.length;if(!_tplLand.has(ck)){_tplLand.clear();_tplLand.set(ck,new Map());}const LC=_tplLand.get(ck);
-  const land=(num,p,b)=>{const key=num+"|"+b+(free?"|f":"");if(LC.has(key))return LC.get(key);const cnt=new Map();let n=0;
-    for(let i=0;i+2<A.length&&n<5000;i++){if(A[i+1].n!==A[i].n-1||A[i+2].n!==A[i].n-2)continue;n++;const t=A[i],cs=p.map(([r,c])=>[A[i+1],A[i+2]][r][SK[b+c]]);if(!has(t,cs))continue;
-      const opts=[];const rec=(j,used,acc)=>{if(j===cs.length){opts.push(acc.join(""));return;}for(const k of SK){if(used.includes(k)||t[k]!==cs[j])continue;rec(j+1,[...used,k],[...acc,k]);}};rec(0,[],[]);
-      for(const o of opts)cnt.set(o,(cnt.get(o)||0)+1/opts.length);}
+  const land=(num,p,b)=>{const key=num+"|"+b+(free?"|f":"");if(LC.has(key))return LC.get(key);const cnt=new Map();const sk=skip||0;
+    for(const h of tplHitList(num,p,b)){if(h.i<sk)continue;if(h.i>=sk+5000)break;for(const o of h.opts)cnt.set(o,(cnt.get(o)||0)+1/h.opts.length);}
     const top=[...cnt.entries()].sort((x,y)=>y[1]-x[1])[0];const best=free&&top?top:pickRun(cnt,b);LC.set(key,best);return best;};
   return [...ITZ].sort((x,y)=>x[0]-y[0]).map(([num,p])=>({num,p,four:p.length===4,opts:[0,1,2].map(b=>{const cards=p.map(([r,c])=>L[r][SK[b+c]]);
     const [perm,ln]=land(num,p,b);const ticket={};cards.forEach((c,j)=>{ticket[perm[j]]=c;});
     const hit=d?has(d,cards):false,inPlace=d?SK.filter(k=>ticket[k]&&d[k]===ticket[k]).length:0;
     return {start:SN[SK[b+p[0][1]]],cards,ticket,ln:Math.round(ln),hit,inPlace,win:!!d&&inPlace===cards.length};})}));
 }
-var _tplLand=new Map();
+var _tplLand=new Map(),_tplHits=null;
+// every hit of every template option over the newest ~5,400 draws, with the suit orders the cards landed in (shared by all skips)
+function tplHitList(num,p,b){const AA=allDraws(),ck=AA[0].n+":"+AA.length;if(!_tplHits||_tplHits.ck!==ck)_tplHits={ck,m:new Map()};
+  const key=num+"|"+b;if(_tplHits.m.has(key))return _tplHits.m.get(key);
+  const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
+  const out=[];for(let i=0;i+2<AA.length&&i<6300;i++){if(AA[i+1].n!==AA[i].n-1||AA[i+2].n!==AA[i].n-2)continue;const t=AA[i],cs=p.map(([r,c])=>[AA[i+1],AA[i+2]][r][SK[b+c]]);if(!has(t,cs))continue;
+    const opts=[];const rec=(j,used,acc)=>{if(j===cs.length){opts.push(acc.join(""));return;}for(const k of SK){if(used.includes(k)||t[k]!==cs[j])continue;rec(j+1,[...used,k],[...acc,k]);}};rec(0,[],[]);out.push({i,opts});}
+  _tplHits.m.set(key,out);return out;}
 // ---- "בדיקת טפסים": a page with the form for the coming draw and the forms of the last 5 draws, marked against the result ----
 var formsSel=null;
+var formsN=50,_fSum=new Map(),_fTok=0;
+function fSumKey(it){const d=it.d;return d.n+"|"+d.S+d.H+d.D+d.C;}
+function fSumCalc(it){const k=fSumKey(it);if(_fSum.has(k))return _fSum.get(k);
+  const rows=allTplRows(it.skip,it.d);const th=rows.filter(r=>r.opts.some(o=>o.hit)).map(r=>r.num);const wb=formWinsBy(it);const v={wb,th};_fSum.set(k,v);return v;}
+function fSumHtml(c){return `${c.wb.length?`<b class="fOk">תפס ✓: ${c.wb.join(", ")}</b>`:`לא נתפס`}${c.th.length?`<b class="fOk">תבניות שפגעו: ${c.th.join(", ")}</b>`:""}`;}
+function fAggHtml(list){const past=list.filter(it=>it.d),cs=past.map(it=>_fSum.get(fSumKey(it)));const done=cs.filter(Boolean).length;
+  if(done<past.length)return `<small class="fPend">בודק ${done.toLocaleString("he-IL")} מתוך ${past.length.toLocaleString("he-IL")} הגרלות…</small>`;
+  const cnt=FMETH.map(([m,t])=>[t,cs.filter(c=>c.wb.includes(t)).length]);const any=cs.filter(c=>c.wb.length).length,tpl=cs.filter(c=>c.th.length).length;
+  return `<b>ב־${past.length.toLocaleString("he-IL")} ההגרלות האחרונות (${past[past.length-1].n}–${past[0].n}):</b> לפחות שיטה אחת תפסה בדיוק ב־<b>${any}</b> הגרלות.<br>${cnt.map(([t,n])=>`${t}: <b>${n}</b>`).join(" · ")}<br><small>תפס = טופס שכל הקלפים שלו יצאו בדיוק בצורות. בנוסף, בתבניות של איציק לפחות תבנית אחת פגעה (3 הקלפים יצאו, בכל צורה) ב־${tpl} הגרלות. שיטות עם טופס של 2 קלפים (כמו זוגות) תופסות יותר כי קל יותר לתפוס 2 קלפים מ־3.</small>`;}
+// fill the per-draw summaries a few at a time so the page stays responsive (1,000 draws take a few seconds)
+function fFill(list,tok){let i=0;const step=()=>{if(tok!==_fTok)return;const t0=performance.now();
+    while(i<list.length&&performance.now()-t0<40){const it=list[i++];if(!it.d||_fSum.has(fSumKey(it)))continue;fSumCalc(it);const el=document.querySelector(`.fSumS[data-i="${list.indexOf(it)}"]`);if(el)el.innerHTML=fSumHtml(_fSum.get(fSumKey(it)));}
+    const a=document.getElementById("fAgg");if(a&&(i>=list.length||i%50<6))a.innerHTML=fAggHtml(list);
+    if(i<list.length)setTimeout(step,0);else if(a)a.innerHTML=fAggHtml(list);};step();}
+var _fList=[];
 function formsHtml(){
   const AA=allDraws(),nx=AA[0].n+1;const sn=k=>SUITS.find(x=>x[0]===k);
-  const FORMS_FROM=53875;const list=[{skip:0,n:nx,d:null}];for(let i=0;i<AA.length&&(AA[i].n>=FORMS_FROM||i<5);i++)list.push({skip:i+1,n:AA[i].n,d:AA[i]});
+  const list=[{skip:0,n:nx,d:null}];for(let i=0;i<AA.length&&i<formsN;i++)list.push({skip:i+1,n:AA[i].n,d:AA[i]});
   const fmt=d=>d?`${(d.date||"").split("-").reverse().slice(0,2).join("/")} · ${d.time||""}`:"";
   const nxs=(()=>{try{const g=slotsAfter(AA[0]);const x=g.next().value;return `${pad(x.d)}/${pad(x.m)} · ${x.time}`;}catch(e){return "";}})();
-  const sel=formsSel==null?0:formsSel;
+  const sel=formsSel==null?0:formsSel;_fList=list;
   const rows=list.map((it,idx)=>{let sum="";
-    if(it.d){const rows=allTplRows(it.skip,it.d);const all=rows.flatMap(r=>r.opts);const full=all.filter(o=>o.win).length;const best=Math.max(...all.map(o=>o.inPlace));
-      const th=rows.filter(r=>r.opts.some(o=>o.hit)).map(r=>r.num);
-      const wb=formWinsBy(it);
-      sum=`<span>${wb.length?`<b class="fOk">תפס ✓: ${wb.join(", ")}</b>`:`לא נתפס`}${th.length?`<b class="fOk">תבניות שפגעו: ${th.join(", ")}</b>`:""}</span>`;}
+    if(it.d){const c=_fSum.get(fSumKey(it));sum=`<span class="fSumS" data-i="${idx}">${c?fSumHtml(c):`<small class="fPend">בודק…</small>`}</span>`;}
     else sum=`<span class="fNx">הטופס הבא</span>`;
     return `<button type="button" class="fRow${sel===idx?" on":""}" data-i="${idx}"><span><b>טופס הגרלה ${it.n}</b><small>${it.d?fmt(it.d):nxs}</small></span>${sum}</button>${sel===idx?formDetail(it):""}`;}).join("");
   return `<div class="fHead"><button type="button" class="fBack" id="formsClose" aria-label="חזרה לאתר">→ חזרה</button><h2>בדיקת טפסים</h2></div>
-  <p class="tplNote">לחיצה על הגרלה פותחת כפתורים לכל שיטה באתר (התבניות של איציק, זוגות, תבניות, שלישיות, שלישיות חמות, עוגן, חילופי מקומות) – כל אחד מראה את הטופס שהשיטה נתנה לאותה הגרלה ואיפה פגע. לכל הגרלה מאז 53875 (8/11 19:00) רואים מה המערכת נתנה לפניה, מסומן מול מה שיצא. פגיעה = כל הקלפים בצורה המדויקת. לחיצה על הגרלה פותחת את הטופס שלה.</p>
+  <p class="tplNote">לחיצה על הגרלה פותחת כפתורים לכל שיטה באתר (התבניות של איציק, זוגות, תבניות, שלישיות, שלישיות חמות, עוגן, חילופי מקומות) – כל אחד מראה את הטופס שהשיטה נתנה לאותה הגרלה ואיפה פגע. בחר כמה הגרלות אחורה לבדוק (50 · 100 · 200 · 1,000) – הרשימה תמיד באותו גודל: כל הגרלה חדשה נכנסת למעלה והישנה ביותר יוצאת. לכל הגרלה רואים מה המערכת נתנה לפניה, מסומן מול מה שיצא. פגיעה = כל הקלפים בצורה המדויקת. לחיצה על הגרלה פותחת את הטופס שלה.</p>
+  <div class="itzTabs cdTabs fNt">${[50,100,200,1000].map(n=>`<button type="button" class="cdN fNb${n===formsN?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")} אחורה</button>`).join("")}</div>
+  <div class="fAgg" id="fAgg">${fAggHtml(list)}</div>
   <div class="fList">${rows}</div>`;
 }
 function formItz(it){
@@ -2330,12 +2356,13 @@ function formDetail(it){
 }
 function renderForms(){const el=document.getElementById("formsPage");if(!el||el.hidden)return;
   if(!HIST){el.innerHTML='<p class="tplNote" style="padding:16px">טוען…</p>';loadHist().then(renderForms);return;}
-  el.innerHTML=`<div class="fWrap">${formsHtml()}</div>`;}
+  el.innerHTML=`<div class="fWrap">${formsHtml()}</div>`;fFill(_fList,++_fTok);}
 function fOpenSync(){document.body.classList.toggle("fOpen",[...document.querySelectorAll(".fPage")].some(x=>!x.hidden));}
 function openForms(on){const el=document.getElementById("formsPage");el.hidden=!on;fOpenSync();
   if(on){formsSel=formsSel==null?1:formsSel;renderForms();el.scrollTop=0;try{if(location.hash!=="#forms")history.pushState(null,"","#forms");}catch(e){}}
   else{try{if(location.hash==="#forms")history.pushState(null,"",location.pathname+location.search);}catch(e){}}}
 document.getElementById("formsPage").addEventListener("click",e=>{if(e.target.closest("#formsClose")){openForms(false);return;}
+  const nb=e.target.closest(".fNb");if(nb){formsN=+nb.dataset.n;formsSel=Math.min(formsSel==null?1:formsSel,1);renderForms();return;}
   const sb=e.target.closest(".fSb");if(sb){formsItzSub=sb.dataset.s;renderForms();const x=document.querySelector(".fDet");if(x)x.scrollIntoView({block:"start"});return;}
   const mb=e.target.closest(".fMb");if(mb){formsMethod=mb.dataset.m;renderForms();const x=document.querySelector(".fDet");if(x)x.scrollIntoView({block:"start"});return;}
   const b=e.target.closest(".fRow");if(!b)return;const i=+b.dataset.i;formsSel=formsSel===i?-1:i;renderForms();const x=document.querySelector(`.fRow[data-i="${i}"]`);if(x)x.scrollIntoView({block:"start",behavior:"smooth"});});
