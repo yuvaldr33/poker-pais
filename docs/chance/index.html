@@ -266,6 +266,13 @@ table.pairs td.nn{font-family:var(--mono)}
 .cdP{display:block;font-size:.62em;opacity:.7;margin-top:2px}
 .cdTabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.cdN{border:1px solid var(--felt);background:var(--surface);color:var(--felt);border-radius:999px;padding:5px 12px;font:inherit;cursor:pointer}.cdN.on{background:var(--felt);color:#fff}
 .fAgg{margin:8px 0 10px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);line-height:1.8;font-size:.92em}.fAgg small{display:block;opacity:.8;line-height:1.5}.fPend{opacity:.6}
+.fGauge{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.fGT{grid-column:1/-1;font-weight:700}
+.fG{border:1.5px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center;background:var(--surface);min-width:0}
+.fG b{display:block;font-size:1.7rem;line-height:1.1;font-family:var(--mono,inherit)}
+.fG span{display:block;font-size:.72rem;opacity:.8;line-height:1.35;margin-top:3px}
+.fG.ok{border-color:var(--felt);background:var(--win)}
+.fG2{border-style:dashed}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -1294,7 +1301,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="85ff154e02";
+const BUILD="16f745327a";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2364,14 +2371,41 @@ function formMethodHtml(it,m){
 }
 function formWinsBy(it){if(!it.d)return [];const out=[];for(const [m,t] of FMETH){if(m==="itz"){if(allTplRows(it.skip,it.d).some(r=>r.opts.some(o=>o.win)))out.push(t);continue;}
   if(formTickets(it.skip,m).some(x=>{const ks=Object.keys(x.t);return ks.every(k=>it.d[k]===x.t[k]);}))out.push(t);}return out;}
+// ---- score gauges: tickets offered / caught for the open draw, and for the chosen method over the whole list ----
+const FS_VER="1";let _fsLS={};try{_fsLS=JSON.parse(localStorage.getItem("chance-fscore")||"{}")||{};if(_fsLS.v!==FS_VER)_fsLS={v:FS_VER};}catch(e){_fsLS={v:FS_VER};}
+let _fsSaveT=null;function fsSave(){clearTimeout(_fsSaveT);_fsSaveT=setTimeout(()=>{try{localStorage.setItem("chance-fscore",JSON.stringify(_fsLS));}catch(e){}},800);}
+function fTix(it,m,sub){
+  if(m!=="itz")return formTickets(it.skip,m).map(x=>x.t);
+  if(sub==="top")return itzTickets(itzCalc(it.skip)).map(x=>x.t);
+  if(sub==="every"||sub==="free")return allTplRows(it.skip,null,sub==="free").flatMap(r=>r.opts.map(o=>o.ticket));
+  const S=itzSept();return allTplRows(it.skip,null).filter(r=>S.by[r.num]).map(r=>{const st=S.by[r.num],o=r.opts[st.b],t={};o.cards.forEach((c,j)=>{t[st.land[j]]=c;});return t;});}
+function fScore(it,m,sub){const d=it.d;const key=d?fSumKey(it)+"|"+m+"|"+(m==="itz"?sub:""):null;
+  if(key&&_fsLS[key])return {off:_fsLS[key][0],cau:_fsLS[key][1]};
+  const tix=fTix(it,m,sub).filter(t=>Object.keys(t).some(k=>t[k]));const off=tix.length,cau=d?tix.filter(t=>SK.every(k=>!t[k]||d[k]===t[k])).length:null;
+  if(key){_fsLS[key]=[off,cau];fsSave();}return {off,cau};}
+function fMethName(m,sub){const a=(FMETH.find(x=>x[0]===m)||[,""])[1];return m==="itz"?`${a} · ${(FITZ.find(x=>x[0]===sub)||[,""])[1]}`:a;}
+function fGauges(it,m,sub){const sc=fScore(it,m,sub),nm=fMethName(m,sub);
+  return `<div class="fGauge"><div class="fGT">${nm}</div>
+    <div class="fG"><b>${sc.off}</b><span>טפסים הוצעו<br>${it.d?`להגרלה ${it.n}`:"להגרלה הבאה"}</span></div>
+    <div class="fG${sc.cau?" ok":""}"><b>${it.d?sc.cau:"—"}</b><span>${it.d?"טפסים תפסו<br>בדיוק בצורות":"עוד לא<br>הוגרל"}</span></div>
+    <div class="fG fG2" id="fG2"><b>…</b><span>בודק את ${formsN.toLocaleString("he-IL")} ההגרלות…</span></div></div>`;}
+function fG2Html(r,n,done){if(done<n)return `<b>${r.cau}</b><span>תפסו עד עכשיו · בודק ${done}/${n}…</span>`;
+  return `<b>${r.cau}</b><span>טפסים תפסו ב־${n.toLocaleString("he-IL")} ההגרלות<br>ב־${r.draws} הגרלות שונות<br>מתוך ${r.off.toLocaleString("he-IL")} טפסים</span>`;}
+function fG2Fill(m,sub,tok){const list=_fList.filter(x=>x.d),r={off:0,cau:0,draws:0};let i=0;
+  const step=()=>{if(tok!==_fTok)return;const el=document.getElementById("fG2");if(!el)return;const t0=performance.now();
+    while(i<list.length&&performance.now()-t0<40){const sc=fScore(list[i++],m,sub);r.off+=sc.off;r.cau+=sc.cau;if(sc.cau)r.draws++;}
+    el.innerHTML=fG2Html(r,list.length,i);if(i<list.length)setTimeout(step,0);};setTimeout(step,0);}
 function formDetail(it){
   const m=formsMethod;
   return `<div class="fDet"><div class="fMt">${FMETH.map(([k,t])=>`<button type="button" class="fMb${m===k?" on":""}" data-m="${k}">${t}</button>`).join("")}</div>
-  ${m==="itz"?`<div class="fMt fSt">${FITZ.map(([k,t])=>`<button type="button" class="fSb${formsItzSub===k?" on":""}" data-s="${k}">${t}</button>`).join("")}</div>${formItzSub(it,formsItzSub)}`:formMethodHtml(it,m)}</div>`;
+  ${m==="itz"?`<div class="fMt fSt">${FITZ.map(([k,t])=>`<button type="button" class="fSb${formsItzSub===k?" on":""}" data-s="${k}">${t}</button>`).join("")}</div>`:""}
+  ${fGauges(it,m,formsItzSub)}
+  ${m==="itz"?formItzSub(it,formsItzSub):formMethodHtml(it,m)}</div>`;
 }
 function renderForms(){const el=document.getElementById("formsPage");if(!el||el.hidden)return;
   if(!HIST){el.innerHTML='<p class="tplNote" style="padding:16px">טוען…</p>';loadHist().then(renderForms);return;}
-  el.innerHTML=`<div class="fWrap">${formsHtml()}</div>`;fFill(_fList,++_fTok);}
+  el.innerHTML=`<div class="fWrap">${formsHtml()}</div>`;const tok=++_fTok;
+  if(document.getElementById("fG2"))fG2Fill(formsMethod,formsItzSub,tok);fFill(_fList,tok);}
 function fOpenSync(){document.body.classList.toggle("fOpen",[...document.querySelectorAll(".fPage")].some(x=>!x.hidden));}
 function openForms(on){const el=document.getElementById("formsPage");el.hidden=!on;fOpenSync();
   if(on){formsSel=formsSel==null?1:formsSel;renderForms();el.scrollTop=0;try{if(location.hash!=="#forms")history.pushState(null,"","#forms");}catch(e){}}
