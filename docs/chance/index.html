@@ -259,6 +259,9 @@ table.pairs td.nn{font-family:var(--mono)}
 .fTbl td.fm{font-family:var(--body);font-size:.8rem;font-weight:600;color:var(--muted)}
 .fTbl tr.fRes td{background:var(--chip);border-bottom:2px solid var(--felt)}.fTbl tr.fRes td:first-child{font-family:var(--body);font-size:.8rem}
 .fTbl tr.fWin td{background:var(--win)!important}.fTbl tr.fWin td.fm{color:var(--felt)}
+.cdTbl td{font-size:1.05em;padding:6px 4px}.cdTbl td.cdV{font-weight:800;font-size:1.15em}
+.cdP{display:block;font-size:.62em;opacity:.7;margin-top:2px}
+.cdTabs{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}.cdN{border:1px solid var(--felt);background:var(--surface);color:var(--felt);border-radius:999px;padding:5px 12px;font:inherit;cursor:pointer}.cdN.on{background:var(--felt);color:#fff}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -585,6 +588,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 <button class="navBtn" id="navBtn" type="button" aria-label="תפריט קיצורי דרך" aria-expanded="false" aria-controls="navMenu">⋮</button>
 <nav class="navMenu" id="navMenu" hidden aria-label="קיצורי דרך"></nav>
 <div id="formsPage" class="fPage" hidden></div>
+<div id="cardsPage" class="fPage" hidden></div>
 <button class="chFab" id="chFab" type="button" aria-label="פתח צ'אט"><span class="dot"></span>שאל את העוזר</button>
 <div class="chBox" id="chBox" dir="rtl" hidden role="dialog" aria-label="העוזר של צ'אנס">
   <div class="chHead"><div><b>העוזר של צ'אנס</b><small>עונה לפי הניתוח החי של האתר</small></div><button type="button" id="chClose" aria-label="סגור">✕</button></div>
@@ -1187,7 +1191,7 @@ function renderTrack(){
 renderTrack();renderTrack3();
 
 // ---- manual result entry ----
-function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();renderMyP();renderFut();renderItz();renderForms();tick();showManNote();}
+function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();renderMyP();renderFut();renderItz();renderForms();renderCards();tick();showManNote();}
 function showManNote(){const n=document.getElementById("manNote");let t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
   const wait=manualDraws.filter(m=>m.n>last.n+1);if(wait.length)t+=` ${wait.map(m=>`הגרלה ${m.n} (${m.time})`).join(", ")} שמורה וממתינה: היא תיכנס לניתוח ברגע שהגרלה ${last.n+1} תיכנס (רשמית או ידנית).`;
   n.textContent=[t.trim(),manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
@@ -1282,7 +1286,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="a22f7aee24";
+const BUILD="988c480c41";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2321,7 +2325,8 @@ function formDetail(it){
 function renderForms(){const el=document.getElementById("formsPage");if(!el||el.hidden)return;
   if(!HIST){el.innerHTML='<p class="tplNote" style="padding:16px">טוען…</p>';loadHist().then(renderForms);return;}
   el.innerHTML=`<div class="fWrap">${formsHtml()}</div>`;}
-function openForms(on){const el=document.getElementById("formsPage");el.hidden=!on;document.body.classList.toggle("fOpen",on);
+function fOpenSync(){document.body.classList.toggle("fOpen",[...document.querySelectorAll(".fPage")].some(x=>!x.hidden));}
+function openForms(on){const el=document.getElementById("formsPage");el.hidden=!on;fOpenSync();
   if(on){formsSel=formsSel==null?1:formsSel;renderForms();el.scrollTop=0;try{if(location.hash!=="#forms")history.pushState(null,"","#forms");}catch(e){}}
   else{try{if(location.hash==="#forms")history.pushState(null,"",location.pathname+location.search);}catch(e){}}}
 document.getElementById("formsPage").addEventListener("click",e=>{if(e.target.closest("#formsClose")){openForms(false);return;}
@@ -2329,12 +2334,38 @@ document.getElementById("formsPage").addEventListener("click",e=>{if(e.target.cl
   const b=e.target.closest(".fRow");if(!b)return;const i=+b.dataset.i;formsSel=formsSel===i?-1:i;renderForms();const x=document.querySelector(`.fRow[data-i="${i}"]`);if(x)x.scrollIntoView({block:"start",behavior:"smooth"});});
 window.addEventListener("hashchange",()=>openForms(location.hash==="#forms"));
 if(location.hash==="#forms")openForms(true);
+// ---- "טבלת קלפים": every card 7..A × every suit, how many times it came out, ranked in colours per suit ----
+var cardsN=1000;
+function cardsHtml(){const A=allDraws().slice(0,cardsN),N=A.length,VALS=["7","8","9","10","J","Q","K","A"];
+  const cnt={};SK.forEach(k=>{cnt[k]={};VALS.forEach(v=>cnt[k][v]=0);});A.forEach(t=>SK.forEach(k=>{if(cnt[k][t[k]]!=null)cnt[k][t[k]]++;}));
+  const rk={};SK.forEach(k=>{const lv=[...new Set(VALS.map(v=>cnt[k][v]))].sort((x,y)=>y-x);rk[k]={};VALS.forEach(v=>rk[k][v]=lv.indexOf(cnt[k][v])+1);});
+  const tot=v=>SK.reduce((a,k)=>a+cnt[k][v],0),tl=[...new Set(VALS.map(tot))].sort((x,y)=>y-x);
+  const exp=N/8;
+  const head=`<tr><th>קלף</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>סה״כ</th></tr>`;
+  const rows=VALS.map(v=>`<tr><td class="cdV">${v}</td>${SK.map(k=>{const r=rk[k][v],red=SUITS.find(x=>x[0]===k)[3];return `<td class="${red?"r":""}"><span class="${r<=4?"cr"+r:""}">${cnt[k][v]}</span><small class="cdP">${(cnt[k][v]/N*100).toFixed(1)}%</small></td>`;}).join("")}<td><span class="${tl.indexOf(tot(v))<4?"cr"+(tl.indexOf(tot(v))+1):""}">${tot(v)}</span></td></tr>`).join("");
+  const top=SK.map(k=>{const s=SUITS.find(x=>x[0]===k);const best=VALS.filter(v=>rk[k][v]===1);return `${s[2]}: <b class="cr1">${best.join(" / ")}</b>`;}).join(" · ");
+  return `<div class="fHead"><button type="button" class="fBack" id="cardsClose" aria-label="חזרה לאתר">→ חזרה</button><h2>טבלת קלפים</h2></div>
+  <p class="tplNote">כמה פעמים כל קלף, מ־7 עד A, יצא בכל צורה, ב־${N.toLocaleString("he-IL")} ההגרלות האחרונות (${A[N-1].n}–${A[0].n}). מתעדכן לבד בכל הגרלה.</p>
+  <div class="itzTabs cdTabs">${[100,500,1000,5000].map(n=>`<button type="button" class="cdN${n===cardsN?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")}</button>`).join("")}</div>
+  <div class="crLeg"><b>בכל עמודה לחוד:</b> <span class="cr1">סגול</span> מקום 1 · <span class="cr2">צהוב</span> מקום 2 · <span class="cr3">ירוק</span> מקום 3 · <span class="cr4">אדום</span> מקום 4 · בלי צבע = מקום 5 ומטה.<br><small>הכי הרבה עכשיו – ${top}. בממוצע כל קלף יוצא בכל צורה ${exp.toFixed(0)} פעמים (12.5%); הבדלים של כמה אחוזים הם בגבולות המזל.</small></div>
+  <div class="fTbl cdTbl"><table dir="ltr">${head}${rows}</table></div>`;}
+function renderCards(){const el=document.getElementById("cardsPage");if(!el||el.hidden)return;
+  if(!HIST&&cardsN>DRAWS.length){el.innerHTML='<p class="tplNote" style="padding:16px">טוען…</p>';loadHist().then(renderCards);return;}
+  el.innerHTML=`<div class="fWrap">${cardsHtml()}</div>`;}
+function openCards(on){const el=document.getElementById("cardsPage");el.hidden=!on;fOpenSync();
+  if(on){renderCards();el.scrollTop=0;try{if(location.hash!=="#cards")history.pushState(null,"","#cards");}catch(e){}}
+  else{try{if(location.hash==="#cards")history.pushState(null,"",location.pathname+location.search);}catch(e){}}}
+document.getElementById("cardsPage").addEventListener("click",e=>{if(e.target.closest("#cardsClose")){openCards(false);return;}
+  const b=e.target.closest(".cdN");if(b){cardsN=+b.dataset.n;renderCards();}});
+window.addEventListener("hashchange",()=>openCards(location.hash==="#cards"));
+if(location.hash==="#cards")openCards(true);
 // ---- section menu (⋮) ----
 (function(){
   const secs=[...document.querySelectorAll("section")];
   secs.forEach((s,i)=>{if(!s.id)s.id="sec"+i;});
   const items=[
     ["📋 בדיקת טפסים",()=>{openForms(true);return null;}],
+    ["🃏 טבלת קלפים",()=>{openCards(true);return null;}],
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
     ["התבניות של איציק",()=>{if(!itzOpen){itzOpen=true;renderItz();}return document.getElementById("itzBtn");}],
