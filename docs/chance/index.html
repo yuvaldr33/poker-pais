@@ -1289,7 +1289,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="cca2ad4fe0";
+const BUILD="38ca750ef5";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2284,9 +2284,9 @@ function formItz(it){
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
   const all=rows.flatMap(r=>r.opts),nh=all.filter(o=>o.hit).length,nw=all.filter(o=>o.win).length;
   const runBox=CR_LEGEND;
-  const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.hit?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi ${itzTierCls(r.num)}" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=crCls(r.num,j,o.ticket,k,it.skip);return `<td class="${red?"r":""}">${tp?crN1000(v,k,it.skip):""}<span class="${ok?"fhit":""}${tp?" "+tp:""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
+  const body=rows.map(r=>r.opts.map((o,j)=>`<tr class="${o.win?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi ${itzTierCls(r.num)}" rowspan="3">${itzSvg(r.p)}<b>${r.num}${r.four?" (4)":""}</b></td>`:""}${SK.map(k=>{const v=o.ticket[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=crCls(r.num,j,o.ticket,k,it.skip);return `<td class="${red?"r":""}">${tp?crN1000(v,k,it.skip):""}<span class="${ok?"fhit":""}${tp?" "+tp:""}">${v}</span><small class="fst">${j===0&&false?"":""}</small></td>`;}).join("")}${d?`<td class="fm">${o.hit?"✓":""}</td>`:""}</tr>`).join("")).join("");
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} אפשרויות פגעו ✓ (כל הקלפים יצאו)</b>`:"אף תבנית לא פגעה בהגרלה הזו."}${nw?` · <b class="fOk">${nw} טפסים תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
-  <p class="tplNote">18 תבניות × 3 אפשרויות (מעלה/מלב/מיהלום או לפי הציור), לפי סדר התבניות. כל שורה היא טופס: הקלפים בצורות שבהן האפשרות הזו נחתה הכי הרבה ב־5,000 ההגרלות. ✓ ושורה ירוקה = כל הקלפים של האפשרות יצאו בהגרלה.</p>
+  <p class="tplNote">18 תבניות × 3 אפשרויות (מעלה/מלב/מיהלום או לפי הציור), לפי סדר התבניות. כל שורה היא טופס: הקלפים בצורות שבהן האפשרות הזו נחתה הכי הרבה ב־5,000 ההגרלות. ✓ = כל הקלפים של האפשרות יצאו (בכל צורה). שורה ירוקה = כל הקלפים יצאו בדיוק בצורות של הטופס.</p>
   ${runBox}<div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;
 }
 
@@ -2306,10 +2306,10 @@ function formItzSub(it,sub){
   const head=`<tr><th>טופס</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>פגעה</th>":""}</tr>`;
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
   const body=items.map(x=>{const cards=SK.filter(k=>x.t[k]).map(k=>x.t[k]);const hit=!!d&&has(d,cards),win=!!d&&SK.every(k=>!x.t[k]||d[k]===x.t[k]);if(hit)nh++;if(win)nw++;
-    return `<tr class="${hit?"fWin":""}"><td class="fi ${itzTierCls(x.num)}">${itzSvg(x.p)}<small class="fSp">${x.label}</small></td>${SK.map(k=>{const v=x.t[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=crCls(x.num,x.b,x.t,k,it.skip);return `<td class="${red?"r":""}">${tp?crN1000(v,k,it.skip):""}<span class="${ok?"fhit":""}${tp?" "+tp:""}">${v}</span></td>`;}).join("")}${d?`<td class="fm">${hit?"✓":""}</td>`:""}</tr>`;}).join("");
+    return `<tr class="${win?"fWin":""}"><td class="fi ${itzTierCls(x.num)}">${itzSvg(x.p)}<small class="fSp">${x.label}</small></td>${SK.map(k=>{const v=x.t[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=crCls(x.num,x.b,x.t,k,it.skip);return `<td class="${red?"r":""}">${tp?crN1000(v,k,it.skip):""}<span class="${ok?"fhit":""}${tp?" "+tp:""}">${v}</span></td>`;}).join("")}${d?`<td class="fm">${hit?"✓":""}</td>`:""}</tr>`;}).join("");
   const AA=allDraws(),A=it.skip?AA.slice(it.skip):AA;
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} טפסים פגעו ✓ (כל הקלפים יצאו)</b>`:"אף טופס לא פגע בהגרלה הזו."}${nw?` · <b class="fOk">${nw} תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
-  <p class="tplNote">${sub==="top"?`15 הטפסים ש"5 החזקות" הציעה להגרלה הזו (★ = אחת מ־5 הנבחרות).`:`18 הטפסים של "ספטמבר": לכל תבנית נקודת ההתחלה שפגעה הכי הרבה בספטמבר, בצורה שבה נחתה שם.`} ✓ ושורה ירוקה = כל הקלפים של הטופס יצאו.</p>
+  <p class="tplNote">${sub==="top"?`15 הטפסים ש"5 החזקות" הציעה להגרלה הזו (★ = אחת מ־5 הנבחרות).`:`18 הטפסים של "ספטמבר": לכל תבנית נקודת ההתחלה שפגעה הכי הרבה בספטמבר, בצורה שבה נחתה שם.`} ✓ = כל הקלפים של הטופס יצאו (בכל צורה). שורה ירוקה = כל הקלפים יצאו בדיוק בצורות של הטופס.</p>
   ${CR_LEGEND}<div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;}
 function formTickets(skip,m){
   const key=DRAWS[skip]?DRAWS[skip].n+"|"+m:m;if(_fmCache.has(key))return _fmCache.get(key);
