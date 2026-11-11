@@ -290,6 +290,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .cc.fhit{border:2px solid var(--ink);border-radius:999px}
 .wRing{outline:3px solid #d4a017;outline-offset:2px;border-radius:999px}.wTbl td.wWhy{white-space:normal;font-size:.68em;line-height:1.35;max-width:5.5em}.wX{color:#b8860b}.wTbl tr.wExtra td{background:var(--win)}.wTbl td,.wTbl th{padding:4px 2px}
 .fTbl td.fl{white-space:normal;font-size:.72em;line-height:1.3;max-width:6em}
+.wTbl td.wNo{font-weight:800;font-size:.85em;color:var(--muted)}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -1318,7 +1319,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="9eef283463";
+const BUILD="a027a9ba40";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2242,15 +2243,21 @@ function itzWinCalc(N){const AA=allDraws(),VALS=["7","8","9","10","J","Q","K","A
 function itzWinHtml(){const S=itzWinCalc(itzWinN),{VALS,tally,slots,co,avg,rank}=S,sn=k=>SUITS.find(x=>x[0]===k);
   const chip=(v,cls)=>`<span class="cc${cls?" "+cls:""}" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
   const top=SK.map(k=>{const L=VALS.slice().sort((a,b)=>tally[k][b]-tally[k][a]).slice(0,3);return `<div><b>${sn(k)[2]} ${sn(k)[1]}</b> · ${L.map(v=>`${chip(v)} <small>${tally[k][v]} · ${slots[k]?(tally[k][v]/slots[k]*100).toFixed(1):0}%</small>`).join(" ")}</div>`;}).join("");
-  const rows=allTplRows(0,null,true);let body="";
+  const rows=allTplRows(0,null,true),G=new Map();
   rows.forEach(r=>r.opts.forEach((o,j)=>{const t=o.ticket,cards=SK.filter(k=>t[k]).map(k=>t[k]);SK.filter(k=>!t[k]).forEach(e=>{
     const sc=VALS.map(c=>{const loves=cards.filter(x=>co[x][c]>avg[x]);return {c,n:tally[e][c],loves};});
     const two=sc.filter(x=>x.loves.length>=2).sort((a,b)=>b.n-a.n),w=(two[0]||sc.slice().sort((a,b)=>b.n-a.n)[0]),extra=rank[e][w.c]===1&&w.loves.length>=2;
-    body+=`<tr class="${extra?"wExtra":""}"><td class="fi ${itzTierCls(r.num)}">${itzSvg(r.p)}<small class="fSp">${r.num} · מ${o.start}</small></td>${SK.map(k=>k===e?`<td><small class="crC hSt">${w.n}<br>מק׳ ${rank[e][w.c]}</small>${chip(w.c,"wRing")}</td>`:cardTd(t[k],k,0,{})).join("")}<td class="wWhy">${w.loves.length?`אוהב ${w.loves.map(x=>`<b>${x}</b> (${co[x][w.c]})`).join(", ")}`:"—"}${extra?`<br><b class="wX">★ אקסטרה חזק</b>`:""}</td></tr>`;});}));
+    // the same 4 cards in the same places = one row; the templates that gave it are listed together
+    const key=SK.map(k=>k===e?"*"+w.c:(t[k]||"-")).join("|");
+    if(!G.has(key))G.set(key,{t,e,w,extra,r,tpl:[]});G.get(key).tpl.push(`${r.num} מ${o.start}`);});}));
+  let body="",i=0;
+  [...G.values()].sort((a,b)=>(b.extra-a.extra)||(b.tpl.length-a.tpl.length)||(b.w.n-a.w.n)).forEach(g=>{const {t,e,w,extra,r}=g;i++;
+    body+=`<tr class="${extra?"wExtra":""}"><td class="wNo">${i}</td><td class="fi ${itzTierCls(r.num)}">${itzSvg(r.p)}<small class="fSp">${g.tpl.join("<br>")}</small></td>${SK.map(k=>k===e?`<td><small class="crC hSt">${w.n}<br>מק׳ ${rank[e][w.c]}</small>${chip(w.c,"wRing")}</td>`:cardTd(t[k],k,0,{})).join("")}<td class="wWhy">${w.loves.length?`אוהב ${w.loves.map(x=>`<b>${x}</b> (${co[x][w.c]})`).join(", ")}`:"—"}${extra?`<br><b class="wX">★ אקסטרה חזק</b>`:""}</td></tr>`;});
   return `<p class="tplNote">לכל טופס של "עם רווחים" להגרלה הבאה – הקלף שמשלים את המקום הריק. ב־${S.N.toLocaleString("he-IL")} ההגרלות האחרונות בדקתי, לכל טופס שהוצע, איזה קלף יצא בפועל במקום הריק שלו. הקלף המנצח = הקלף שיצא שם הכי הרבה מבין אלה ש"אוהבים" לפחות 2 מ־3 הקלפים של הטופס (יצאו איתם באותה הגרלה יותר מהרגיל).</p>
   <div class="itzTabs cdTabs">${[100,200,500].map(n=>`<button type="button" class="cdN iwN${n===itzWinN?" on":""}" data-n="${n}">${n} הגרלות</button>`).join("")}</div>
   <div class="crLeg"><b>מה הכי הרבה עלה במקומות הריקים:</b>${top}<small>עיגול זהב = הקלף המנצח. מעליו: כמה פעמים עלה במקום הריק הזה, ובאיזה מקום הוא בדירוג של הצורה. "אוהב X (n)" = יצאו יחד ב־n הגרלות. ★ אקסטרה חזק = מקום 1 במקום הריק וגם אוהב 2 קלפים או יותר. בממוצע כל קלף עולה במקום ריק ב־12.5%.</small></div>
-  <div class="fTbl wTbl"><table dir="ltr"><tr><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>למה</th></tr>${body}</table></div>`;}
+  <p class="tplNote"><b>${i}</b> צירופים שונים (אחרי צמצום – צירוף שחוזר מופיע פעם אחת, עם כל התבניות שנתנו אותו). מסודר: אקסטרה חזק קודם, אחר כך לפי כמה תבניות נותנות אותו.</p>
+  <div class="fTbl wTbl"><table dir="ltr"><tr><th>#</th><th>תבנית</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>למה</th></tr>${body}</table></div>`;}
 var itzTab="top",itzOpenRow=null,itzRunBox="";
 function renderItz(){
   const el=document.getElementById("itzPanel"),bt=document.getElementById("itzBtn");if(!el)return;
