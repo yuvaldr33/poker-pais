@@ -266,7 +266,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .itzPicLeg{text-align:center}
 .cc{display:inline-block;min-width:1.6em;padding:1px 4px;border-radius:6px;font-weight:800}
 .ccTbl td{padding:5px 3px}.hSt{font-size:.58em;line-height:1.15}.hTbl .cc{min-width:1.4em;padding:1px 3px}.hOff{opacity:.45}
-.ipTbl td,.ipTbl th{padding:5px 2px}.ipTbl td.ipP{font-weight:800;white-space:nowrap}.ipTbl td.ipAgo{font-size:.85em}
+.ipTbl td,.ipTbl th{padding:5px 2px}.ipTbl td.ipP{font-weight:800;white-space:nowrap}.ipTbl td.ipAgo{font-size:.85em}.ipL{display:block;font-size:.65em;color:var(--felt);font-weight:700}.ipTbl tr.ipNow td{background:var(--win)}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -2182,25 +2182,27 @@ function itzHitsHtml(){if(!HDATES){loadHDates().then(()=>{const el=document.getE
     return `<tr><td class="hDt"><b>${x.d.n}</b><br>${fmt(x.d)}<small class="hI">#${i+1}</small></td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}"><span class="${mk[k]?"fhit":""}">${x.d[k]}</span></td>`).join("")}<td class="hTp">${x.tpl.join(", ")}</td></tr>`;}).join("");
   return `<p class="tplNote">${R.length} ${itzHitMode==="exact"?`הצירופים האחרונים שבהם טופס של "כל התבניות" תפס צ'אנס 3 מדויק (3 הקלפים בדיוק בצורות של הטופס)`:"הצירופים האחרונים שבהם תבנית פגעה – 3 הקלפים שלה יצאו (בכל צורה)"}, מהחדש לישן: מהגרלה ${R[0].d.n} עד ${last.d.n} (${dt(last.d)}). תבניות שנותנות אותם קלפים מופיעות יחד בשורה אחת. עיגול = הקלפים של התבנית בתוצאה.</p>
   <div class="fTbl hTbl"><table dir="ltr"><tr><th>הגרלה<br>ותאריך</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>תבניות</th></tr>${body}</table></div>`;}
-// ---- "הזוגות של איציק": Itzik's 11 pairs – how often the two cards came out one right next to the other (either order) ----
+// ---- "הזוגות של איציק": Itzik's 11 pairs – how often a pair that came out (both cards, any place) came out again in the very next draw ----
 const ITZ_PAIRS=[["A","7"],["10","A"],["7","10"],["8","10"],["9","K"],["8","K"],["A","Q"],["J","10"],["K","J"],["K","Q"],["A","8"]];
 var itzPairsN=1000;
-function itzPairsHtml(){const AA=allDraws(),W=AA.slice(0,itzPairsN),N=W.length;
-  const ADJ=[["S","H"],["H","D"],["D","C"]],at=(d,a,b,x,y)=>(d[x]===a&&d[y]===b)||(d[x]===b&&d[y]===a);
-  const R=ITZ_PAIRS.map(([a,b])=>{const c=ADJ.map(([x,y])=>W.filter(d=>at(d,a,b,x,y)).length);
-    const run=W.filter(d=>ADJ.some(([x,y])=>at(d,a,b,x,y))).length;
-    const any=W.filter(d=>{const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)return false;v.splice(i,1);return v.includes(b);}).length;
-    let ago=AA.findIndex(d=>ADJ.some(([x,y])=>at(d,a,b,x,y)));return {a,b,c,run,any,ago};});
-  // colour rank per column: 1 purple … 4 red
+function itzPairsHtml(){const AA=allDraws(),N=Math.min(itzPairsN,AA.length-1),W=AA.slice(0,N);
+  const has=(d,a,b)=>{const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)return false;v.splice(i,1);return v.includes(b);};
+  const R=ITZ_PAIRS.map(([a,b])=>{let app=0,rep=0;
+    // a draw AA[i+1] with the pair, followed right away by AA[i]
+    for(let i=0;i<N;i++){const prev=AA[i+1],cur=AA[i];if(!prev||prev.n!==cur.n-1)continue;if(has(prev,a,b)){app++;if(has(cur,a,b))rep++;}}
+    const any=W.filter(d=>has(d,a,b)).length,last=has(AA[0],a,b),ago=AA.findIndex(d=>has(d,a,b));
+    return {a,b,app,rep,pr:app?rep/app*100:0,base:any/N*100,last,ago};});
   const rank=vals=>{const lv=[...new Set(vals)].sort((x,y)=>y-x);return vals.map(v=>{const r=lv.indexOf(v)+1;return r<=4?"cr"+r:"";});};
-  const cols=[0,1,2].map(j=>rank(R.map(r=>r.c[j]))),cRun=rank(R.map(r=>r.run)),cAny=rank(R.map(r=>r.any));
-  const pc=n=>(n/N*100).toFixed(1)+"%";
-  const cell=(n,cls)=>`<td><span class="${cls}">${n}</span><small class="cdP">${pc(n)}</small></td>`;
-  const body=R.map((r,i)=>`<tr><td class="ipP"><bdi dir="ltr">${r.a} ${r.b}</bdi></td>${r.c.map((n,j)=>cell(n,cols[j][i])).join("")}${cell(r.run,cRun[i])}${cell(r.any,cAny[i])}<td class="ipAgo">${r.ago<0?"—":r.ago===0?"עכשיו":r.ago}</td></tr>`).join("");
-  return `<p class="tplNote">11 הזוגות של איציק: כמה פעמים שני הקלפים יצאו <b>אחד ליד השני</b> (באיזה סדר שהוא) ב־${N.toLocaleString("he-IL")} ההגרלות האחרונות (${W[N-1].n}–${W[0].n}). מתעדכן לבד בכל הגרלה.</p>
+  const cRep=rank(R.map(r=>r.rep)),cPr=rank(R.map(r=>+r.pr.toFixed(1))),cApp=rank(R.map(r=>r.app));
+  const body=R.map((r,i)=>`<tr class="${r.last?"ipNow":""}"><td class="ipP"><bdi dir="ltr">${r.a} ${r.b}</bdi>${r.last?`<small class="ipL">יצא עכשיו</small>`:""}</td>
+    <td><span class="${cApp[i]}">${r.app}</span><small class="cdP">${r.base.toFixed(1)}%</small></td>
+    <td><span class="${cRep[i]}">${r.rep}</span></td>
+    <td><span class="${cPr[i]}">${r.pr.toFixed(1)}%</span><small class="cdP">${r.pr>=r.base?"▲":"▼"} ${(r.pr-r.base>=0?"+":"")+(r.pr-r.base).toFixed(1)}</small></td>
+    <td class="ipAgo">${r.ago<0?"—":r.ago===0?"עכשיו":r.ago}</td></tr>`).join("");
+  return `<p class="tplNote">11 הזוגות של איציק: כמה פעמים זוג יצא בהגרלה (שני הקלפים, בכל מקום ובכל סדר) – וכמה מהפעמים האלה הוא יצא <b>שוב בהגרלה שמיד אחרי</b>. ${N.toLocaleString("he-IL")} ההגרלות האחרונות (${W[N-1].n}–${W[0].n}). מתעדכן לבד בכל הגרלה.</p>
   <div class="itzTabs cdTabs">${[100,500,1000,5000].map(n=>`<button type="button" class="cdN ipN${n===itzPairsN?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")}</button>`).join("")}</div>
-  <div class="crLeg"><b>בכל עמודה:</b> <span class="cr1">סגול</span> 1 · <span class="cr2">צהוב</span> 2 · <span class="cr3">ירוק</span> 3 · <span class="cr4">אדום</span> 4<br><small>"ברצף" = באחד משלושת המקומות הצמודים. "בהגרלה" = שני הקלפים יצאו, בכל מקום. "לפני" = לפני כמה הגרלות יצאו לאחרונה צמודים. בממוצע זוג של שני קלפים שונים יוצא צמוד במקום מסוים ב־3.1% מההגרלות, וברצף כלשהו בכ־9%.</small></div>
-  <div class="fTbl ipTbl"><table dir="ltr"><tr><th>זוג</th><th>עלה<br>לב</th><th>לב<br>יהלום</th><th>יהלום<br>תלתן</th><th>ברצף</th><th>בהגרלה</th><th>לפני</th></tr>${body}</table></div>`;}
+  <div class="crLeg"><b>בכל עמודה:</b> <span class="cr1">סגול</span> 1 · <span class="cr2">צהוב</span> 2 · <span class="cr3">ירוק</span> 3 · <span class="cr4">אדום</span> 4<br><small>"יצא" = בכמה הגרלות הזוג יצא (ומתחת – באיזה אחוז מההגרלות). "חזר מיד" = כמה מהן הזוג יצא גם בהגרלה הבאה. "% חזרה" = חזר מיד מתוך יצא; מתחת – כמה זה מעל (▲) או מתחת (▼) לאחוז הרגיל של הזוג. שורה מודגשת = הזוג יצא בהגרלה האחרונה.</small></div>
+  <div class="fTbl ipTbl"><table dir="ltr"><tr><th>זוג</th><th>יצא</th><th>חזר<br>מיד</th><th>%<br>חזרה</th><th>לפני</th></tr>${body}</table></div>`;}
 var itzTab="top",itzOpenRow=null,itzRunBox="";
 function renderItz(){
   const el=document.getElementById("itzPanel"),bt=document.getElementById("itzBtn");if(!el)return;
