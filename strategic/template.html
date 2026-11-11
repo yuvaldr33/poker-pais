@@ -269,7 +269,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .ipTbl td,.ipTbl th{padding:5px 2px}.ipTbl td.ipP{font-weight:800;white-space:nowrap}.ipTbl td.ipAgo{font-size:.85em}.ipL{display:block;font-size:.65em;color:var(--felt);font-weight:700}.ipTbl tr.ipNow td{background:var(--win)}
 .ovR{outline:2.5px dashed #f97316;outline-offset:2px;border-radius:999px}
 .ovH{margin:14px 0 4px;font-size:1.02rem}
-.rk{display:inline-block;width:.5em;height:.5em;border-radius:50%;margin-inline-start:2px;vertical-align:super;border:1.5px solid #fff;box-sizing:content-box}.crLeg .rk{vertical-align:middle;border-color:var(--line)}
+.rkd{display:inline-block;width:.5em;height:.5em;border-radius:50%;margin-inline-start:2px;vertical-align:super;border:1.5px solid #fff;box-sizing:content-box}.crLeg .rkd{vertical-align:middle;border-color:var(--line)}
 .itzG td,.itzG th{padding:4px 2px}.itzG .itzS small{font-size:.6rem;white-space:normal}.itzG td.g{max-width:76px;white-space:normal}.itzG .itzS svg{width:30px;height:30px}.fTbl td.fq{padding:4px 2px;font-size:.78em;white-space:normal;width:44px}.fTbl td.fi .fSp{white-space:normal}
 .rk1{background:#8b2fc9}.rk2{background:#f2c200}.rk3{background:#1f9a4a}.rk4{background:#d42c2c}
 .cc.fhit{border:2px solid var(--ink);border-radius:999px}
@@ -2352,14 +2352,14 @@ function crN1000(v,k,skip){const AA=allDraws(),A=skip?AA.slice(skip):AA;const ke
 // a small dot = the template-strength rank (1 purple … 4 red), circle = came out in that place, dashed orange ring = the completing card
 function cardTd(v,k,skip,o){o=o||{};const red=SUITS.find(x=>x[0]===k)[3];if(!v)return `<td class="fe">—</td>`;
   const m=c1kMap(skip),n=m[k+v]||0,N=m._N||1000,rk=o.rank?o.rank.replace("cr","rk"):"";
-  return `<td class="${red?"r":""}"><small class="crC hSt">${n}<br>${(n/N*100).toFixed(1)}%</small><span class="cc${o.hit?" fhit":""}${o.ring?" ovR":""}" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}${rk?`<i class="rk ${rk}"></i>`:""}</span></td>`;}
+  return `<td class="${red?"r":""}"><small class="crC hSt">${n}<br>${(n/N*100).toFixed(1)}%</small><span class="cc${o.hit?" fhit":""}${o.ring?" ovR":""}" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}${rk?`<i class="rkd ${rk}"></i>`:""}</span></td>`;}
 function c1kMap(skip){const AA=allDraws(),A=skip?AA.slice(skip):AA;const key=A[0].n;let m=_c1k.get(key);
   if(!m){m={_N:Math.min(1000,A.length)};for(const t of A.slice(0,1000))for(const s of SK){const x=s+t[s];m[x]=(m[x]||0)+1;}if(_c1k.size>400)_c1k.clear();_c1k.set(key,m);}return m;}
 function crNum(num,b,t,k,skip){return crCls(num,b,t,k,skip)?crN1000(t[k],k,skip):"";}
 function crCls(num,b,t,k,skip){const v=t[k];if(!v)return "";const R=cellRank(num,b,skip);const r=R&&R.rk[k][v];return r&&r<=4?"cr"+r:"";}
 const CARD_COL={"7":"#dc2626","8":"#ea580c","9":"#eab308","10":"#16a34a","J":"#0d9488","Q":"#2563eb","K":"#7c3aed","A":"#92400e"};
 const CARD_INK={"9":"#1a1a1a"};
-const CR_LEGEND=`<div class="crLeg"><b>צבע הקלף:</b> ${["7","8","9","10","J","Q","K","A"].map(v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`).join(" ")}<br><small>מעל כל קלף: כמה פעמים הוא יצא בצורה הזו ב־1,000 ההגרלות האחרונות, ובאיזה אחוז (ממוצע ~125 · 12.5%). מתעדכן בכל הגרלה.</small><b>הנקודה על הקלף = חוזק במקום שלו בתבנית:</b> <i class="rk rk1"></i> 1 · <i class="rk rk2"></i> 2 · <i class="rk rk3"></i> 3 · <i class="rk rk4"></i> 4 · בלי נקודה = 5 ומטה. עיגול = יצא במקום הזה.<small>חוזק: בכל הפעמים שהתבנית פגעה ב־5,000 ההגרלות האחרונות, כמה פעמים כל קלף יצא בכל צורה. ההבדלים קטנים, וזה לא משנה את הסיכוי של ההגרלה הבאה.</small></div>`;
+const CR_LEGEND=`<div class="crLeg"><b>צבע הקלף:</b> ${["7","8","9","10","J","Q","K","A"].map(v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`).join(" ")}<br><small>מעל כל קלף: כמה פעמים הוא יצא בצורה הזו ב־1,000 ההגרלות האחרונות, ובאיזה אחוז (ממוצע ~125 · 12.5%). מתעדכן בכל הגרלה.</small><b>הנקודה על הקלף = חוזק במקום שלו בתבנית:</b> <i class="rkd rk1"></i> 1 · <i class="rkd rk2"></i> 2 · <i class="rkd rk3"></i> 3 · <i class="rkd rk4"></i> 4 · בלי נקודה = 5 ומטה. עיגול = יצא במקום הזה.<small>חוזק: בכל הפעמים שהתבנית פגעה ב־5,000 ההגרלות האחרונות, כמה פעמים כל קלף יצא בכל צורה. ההבדלים קטנים, וזה לא משנה את הסיכוי של ההגרלה הבאה.</small></div>`;
 function runTop(tks){const sn=k=>SUITS.find(x=>x[0]===k),TOP={};let box="";
   for(const run of ["SHD","HDC","SHC","SDC"]){const os=tks.filter(t=>runOf(t)===run);if(!os.length)continue;TOP[run]={};const parts=[];
     for(const k of run){const c=new Map();os.forEach(t=>c.set(t[k],(c.get(t[k])||0)+1));const mx=Math.max(...c.values());const w=[...c.keys()].filter(x=>c.get(x)===mx);TOP[run][k]=w;
