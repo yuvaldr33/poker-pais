@@ -282,6 +282,8 @@ table.pairs td.nn{font-family:var(--mono)}
 .cc{display:inline-block;min-width:1.6em;padding:1px 4px;border-radius:6px;font-weight:800}
 .ccTbl td{padding:5px 3px}.hSt{font-size:.58em;line-height:1.15}.hTbl .cc{min-width:1.4em;padding:1px 3px}.hOff{opacity:.45}
 .ipTbl td,.ipTbl th{padding:5px 2px}.ipTbl td.ipP{font-weight:800;white-space:nowrap}.ipTbl td.ipAgo{font-size:.85em}.ipL{display:block;font-size:.65em;color:var(--felt);font-weight:700}.ipTbl tr.ipNow td{background:var(--win)}
+.ovR{outline:2.5px dashed #f97316;outline-offset:2px;border-radius:999px}
+.ovH{margin:14px 0 4px;font-size:1.02rem}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -1310,7 +1312,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="13d3fc8add";
+const BUILD="a3d8cc9aa9";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2444,11 +2446,11 @@ const FITZ=[["top","5 החזקות"],["every","כל התבניות"],["stat","ס
 // A Chance 2 ticket + one card of a Chance 3 ticket on a free suit, or 2 cards of a Chance 3 ticket + one card of a Chance 2 ticket – the cards keep their suits.
 // Ranked by how many overlays give the same ticket; the 30 strongest are shown.
 function overTix(skip){const C3=itzTickets(itzCalc(skip)).slice(0,15),C2=formTickets(skip,"pairs").slice(0,15),M=new Map();
-  const add=(t,x,i,j)=>{const k=SK.map(q=>t[q]||"-").join("");if(!M.has(k))M.set(k,{t,n:0,v:x.v,c3:new Set(),c2:new Set()});const m=M.get(k);m.n++;m.c3.add(i+1);m.c2.add(j+1);};
+  const add=(t,x,i,j,ring)=>{const k=SK.map(q=>t[q]||"-").join("");if(!M.has(k))M.set(k,{t,n:0,v:x.v,c3:new Set(),c2:new Set(),ring:new Map()});const m=M.get(k);m.n++;m.c3.add(i+1);m.c2.add(j+1);m.ring.set(ring,(m.ring.get(ring)||0)+1);};
   C3.forEach((x,i)=>{const a=x.t,as=SK.filter(k=>a[k]);C2.forEach((y,j)=>{const c=y.t,cs=SK.filter(k=>c[k]);if(cs.length!==2)return;
-    for(const k of as)if(!cs.includes(k))add({[cs[0]]:c[cs[0]],[cs[1]]:c[cs[1]],[k]:a[k]},x,i,j);
-    for(let p=0;p<as.length;p++)for(let q=p+1;q<as.length;q++){const ka=as[p],kb=as[q];for(const kc of cs)if(kc!==ka&&kc!==kb)add({[ka]:a[ka],[kb]:a[kb],[kc]:c[kc]},x,i,j);}});});
-  return [...M.values()].sort((x,y)=>y.n-x.n).slice(0,30).map(m=>({t:m.t,num:m.v.rep.num,b:m.v.rep.b,p:m.v.rep.p,label:`×${m.n}<br>${m.c3.size} טפסי צ'אנס 3<br>${m.c2.size} טפסי צ'אנס 2`}));}
+    for(const k of as)if(!cs.includes(k))add({[cs[0]]:c[cs[0]],[cs[1]]:c[cs[1]],[k]:a[k]},x,i,j,k);
+    for(let p=0;p<as.length;p++)for(let q=p+1;q<as.length;q++){const ka=as[p],kb=as[q];for(const kc of cs)if(kc!==ka&&kc!==kb)add({[ka]:a[ka],[kb]:a[kb],[kc]:c[kc]},x,i,j,kc);}});});
+  const out=[...M.values()].sort((x,y)=>y.n-x.n).slice(0,30).map(m=>({t:m.t,ring:[[...m.ring.entries()].sort((x,y)=>y[1]-x[1])[0][0]],num:m.v.rep.num,b:m.v.rep.b,p:m.v.rep.p,label:`×${m.n}<br>${m.c3.size} טפסי צ'אנס 3<br>${m.c2.size} טפסי צ'אנס 2`}));out.C3=C3;out.C2=C2;return out;}
 // "זוגות בתוך תבניות": table on table – every pair ticket of the "זוגות" method (2 cards on their suits) laid on every template triple that contains both cards;
 // the template's third card completes it, on each of the 2 free suits. Ranked by how many template options give the same ticket.
 function mixTix(skip){const P=formTickets(skip,"pairs").map(x=>x.t),rows=allTplRows(skip,null),M=new Map();
@@ -2475,18 +2477,25 @@ function formItzSub(it,sub){
   const items=[];
   if(sub==="stat"){statTix(it.skip).forEach(x=>items.push(x));}
   else if(sub==="mix"){mixTix(it.skip).forEach(x=>items.push(x));}
-  else if(sub==="over"){overTix(it.skip).forEach(x=>items.push(x));}
+  else if(sub==="over"){const O=overTix(it.skip);O.forEach(x=>items.push(x));items.C3=O.C3;items.C2=O.C2;}
   else if(sub==="top"){const R=itzCalc(it.skip);itzTickets(R).forEach((x,i)=>{const v=x.v;items.push({label:`${i+1}. ${R.top5.includes(v)?"★":""}תבנית ${v.rep.num} · מ${v.start}${x.sec?" (סידור נוסף)":""}`,t:x.t,num:v.rep.num,b:v.rep.b,p:v.rep.p});});}
   else{const S=itzSept();allTplRows(it.skip,null).forEach(r=>{const st=S.by[r.num];if(!st)return;const o=r.opts[st.b];const t={};o.cards.forEach((c,j)=>{t[st.land[j]]=c;});items.push({label:`תבנית ${r.num} · מ${o.start}`,t,num:r.num,b:st.b,p:r.p});});}
   let nh=0,nw=0;
   const head=`<tr><th>טופס</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>פגעה</th>":""}</tr>`;
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
   const body=items.map(x=>{const cards=SK.filter(k=>x.t[k]).map(k=>x.t[k]);const hit=!!d&&has(d,cards),win=!!d&&SK.every(k=>!x.t[k]||d[k]===x.t[k]);if(hit)nh++;if(win)nw++;
-    return `<tr class="${win?"fWin":""}"><td class="fi ${itzTierCls(x.num)}">${itzSvg(x.p)}<small class="fSp">${x.label}</small></td>${SK.map(k=>{const v=x.t[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=crCls(x.num,x.b,x.t,k,it.skip);return `<td class="${red?"r":""}">${tp?crN1000(v,k,it.skip):""}<span class="${ok?"fhit":""}${tp?" "+tp:""}">${v}</span></td>`;}).join("")}${d?`<td class="fm">${hit?"✓":""}</td>`:""}</tr>`;}).join("");
+    return `<tr class="${win?"fWin":""}"><td class="fi ${itzTierCls(x.num)}">${itzSvg(x.p)}<small class="fSp">${x.label}</small></td>${SK.map(k=>{const v=x.t[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;const ok=d&&d[k]===v,tp=crCls(x.num,x.b,x.t,k,it.skip),rg=x.ring&&x.ring.includes(k);return `<td class="${red?"r":""}">${tp?crN1000(v,k,it.skip):""}<span class="${ok?"fhit":""}${tp?" "+tp:""}${rg?" ovR":""}">${v}</span></td>`;}).join("")}${d?`<td class="fm">${hit?"✓":""}</td>`:""}</tr>`;}).join("");
   const AA=allDraws(),A=it.skip?AA.slice(it.skip):AA;
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} טפסים פגעו ✓ (כל הקלפים יצאו)</b>`:"אף טופס לא פגע בהגרלה הזו."}${nw?` · <b class="fOk">${nw} תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
   <p class="tplNote">${sub==="over"?`שבלונה על שבלונה: 15 טפסי צ'אנס 3 הכי חזקים (5 החזקות) מונחים על 15 טפסי צ'אנס 2 הכי חזקים (זוגות), מקום על מקום – זוג מצ'אנס 2 + קלף אחד מצ'אנס 3 במקום פנוי, או 2 קלפים מצ'אנס 3 + קלף אחד מצ'אנס 2. כל קלף נשאר בצורה שלו. ×N = כמה הנחות נותנות את אותו טופס; מוצגים 30 החזקים. מתחת: מכמה טפסים בכל טבלה הוא נבנה.`:sub==="mix"?`זוגות בתוך תבניות: כל טופס של "זוגות" (2 קלפים בצורות שלהם) מונח על כל תבנית שיש בה את שני הקלפים, והקלף השלישי של התבנית משלים לשלישייה – בכל אחת משתי הצורות שנשארו. ×N = כמה אפשרויות של תבניות נותנות את אותו טופס; המסודר מהחזק לחלש. ${items.length} טפסים.`:sub==="stat"?`סטטיסטיקת שבלונות: שלישיות קלפים שלפחות 2 תבניות נותנות. כל טופס שלהן מופיע פעם אחת בלבד, ועוד אותו סדר בהזזה של צורה אחת (מעלה-לב-יהלום ללב-יהלום-תלתן או להפך) – כדי לתפוס גם אם הקלפים זזו מקום. ${items.length} טפסים.`:sub==="top"?`15 הטפסים ש"5 החזקות" הציעה להגרלה הזו (★ = אחת מ־5 הנבחרות).`:`18 הטפסים של "ספטמבר": לכל תבנית נקודת ההתחלה שפגעה הכי הרבה בספטמבר, בצורה שבה נחתה שם.`} ✓ = כל הקלפים של הטופס יצאו (בכל צורה). שורה ירוקה = כל הקלפים יצאו בדיוק בצורות של הטופס.</p>
+  ${sub==="over"?ovSrcHtml(items,d,head.replace("<th>טופס</th>","<th>#</th>"),res):""}
+  ${sub==="over"?`<h3 class="ovH">טבלה 3 · שבלונה על שבלונה</h3><p class="tplNote">הקלף בעיגול כתום מקווקו = הקלף המשלים – זה שהגיע מהשקף השני.</p>`:""}
   ${CR_LEGEND}<div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;}
+// tables 1 and 2 of "שבלונה על שבלונה": the two transparencies
+function ovSrcHtml(items,d,head,res){const sn=k=>SUITS.find(x=>x[0]===k);
+  const tb=(L,title)=>`<h3 class="ovH">${title}</h3><div class="fTbl"><table dir="ltr">${head}${res}${L.map((x,i)=>{const t=x.t,win=!!d&&SK.every(k=>!t[k]||d[k]===t[k]);
+    return `<tr class="${win?"fWin":""}"><td class="fl">${i+1}</td>${SK.map(k=>{const v=t[k],red=sn(k)[3];if(!v)return `<td class="fe">—</td>`;return `<td class="${red?"r":""}"><span class="${d&&d[k]===v?"fhit":""}">${v}</span></td>`;}).join("")}${d?`<td class="fm">${win?"✓":""}</td>`:""}</tr>`;}).join("")}</table></div>`;
+  return tb(items.C3||[],"טבלה 1 · 15 טפסי צ'אנס 3 הכי חזקים (5 החזקות)")+tb(items.C2||[],"טבלה 2 · 15 טפסי צ'אנס 2 הכי חזקים (זוגות)");}
 function formTickets(skip,m){
   const _AA=allDraws(),key=_AA[skip]?_AA[skip].n+"|"+m:m;if(_fmCache.has(key))return _fmCache.get(key);
   const base=_AA.slice(skip),out=[];const T=(cards,label)=>{if(!cards)return;const t={};for(const [k,r] of cards)t[k]=r;out.push({t,label});};
