@@ -124,7 +124,9 @@ def main():
     hist = os.path.join(SRC, "history.txt")
     if os.path.exists(hist):
         open(os.path.join(OUT, "history.txt"), "w", encoding="utf-8").write(open(hist, encoding="utf-8").read())
-    for f in ("manifest.webmanifest", "icon.svg"):
+    for f in ("manifest.webmanifest", "icon.svg", "hdates.txt"):
+        if not os.path.exists(os.path.join(SRC, f)):
+            continue
         open(os.path.join(OUT, f), "w", encoding="utf-8").write(open(os.path.join(SRC, f), encoding="utf-8").read())
     print(f"צ'אנס אסטרטגי: הגרלה אחרונה {rows[0]['n']} ({rows[0]['date']} {rows[0]['time']}), {len(rows)} הגרלות")
 
