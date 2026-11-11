@@ -275,6 +275,10 @@ table.pairs td.nn{font-family:var(--mono)}
 .fG2{border-style:dashed}
 .hTbl{overflow-x:auto;max-width:100%}.hTbl table{font-size:.88em}.hTbl td,.hTbl th{padding:5px 2px}.hTbl td.hDt{font-size:.8em;white-space:nowrap}.hTbl td.hTp{font-size:.75em;line-height:1.35;min-width:3.5em;max-width:5.5em}.hI{display:block;font-size:.7em;opacity:.6}
 .fBig{display:flex;flex-direction:column;align-items:center;gap:2px;width:100%;margin:10px 0;padding:14px 10px;border:2px solid var(--felt);border-radius:14px;background:var(--surface);color:var(--felt);font:inherit;font-size:1.2rem;font-weight:800;cursor:pointer}.fBig small{font-size:.72rem;font-weight:500;opacity:.8}.fBig.on{background:var(--felt);color:var(--felt-ink)}
+.itzPic{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px 12px;margin:10px 0;padding:12px;background:#fff;border:1px solid var(--line);border-radius:12px;color:#000}
+.itzPic figure{margin:0;text-align:center;min-width:0}.itzPic figcaption{font-weight:800;font-size:1.25rem;margin-bottom:4px}.itzPic svg{display:block;max-width:100%;height:auto;aspect-ratio:1}
+.itzPic svg .gl{stroke:#1e293b}.itzPic svg .bx{fill:#fff}
+.itzPicLeg{text-align:center}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -1303,7 +1307,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="daa2ab2a01";
+const BUILD="587c78f023";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2196,7 +2200,7 @@ function renderItz(){
   bt.textContent="התבניות של איציק"+(itzOpen?" ▴":" ▾");bt.classList.toggle("on",itzOpen);bt.setAttribute("aria-pressed",itzOpen);el.hidden=!itzOpen;if(!itzOpen)return;
   if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(itzOpen)renderItz();});return;}
   const R=itzCalc();const nx=R.last.n+1;
-  const tabs=[["top","5 החזקות"],["every","כל התבניות"],["free","עם רווחים"],["sep","ספטמבר"],["track","מעקב"],["all","דירוג"],["cards","הקלפים שחזרו"]];
+  const tabs=[["top","5 החזקות"],["every","כל התבניות"],["free","עם רווחים"],["sep","ספטמבר"],["pic","תמונה"],["track","מעקב"],["all","דירוג"],["cards","הקלפים שחזרו"]];
   let body="";
   if(itzTab==="top"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>, לפי ההגרלות ${R.last.n} (שורה עליונה בשבלונה) ו־${R.prev.n} (שורה תחתונה). אחרי כל הגרלה המערכת בודקת מחדש את כל 12 השיטות: כמה כל אחת חזקה בכלל, וכמה היא פגעה בעבר עם הקלפים המדויקים שהיא מביאה עכשיו. 5 המתאימות ביותר להגרלה הזו נכנסות לכאן, גם אם בדירוג הכללי הן במקום 7 או 8. כל שורה היא טופס צ'אנס 3: הקלפים במקומות שבהם השבלונה נחתה הכי הרבה ב־5,000 ההגרלות האחרונות.</p>
@@ -2214,6 +2218,10 @@ function renderItz(){
     <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr class="itzRow ${itzTierCls(r.num)}" data-num="${r.num}"><td class="n">${k+1}</td><td class="b">${r.star?"★ ":""}${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> ${v.star?"★ ":""}<b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>${itzOpenRow===r.num?`<tr><td colspan="5">${itzExample(r.num,r.p,r.vs[0].b,R.V.get(r.vs[0].key),R,`תבנית ${r.num} · מתחילה מ${r.vs[0].s} (המקום הכי חזק)`)}</td></tr>`:""}`).join("")}</table></div><p class="tplNote">לחץ על שורה כדי לראות איך התבנית נבנית על שתי ההגרלות האחרונות.</p>`;
   }else if(itzTab==="every"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>: כל 18 התבניות, עם 3 האפשרויות של כל אחת – 54 טפסים, לפי סדר התבניות. אחרי ההגרלה אפשר לראות איך כל אחד יצא ב"בדיקת טפסים".</p>${formItz({skip:0,d:null})}`;
+  }else if(itzTab==="pic"){
+    body=`<p class="tplNote">דף השבלונות – 18 התבניות של איציק, במספור של האתר.</p>
+    <div class="itzPic">${[...ITZ].sort((x,y)=>x[0]-y[0]).map(([num,p])=>`<figure><figcaption>${num}</figcaption>${itzSvg(p).replace('width="40" height="40"','width="100%"')}</figure>`).join("")}</div>
+    <p class="tplNote itzPicLeg">שורה עליונה = ההגרלה האחרונה · שורה תחתונה = ההגרלה שלפניה · נקודה = התחלה · החצים = הסדר של הקלפים</p>`;
   }else if(itzTab==="free"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>: אותם 54 טפסים כמו ב"כל התבניות", אבל כל טופס מונח בצורה שבה שלושת הקלפים נחתו הכי הרבה ב־5,000 ההגרלות האחרונות – גם אם יש רווח (קלף חסר) באמצע. ההבדלים בין הצורות קטנים וקרובים למזל.</p>${formItz({skip:0,d:null,free:true})}`;
   }else if(itzTab==="sep"){
