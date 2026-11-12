@@ -278,6 +278,12 @@ table.pairs td.nn{font-family:var(--mono)}
 .fTbl td.fl{white-space:normal;font-size:.72em;line-height:1.3;max-width:6em}
 .wTbl td.wNo{font-weight:800;font-size:.85em;color:var(--muted)}
 .wTp{display:block;font-size:.72em;white-space:normal;line-height:1.25;margin-bottom:2px}
+.mySel{font:inherit;font-size:1rem;padding:4px 2px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);width:100%;min-width:0}
+.myTbl td{padding:4px 3px}.myDel{border:0;background:none;color:var(--muted);font-size:1rem;cursor:pointer}
+.myBtns{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.myBtns .fBig{flex:1;margin:0}
+.myRes{margin:12px 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.myN{margin:6px 0;padding-inline-start:18px;line-height:1.6;font-size:.92em}.myCm{margin-top:8px;font-size:.92em}
+.myV.ok{color:var(--felt)}.myV.mid{color:#b8860b}.myV.bad{color:#d42c2c}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -605,6 +611,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 <nav class="navMenu" id="navMenu" hidden aria-label="קיצורי דרך"></nav>
 <div id="formsPage" class="fPage" hidden></div>
 <div id="cardsPage" class="fPage" hidden></div>
+<div id="myPage" class="fPage" hidden></div>
 <button class="chFab" id="chFab" type="button" aria-label="פתח צ'אט"><span class="dot"></span>שאל את העוזר</button>
 <div class="chBox" id="chBox" dir="rtl" hidden role="dialog" aria-label="העוזר של צ'אנס">
   <div class="chHead"><div><b>העוזר של צ'אנס</b><small>עונה לפי הניתוח החי של האתר</small></div><button type="button" id="chClose" aria-label="סגור">✕</button></div>
@@ -2667,6 +2674,71 @@ document.getElementById("cardsPage").addEventListener("click",e=>{if(e.target.cl
   const b=e.target.closest(".cdN");if(b){cardsN=+b.dataset.n;renderCards();}});
 window.addEventListener("hashchange",()=>openCards(location.hash==="#cards"));
 if(location.hash==="#cards")openCards(true);
+// ---- "סטטיסטיקה אישית": the user's own forms; the site completes them to Chance 3 / Chance 4 and comments on every choice ----
+const MY_VALS=["7","8","9","10","J","Q","K","A"];
+var myRows=[],myMode=null;try{const v=JSON.parse(localStorage.getItem("chance-mystats")||"null");if(Array.isArray(v))myRows=v;}catch(e){}
+if(!myRows.length)myRows=[{},{},{}];
+function mySave(){try{localStorage.setItem("chance-mystats",JSON.stringify(myRows));}catch(e){}}
+// statistics of the last month: how often each card came out in each suit, and which cards came out together
+function myStatsCalc(){const AA=allDraws(),d0=new Date(AA[0].date||"2026-01-01");let W=AA.filter(d=>d.date&&(d0-new Date(d.date))/864e5<30);if(W.length<100)W=AA.slice(0,200);
+  const N=W.length,freq={};SK.forEach(k=>{freq[k]={};MY_VALS.forEach(v=>freq[k][v]=0);});W.forEach(d=>SK.forEach(k=>{if(freq[k][d[k]]!=null)freq[k][d[k]]++;}));
+  const has2=(d,a,b)=>{const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)return false;v.splice(i,1);return v.includes(b);};
+  const co={};MY_VALS.forEach(a=>{co[a]={};MY_VALS.forEach(b=>{co[a][b]=W.filter(d=>has2(d,a,b)).length;});});
+  const avg={};MY_VALS.forEach(a=>{avg[a]=MY_VALS.reduce((x,b)=>x+co[a][b],0)/MY_VALS.length;});
+  return {N,from:W[N-1],to:W[0],freq,co,avg,exp:N/8};}
+function myScore(S,k,c,cards){const f=S.freq[k][c]/S.exp,l=cards.length?cards.reduce((a,x)=>a+S.co[x][c]/(S.avg[x]||1),0)/cards.length:1;
+  return {sc:f+l,f:S.freq[k][c],loves:cards.filter(x=>S.co[x][c]>S.avg[x])};}
+function myBest(S,t,slots){const cards=SK.filter(k=>t[k]).map(k=>t[k]);let best=null;
+  for(const k of slots)for(const c of MY_VALS){const r=myScore(S,k,c,cards);if(!best||r.sc>best.sc)best=Object.assign({k,c},r);}return best;}
+function myComplete(S,row,target){const t={};SK.forEach(k=>{if(row[k])t[k]=row[k];});const added=[];
+  while(SK.filter(k=>t[k]).length<target){const b=myBest(S,t,SK.filter(k=>!t[k]));if(!b)break;t[b.k]=b.c;added.push(b);}return {t,added};}
+function myComment(S,row){const ks=SK.filter(k=>row[k]);if(ks.length<2)return `<p class="tplNote">בחר לפחות 2 קלפים בשורה הזו.</p>`;
+  const sn=k=>SUITS.find(x=>x[0]===k)[2],notes=[];let good=0,bad=0;
+  ks.forEach(k=>{const v=row[k],f=S.freq[k][v],r=f/S.exp;const others=ks.filter(x=>x!==k).map(x=>row[x]),lov=others.filter(x=>S.co[x][v]>S.avg[x]);
+    if(r>=1.1){good++;notes.push(`✓ <b><bdi>${v}</bdi> ב${sn(k)}</b> יצא שם ${f} פעמים בחודש – מעל הממוצע (${S.exp.toFixed(0)}).`);}
+    else if(r<=0.9){bad++;notes.push(`✗ <b><bdi>${v}</bdi> ב${sn(k)}</b> יצא שם רק ${f} פעמים – מתחת לממוצע (${S.exp.toFixed(0)}).`);}
+    else notes.push(`<b><bdi>${v}</bdi> ב${sn(k)}</b> – ${f} פעמים, בערך הממוצע.`);
+    if(others.length){if(lov.length===others.length){good++;notes.push(`✓ <bdi>${v}</bdi> אוהב את <bdi>${others.join(", ")}</bdi> – יצאו יחד יותר מהרגיל.`);}else if(!lov.length){bad++;notes.push(`✗ <bdi>${v}</bdi> לא אוהב את <bdi>${others.join(", ")}</bdi> – יצאו יחד פחות מהרגיל.`);}}});
+  // the weakest card and a better card for the same place
+  let weak=null;ks.forEach(k=>{const others=ks.filter(x=>x!==k).map(x=>row[x]);const r=myScore(S,k,row[k],others);if(!weak||r.sc<weak.sc)weak={k,sc:r.sc,others};});
+  const alt=MY_VALS.filter(c=>c!==row[weak.k]).map(c=>Object.assign({c},myScore(S,weak.k,c,weak.others))).sort((a,b)=>b.sc-a.sc)[0];
+  let verdict;
+  if(good>=bad+2)verdict=`<b class="myV ok">אהבתי מאוד את הבחירה 👍</b>`;
+  else if(good>=bad)verdict=`<b class="myV mid">הכיוון נכון, אפשר לדייק:</b> במקום <b><bdi>${row[weak.k]}</bdi> ב${sn(weak.k)}</b> אולי <b><bdi>${alt.c}</bdi></b> – יצא שם ${alt.f} פעמים${alt.loves.length?` ואוהב את <bdi>${alt.loves.join(", ")}</bdi>`:""}.`;
+  else verdict=`<b class="myV bad">אולי כדאי לשנות.</b> החלש בטופס: <b><bdi>${row[weak.k]}</bdi> ב${sn(weak.k)}</b> – אפשר לנסות <b><bdi>${alt.c}</bdi></b> (יצא שם ${alt.f} פעמים${alt.loves.length?`, אוהב את <bdi>${alt.loves.join(", ")}</bdi>`:""}).`;
+  return `<ul class="myN">${notes.map(n=>`<li>${n}</li>`).join("")}</ul><p>${verdict}</p>`;}
+function myHtml(){const S=myStatsCalc(),sn=k=>SUITS.find(x=>x[0]===k);
+  const head=`<tr><th>#</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th></th></tr>`;
+  const sel=(i,k)=>`<select class="mySel" data-i="${i}" data-k="${k}"><option value="">—</option>${MY_VALS.map(v=>`<option${myRows[i][k]===v?" selected":""}>${v}</option>`).join("")}</select>`;
+  const form=myRows.map((r,i)=>`<tr><td class="fl">${i+1}</td>${SK.map(k=>`<td>${sel(i,k)}</td>`).join("")}<td><button type="button" class="myDel" data-i="${i}" aria-label="מחק שורה">✕</button></td></tr>`).join("");
+  let res="";
+  if(myMode){const target=myMode==="c3"?3:4;
+    res=myRows.map((r,i)=>{const n=SK.filter(k=>r[k]).length;if(n<2)return "";
+      const C=n>=target?{t:Object.fromEntries(SK.filter(k=>r[k]).map(k=>[k,r[k]])),added:[]}:myComplete(S,r,target);
+      const ring=C.added.map(a=>a.k);
+      const why=C.added.map(a=>`<li>השלמה: <b><bdi>${a.c}</bdi> ב${sn(a.k)[2]}</b> – יצא שם ${a.f} פעמים בחודש (${(a.f/S.N*100).toFixed(1)}%)${a.loves.length?`, אוהב את <bdi>${a.loves.join(", ")}</bdi>`:""}.</li>`).join("");
+      return `<div class="myRes"><h3 class="ovH">טופס ${i+1}${n>target?` – כבר יש בו ${n} קלפים`:""}</h3>
+        <div class="fTbl"><table dir="ltr">${head.replace("<th></th>","")}<tr><td class="fl">${i+1}</td>${SK.map(k=>C.t[k]?cardTd(C.t[k],k,0,{ring:ring.includes(k)}):`<td class="fe">—</td>`).join("")}</tr></table></div>
+        ${why?`<ul class="myN">${why}</ul>`:""}<div class="myCm"><b>הערות על הבחירה שלך:</b>${myComment(S,r)}</div></div>`;}).join("")||`<p class="tplNote">מלא לפחות 2 קלפים בשורה.</p>`;}
+  return `<div class="fHead"><button type="button" class="fBack" id="myClose" aria-label="חזרה לאתר">→ חזרה</button><h2>סטטיסטיקה אישית</h2></div>
+  <p class="tplNote">שבץ קלפים משלך – 2 או 3 בכל שורה – ולחץ על צ'אנס 3 או צ'אנס 4. האתר משלים את המקומות הריקים בקלף שהכי מתאים: שיצא הרבה במקום הזה בחודש האחרון (${S.N} הגרלות, ${S.from.n}–${S.to.n}) וש"אוהב" את הקלפים שבחרת (יצא איתם יותר מהרגיל). הקלף שהושלם מוקף בעיגול כתום. לכל טופס – הערות למה זה יכול לעבוד או לא. הבחירות נשמרות אצלך בטלפון.</p>
+  <div class="fTbl myTbl"><table dir="ltr">${head}${form}</table></div>
+  <div class="myBtns"><button type="button" class="cdN" id="myAdd">+ שורה</button><button type="button" class="cdN" id="myClear">נקה הכול</button></div>
+  <div class="myBtns"><button type="button" class="fBig myGo${myMode==="c3"?" on":""}" data-m="c3">צ'אנס 3<small>השלמה ל־3 קלפים</small></button><button type="button" class="fBig myGo${myMode==="c4"?" on":""}" data-m="c4">צ'אנס 4<small>השלמה ל־4 קלפים</small></button></div>
+  ${res}<p class="tplNote">שים לב: "יצא הרבה" ו"אוהב" מתארים את העבר. כל הגרלה עצמאית, וההשלמה לא משנה את הסיכוי לזכות (צ'אנס 3: 1 ל־512 לטופס).</p>`;}
+function renderMy(){const el=document.getElementById("myPage");if(!el||el.hidden)return;
+  if(!HIST&&false){}el.innerHTML=`<div class="fWrap">${myHtml()}</div>`;}
+function openMy(on){const el=document.getElementById("myPage");el.hidden=!on;fOpenSync();
+  if(on){renderMy();el.scrollTop=0;try{if(location.hash!=="#mystats")history.pushState(null,"","#mystats");}catch(e){}}
+  else{try{if(location.hash==="#mystats")history.pushState(null,"",location.pathname+location.search);}catch(e){}}}
+document.getElementById("myPage").addEventListener("click",e=>{if(e.target.closest("#myClose")){openMy(false);return;}
+  if(e.target.closest("#myAdd")){myRows.push({});mySave();renderMy();return;}
+  if(e.target.closest("#myClear")){myRows=[{},{},{}];myMode=null;mySave();renderMy();return;}
+  const d=e.target.closest(".myDel");if(d){myRows.splice(+d.dataset.i,1);if(!myRows.length)myRows.push({});mySave();renderMy();return;}
+  const g=e.target.closest(".myGo");if(g){myMode=g.dataset.m;renderMy();const x=document.querySelector(".myRes");if(x)x.scrollIntoView({behavior:"smooth",block:"start"});}});
+document.getElementById("myPage").addEventListener("change",e=>{const sl=e.target.closest(".mySel");if(!sl)return;const r=myRows[+sl.dataset.i];if(sl.value)r[sl.dataset.k]=sl.value;else delete r[sl.dataset.k];mySave();if(myMode)renderMy();});
+window.addEventListener("hashchange",()=>openMy(location.hash==="#mystats"));
+if(location.hash==="#mystats")openMy(true);
 // ---- section menu (⋮) ----
 (function(){
   const secs=[...document.querySelectorAll("section")];
@@ -2674,6 +2746,7 @@ if(location.hash==="#cards")openCards(true);
   const items=[
     ["📋 בדיקת טפסים",()=>{openForms(true);return null;}],
     ["🃏 טבלת קלפים",()=>{openCards(true);return null;}],
+    ["📊 סטטיסטיקה אישית",()=>{openMy(true);return null;}],
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
     ["התבניות של איציק",()=>{if(!itzOpen){itzOpen=true;renderItz();}return document.getElementById("itzBtn");}],
