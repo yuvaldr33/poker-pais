@@ -270,7 +270,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .ovR{outline:2.5px dashed #f97316;outline-offset:2px;border-radius:999px}
 .ovH{margin:14px 0 4px;font-size:1.02rem}
 .rkd{display:inline-block;width:.5em;height:.5em;border-radius:50%;margin-inline-start:2px;vertical-align:super;border:1.5px solid #fff;box-sizing:content-box}.crLeg .rkd{vertical-align:middle;border-color:var(--line)}
-.itzG td,.itzG th{padding:4px 2px}.itzG .itzS small{font-size:.6rem;white-space:normal}.itzG td.g{max-width:76px;white-space:normal}.itzG .itzS svg{width:30px;height:30px}.fTbl td.fq{padding:4px 2px;font-size:.78em;white-space:normal;width:44px}.fTbl td.fi .fSp{white-space:normal}
+.itzG td,.itzG th{padding:4px 2px}.itzG .itzS small{font-size:.6rem;white-space:normal}.itzG td.g{max-width:60px;white-space:normal}.itzG .itzS svg{width:24px;height:24px}.fTbl td.fq{padding:4px 2px;font-size:.78em;white-space:normal;width:44px}.fTbl td.fi .fSp{white-space:normal}
 .rk1{background:#8b2fc9}.rk2{background:#f2c200}.rk3{background:#1f9a4a}.rk4{background:#d42c2c}
 .cc.fhit{border:2px solid var(--ink);border-radius:999px}
 .wRing{outline:3px solid #d4a017;outline-offset:2px;border-radius:999px}.wTbl td.wWhy{white-space:normal;font-size:.68em;line-height:1.35;max-width:5.5em}.wX{color:#b8860b}.wTbl tr.wExtra td{background:var(--win)}.wTbl td,.wTbl th{padding:4px 2px}
@@ -284,6 +284,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .myRes{margin:12px 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 .myN{margin:6px 0;padding-inline-start:18px;line-height:1.6;font-size:.92em}.myCm{margin-top:8px;font-size:.92em}
 .myV.ok{color:var(--felt)}.myV.mid{color:#b8860b}.myV.bad{color:#d42c2c}
+table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight:700;color:var(--muted);text-align:center;width:1.6em;background:var(--bg)}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -2273,7 +2274,7 @@ function renderItz(){
     <p class="tplNote">כל שבלונה מונחת בכל המקומות האפשריים. יש בדיוק 12 שלישיות שונות, כי כמה תבניות לוקחות את אותם קלפים. אז 12 הטפסים הראשונים מכסים את כולן, מסודרים מהמתאימה ביותר. 3 הטפסים האחרונים הם סידור נוסף של 3 החזקות, לפי המקום השני שבו הקלפים נחתו הכי הרבה.</p>
     <!--RUNBOX--><div class="itzT"><table class="itzG" dir="ltr"><tr><th>שבלונה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${(()=>{const L=R.all.map((v,k)=>({v,k,t:v.ticket,sec:false}));R.all.slice(0,3).forEach((v,k)=>{if(v.ticket2)L.push({v,k,t:v.ticket2,sec:true});});
       const LL=L.slice(0,15);itzRunBox=CR_LEGEND;
-      return LL.map((x,i)=>`<tr class="${R.top5.includes(x.v)?"tp":""}"><td class="g"><div class="itzS"><b class="itzI">${i+1}</b>${itzSvg(x.v.rep.p)}<small>${R.top5.includes(x.v)?`<b class="itzSt5">★${R.top5.indexOf(x.v)+1}</b> `:""}תבנית ${x.v.rep.num}<br>מ${x.v.start}${x.sec?"<br>סידור נוסף":""}<br><span class="itzB">${x.v.likes?"♥":""}${x.v.due?"⏱":""}</span></small></div></td>${SUITS.map(([sk,,,red])=>cardTd(x.t[sk],sk,0,{rank:crCls(x.v.rep.num,x.v.rep.b,x.t,sk,0)})).join("")}</tr>`).join("");})()}</table></div>
+      return LL.map((x,i)=>`<tr class="${R.top5.includes(x.v)?"tp":""}"><td class="g"><div class="itzS">${itzSvg(x.v.rep.p)}<small>${R.top5.includes(x.v)?`<b class="itzSt5">★${R.top5.indexOf(x.v)+1}</b> `:""}תבנית ${x.v.rep.num}<br>מ${x.v.start}${x.sec?"<br>סידור נוסף":""}<br><span class="itzB">${x.v.likes?"♥":""}${x.v.due?"⏱":""}</span></small></div></td>${SUITS.map(([sk,,,red])=>cardTd(x.t[sk],sk,0,{rank:crCls(x.v.rep.num,x.v.rep.b,x.t,sk,0)})).join("")}</tr>`).join("");})()}</table></div>
     <p class="tplNote">♥ = היא אוהבת את הקלפים של עכשיו · ⏱ = לפי הספירה אמורה לחזור. 5 הנבחרות (★) הן קודם אלה עם שני הסימנים, אחר כך עם אחד, ואז לפי ההתאמה לקלפים – גם אם בדירוג הכללי הן במקום נמוך.</p>
     <p class="tplNote">15 טפסי צ'אנס 3 מכסים יחד בערך 15 מתוך 512 תוצאות אפשריות לכל צורה (~2.9%). ★ = אחת מ־5 הנבחרות, ומתחת יש דוגמה מצוירת לכל אחת.</p>
     <h3>איך כל אחת נבנתה – על שתי ההגרלות האחרונות</h3>
@@ -2739,6 +2740,13 @@ document.getElementById("myPage").addEventListener("click",e=>{if(e.target.close
 document.getElementById("myPage").addEventListener("change",e=>{const sl=e.target.closest(".mySel");if(!sl)return;const r=myRows[+sl.dataset.i];if(sl.value)r[sl.dataset.k]=sl.value;else delete r[sl.dataset.k];mySave();if(myMode)renderMy();});
 window.addEventListener("hashchange",()=>openMy(location.hash==="#mystats"));
 if(location.hash==="#mystats")openMy(true);
+// ---- row numbers: every table of forms (a column per suit) gets a "#" column – one number per form, 1, 2, 3 … ----
+function numberTables(root){(root||document).querySelectorAll("table").forEach(tb=>{if(tb.dataset.rn)return;tb.dataset.rn="1";
+  if(tb.closest(".ccTbl,.cdTbl"))return;const rows=[...tb.rows];if(!rows.length)return;const h=rows[0];
+  if(!/♠/.test(h.textContent))return;const f=h.cells[0];if(f&&f.textContent.trim()==="#")return;
+  const th=document.createElement("th");th.textContent="#";th.className="rnH";h.insertBefore(th,h.firstChild);let n=0;
+  rows.slice(1).forEach(tr=>{const td=document.createElement("td");td.className="rnC";if(!tr.classList.contains("fRes")&&!(tr.cells.length===1&&tr.cells[0].colSpan>1)){n++;td.textContent=n;}tr.insertBefore(td,tr.firstChild);});});}
+(function(){let t=null;new MutationObserver(()=>{clearTimeout(t);t=setTimeout(()=>numberTables(),30);}).observe(document.body,{childList:true,subtree:true});setTimeout(()=>numberTables(),500);})();
 // ---- section menu (⋮) ----
 (function(){
   const secs=[...document.querySelectorAll("section")];
