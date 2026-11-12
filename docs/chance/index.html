@@ -300,6 +300,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .myN{margin:6px 0;padding-inline-start:18px;line-height:1.6;font-size:.92em}.myCm{margin-top:8px;font-size:.92em}
 .myV.ok{color:var(--felt)}.myV.mid{color:#b8860b}.myV.bad{color:#d42c2c}
 table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight:700;color:var(--muted);text-align:center;width:1.6em;background:var(--bg)}
+.myLast td{padding:6px 3px}.myLast .cc{font-size:1.05rem;min-width:1.8em}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -1329,7 +1330,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="87ed831cbe";
+const BUILD="5a732ede48";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2746,6 +2747,9 @@ function myHtml(){const S=myStatsCalc(),sn=k=>SUITS.find(x=>x[0]===k);
         ${why?`<ul class="myN">${why}</ul>`:""}<div class="myCm"><b>הערות על הבחירה שלך:</b>${myComment(S,r)}</div></div>`;}).join("")||`<p class="tplNote">מלא לפחות 2 קלפים בשורה.</p>`;}
   return `<div class="fHead"><button type="button" class="fBack" id="myClose" aria-label="חזרה לאתר">→ חזרה</button><h2>סטטיסטיקה אישית</h2></div>
   <p class="tplNote">שבץ קלפים משלך – 2 או 3 בכל שורה – ולחץ על צ'אנס 3 או צ'אנס 4. האתר משלים את המקומות הריקים בקלף שהכי מתאים: שיצא הרבה במקום הזה בחודש האחרון (${S.N} הגרלות, ${S.from.n}–${S.to.n}) וש"אוהב" את הקלפים שבחרת (יצא איתם יותר מהרגיל). הקלף שהושלם מוקף בעיגול כתום. לכל טופס – הערות למה זה יכול לעבוד או לא. הבחירות נשמרות אצלך בטלפון.</p>
+  <h3 class="ovH">3 ההגרלות האחרונות</h3>
+  <div class="fTbl myLast"><table dir="ltr"><tr><th>הגרלה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${allDraws().slice(0,3).map(d=>`<tr><td class="hDt"><b>${d.n}</b><br><small>${(d.date||"").split("-").reverse().slice(0,2).join("/")} · ${d.time||""}</small></td>${SK.map(k=>`<td><span class="cc" style="background:${CARD_COL[d[k]]};color:${CARD_INK[d[k]]||"#fff"}">${d[k]}</span></td>`).join("")}</tr>`).join("")}</table></div>
+  <h3 class="ovH">הטפסים שלי</h3>
   <div class="fTbl myTbl"><table dir="ltr">${head}${form}</table></div>
   <div class="myBtns"><button type="button" class="cdN" id="myAdd">+ שורה</button><button type="button" class="cdN" id="myClear">נקה הכול</button></div>
   <div class="myBtns"><button type="button" class="fBig myGo${myMode==="c3"?" on":""}" data-m="c3">צ'אנס 3<small>השלמה ל־3 קלפים</small></button><button type="button" class="fBig myGo${myMode==="c4"?" on":""}" data-m="c4">צ'אנס 4<small>השלמה ל־4 קלפים</small></button></div>
