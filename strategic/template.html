@@ -2449,8 +2449,8 @@ function hitsHtml(){if(!HDATES)loadHDates().then(()=>{const el=document.getEleme
 var formsHits=false,formsN=50,_fSum=new Map(),_fTok=0;
 function fSumKey(it){const d=it.d;return d.n+"|"+d.S+d.H+d.D+d.C;}
 function fSumCalc(it){const k=fSumKey(it);if(_fSum.has(k))return _fSum.get(k);
-  const rows=allTplRows(it.skip,it.d);const th=rows.filter(r=>r.opts.some(o=>o.hit)).map(r=>r.num);const wb=formWinsBy(it);const v={wb,th};_fSum.set(k,v);return v;}
-function fSumHtml(c){return `${c.wb.length?`<b class="fOk">תפס ✓: ${c.wb.join(", ")}</b>`:`לא נתפס`}${c.th.length?`<b class="fOk">תבניות שפגעו: ${c.th.join(", ")}</b>`:""}`;}
+  const rows=allTplRows(it.skip,it.d);const th=rows.filter(r=>r.opts.some(o=>o.hit)).map(r=>r.num);const wb=formWinsBy(it);const v={wb,th,itz:wb.itz||[]};_fSum.set(k,v);return v;}
+function fSumHtml(c){return `${c.wb.length?`<b class="fOk">תפס ✓: ${c.wb.map(w=>w==="התבניות של איציק"&&c.itz&&c.itz.length?`${w} (${c.itz.join(", ")})`:w).join(", ")}</b>`:`לא נתפס`}${c.th.length?`<b class="fOk">תבניות שפגעו: ${c.th.join(", ")}</b>`:""}`;}
 function fAggHtml(list){const past=list.filter(it=>it.d),cs=past.map(it=>_fSum.get(fSumKey(it)));const done=cs.filter(Boolean).length;
   if(done<past.length)return `<small class="fPend">בודק ${done.toLocaleString("he-IL")} מתוך ${past.length.toLocaleString("he-IL")} הגרלות…</small>`;
   const cnt=FMETH.map(([m,t])=>[t,cs.filter(c=>c.wb.includes(t)).length]);const any=cs.filter(c=>c.wb.length).length,tpl=cs.filter(c=>c.th.length).length;
@@ -2594,7 +2594,15 @@ function formMethodHtml(it,m){
   return `<div class="fSum">${d?(wins?`<b class="fOk">${wins} טפסים תפסו ✓</b>`:"אף טופס לא תפס.")+" עיגול = קלף נכון בצורה הנכונה. שורה ירוקה = כל הקלפים של הטופס במקום.":`${L.length} טפסים להגרלה הבאה.`}</div>
   <div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;
 }
-function formWinsBy(it){if(!it.d)return [];const out=[];for(const [m,t] of FMETH){if(m==="itz"){if(allTplRows(it.skip,it.d).some(r=>r.opts.some(o=>o.win)))out.push(t);continue;}
+// which Itzik buttons caught this draw exactly. The light buttons are always checked; the heavy ones (5 החזקות, שבלונה על שבלונה,
+// האולטימטיביים, הקלף המנצח) for the newest 50 draws, and further back only if they were already worked out
+function itzSubsWon(it){const d=it.d,out=[];if(!d)return out;const win=t=>{const ks=SK.filter(k=>t[k]);return ks.length>=3&&ks.every(k=>d[k]===t[k]);};
+  for(const [sub,name] of FITZ){const heavy=["top","over","ult","win"].includes(sub);let won=false;
+    if(heavy&&it.skip>51){const key=fSumKey(it)+"|itz|"+sub;if(_fsLS[key])won=_fsLS[key][1]>0;else continue;}
+    else won=fScore(it,"itz",sub).cau>0;
+    if(won)out.push(name);}
+  return out;}
+function formWinsBy(it){if(!it.d)return [];const out=[];for(const [m,t] of FMETH){if(m==="itz"){const subs=itzSubsWon(it);if(subs.length){out.push(t);out.itz=subs;}continue;}
   if(formTickets(it.skip,m).some(x=>{const ks=Object.keys(x.t);return ks.every(k=>it.d[k]===x.t[k]);}))out.push(t);}return out;}
 // ---- score gauges: tickets offered / caught for the open draw, and for the chosen method over the whole list ----
 const FS_VER="3";let _fsLS={};try{_fsLS=JSON.parse(localStorage.getItem("chance-fscore")||"{}")||{};if(_fsLS.v!==FS_VER)_fsLS={v:FS_VER};}catch(e){_fsLS={v:FS_VER};}
