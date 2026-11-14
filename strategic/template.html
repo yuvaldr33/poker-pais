@@ -286,6 +286,7 @@ table.pairs td.nn{font-family:var(--mono)}
 .myV.ok{color:var(--felt)}.myV.mid{color:#b8860b}.myV.bad{color:#d42c2c}
 table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight:700;color:var(--muted);text-align:center;width:1.6em;background:var(--bg)}
 .myLast td{padding:6px 3px}.myLast .cc{font-size:1.05rem;min-width:1.8em}
+.ccW1,.ccW2{display:inline-flex;align-items:center;justify-content:center;min-width:1.9em;height:1.9em;border-radius:999px}.ccW1{border:2.5px solid var(--felt)}.ccW2{border:2.5px dashed var(--felt)}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -2441,9 +2442,12 @@ function hitsHtml(){if(!HDATES)loadHDates().then(()=>{const el=document.getEleme
   const head=`<p class="tplNote">${hitsMode==="itz"?"כל הטפסים של התבניות של איציק (כל התבניות, עם רווחים, ספטמבר)":"כל טפסי צ'אנס 3 באתר (התבניות של איציק, תבניות, שלישיות, שלישיות חמות, עוגן)"} שתפסו צ'אנס 3 מדויק – 3 הקלפים בדיוק בצורות – ב־${N.toLocaleString("he-IL")} ההגרלות האחרונות. מוצגות רק הגרלות שפגעו.</p>
     <div class="fAgg">${done?"":`<small class="fPend">בודק… ${st.i.toLocaleString("he-IL")} מתוך ${N.toLocaleString("he-IL")} הגרלות</small>`}<b>${R.length}</b> טפסים תפסו, ב־<b>${nd}</b> הגרלות שונות מתוך ${Math.min(st.i,N).toLocaleString("he-IL")}.</div>`;
   const VALS=["7","8","9","10","J","Q","K","A"];
+  // per suit: the winning card (solid circle) and the second (dashed circle); ties share
+  const ccRk={};SK.forEach(k=>{ccRk[k]=[...new Set(VALS.map(v=>cnt[k][v]||0))].filter(x=>x>0).sort((a,b)=>b-a);});
+  const ccRkT=[...new Set(VALS.map(v=>SK.reduce((a,k)=>a+(cnt[k][v]||0),0)))].filter(x=>x>0).sort((a,b)=>b-a);
   const ctab=`<div class="fTbl ccTbl"><table dir="ltr"><tr><th>קלף</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>סה״כ</th></tr>${VALS.map(v=>{const tot=SK.reduce((a,k)=>a+(cnt[k][v]||0),0);
-    return `<tr><td>${chip(v)}</td>${SK.map(k=>{const n=cnt[k][v]||0;return `<td><b>${n}</b><small class="cdP">${pc(n)}</small></td>`;}).join("")}<td><b>${tot}</b></td></tr>`;}).join("")}</table></div>
-    <p class="tplNote">בטבלה: כמה פעמים כל קלף היה חלק מטופס שתפס, בכל צורה, ובאיזה אחוז מהטפסים שתפסו. לכל קלף צבע משלו, וכך הוא מסומן גם ברשימה. מעל כל קלף ברשימה – כמה פעמים הוא תפס במקום הזה ובאיזה אחוז.</p>`;
+    return `<tr><td>${chip(v)}</td>${SK.map(k=>{const n=cnt[k][v]||0,r=n?ccRk[k].indexOf(n):-1;return `<td><b class="${r===0?"ccW1":r===1?"ccW2":""}">${n}</b><small class="cdP">${pc(n)}</small></td>`;}).join("")}<td><b class="${ccRkT.indexOf(tot)===0&&tot?"ccW1":ccRkT.indexOf(tot)===1&&tot?"ccW2":""}">${tot}</b></td></tr>`;}).join("")}</table></div>
+    <p class="tplNote">בטבלה: כמה פעמים כל קלף היה חלק מטופס שתפס, בכל צורה, ובאיזה אחוז מהטפסים שתפסו. בכל עמודה: עיגול מלא = הקלף המנצח, עיגול מקווקו = השני הכי חזק. לכל קלף צבע משלו, וכך הוא מסומן גם ברשימה. מעל כל קלף ברשימה – כמה פעמים הוא תפס במקום הזה ובאיזה אחוז.</p>`;
   const body=R.map(r=>`<tr><td class="hDt"><b>${r.d.n}</b><br>${dt(r.d)}${r.d.time?`<br><small>${r.d.time}</small>`:""}</td>${SK.map(k=>{const v=r.d[k],red=sn(k)[3];
       if(!r.t[k])return `<td class="${red?"r":""} hOff">${v}</td>`;const n=cnt[k][v]||0;return `<td><small class="crC hSt">${n}<br>${pc(n)}</small>${chip(v)}</td>`;}).join("")}<td class="hTp">${r.labs.join("<br>")}</td></tr>`).join("");
   return `${tabs}${head}${ctab}<div class="fTbl hTbl"><table dir="ltr"><tr><th>הגרלה<br>ותאריך</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>מי תפס</th></tr>${body||`<tr><td colspan="6">עוד אין</td></tr>`}</table></div>`;}
