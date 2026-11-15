@@ -293,6 +293,7 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .tkDet{white-space:normal!important;text-align:start!important;padding:10px!important;background:var(--surface)}.tkD{direction:rtl;font-size:.88rem;line-height:1.6}.tkD p{margin:4px 0}.tkT{display:inline-block;margin:2px 4px;padding:1px 6px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono,monospace)}
 .pqPick{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:1.4rem}.pqPick .mySel{font-size:1.3rem;padding:8px}.pqOff{opacity:.45}.pqAgo{font-size:.75em;white-space:nowrap}.pqTbl td{padding:5px 3px}
 .trP{cursor:pointer}.trP.on td{background:var(--win)}
+.tkMini{margin:6px 0 12px}.tkMini td,.tkMini th{padding:4px 2px}.tkSrc{font-size:.7em;white-space:normal!important;line-height:1.3}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -2877,12 +2878,15 @@ function tkDetail(st,r,K,rk){const AA=allDraws(),sn=k=>SUITS.find(x=>x[0]===k);c
   const strong=K.S.includes(r.n);
   const why=strong?`נמצאת במקום <b>${rk}</b> מתוך 18: <b>${r.c}</b> תפסים בחודש האחרון (ממוצע לתבנית: בערך 2), מהם ${r.w1} בשבוע האחרון ו־${r.w2} בשבוע שלפניו – ניקוד ${r.sc}.${r.last>=2*TK_WEEK?` <b>שים לב:</b> לא תפסה כבר ${r.last} הגרלות – בסיכון לרדת.`:""}`
     :`במקום <b>${rk}</b>: ${r.c?`${r.c} תפסים בחודש, ניקוד ${r.sc}`:"לא תפסה בחודש האחרון"}.${r.last>=0&&r.last<TK_WEEK?" תפסה השבוע – מועמדת לעלות אם תתפוס שוב.":""}`;
-  const hits=cs.map(x=>`<li><b>${x.d.n}</b> · ${(x.d.date||"").split("-").reverse().slice(0,2).join("/")} ${x.d.time||""} · ${x.w.map(w=>`<bdi dir="ltr">${SK.filter(k=>w.t[k]).map(k=>`${w.t[k]}${sn(k)[1]}`).join(" ")}</bdi> (${w.src}, מ${w.start})`).join(" · ")}</li>`).join("");
+  const head=`<tr><th>${"הגרלה"}</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>גרסה</th></tr>`;
+  const hitRows=cs.flatMap(x=>x.w.map(w=>`<tr><td class="hDt"><b>${x.d.n}</b><br>${(x.d.date||"").split("-").reverse().slice(0,2).join("/")}${x.d.time?`<br>${x.d.time}`:""}</td>${SK.map(k=>{const v=x.d[k];return w.t[k]?`<td>${chip(v)}</td>`:`<td><span class="pqOff ${sn(k)[3]?"r":""}">${v}</span></td>`;}).join("")}<td class="tkSrc">${w.src}<br>מ${w.start}</td></tr>`)).join("");
+  const hits=hitRows?`<div class="fTbl tkMini"><table dir="ltr">${head}${hitRows}</table></div>`:"";
   const next=tkTickets([r.n],0);
+  const nextT=`<div class="fTbl tkMini"><table dir="ltr"><tr><th>#</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>מאיפה</th></tr>${next.map((x,i)=>`<tr><td class="fl">${i+1}</td>${SK.map(k=>x.t[k]?cardTd(x.t[k],k,0,{}):`<td class="fe">—</td>`).join("")}<td class="tkSrc">${x.src.join("<br>")}</td></tr>`).join("")}</table></div>`;
   return `<div class="tkD"><p>${why}</p>
    <p>${all.length} תפסים ב־${TK_M} ההגרלות האחרונות${avgGap?` · בממוצע תפס כל <b>${avgGap}</b> הגרלות`:""}.${fav.length?` הקלפים שהכי הרבה היו בתפסים שלה: ${fav.map(([v,n])=>`${chip(v)} ×${n}`).join(" ")}.`:""}</p>
-   ${hits?`<b>התפסים בחודש:</b><ul class="myN">${hits}</ul>`:""}
-   <b>הטפסים שלה להגרלה הבאה (${next.length}):</b> ${next.map(x=>`<bdi dir="ltr" class="tkT">${SK.map(k=>x.t[k]?`${x.t[k]}${sn(k)[1]}`:"–").join(" ")}</bdi>`).join(" ")}</div>`;}
+   ${hits?`<b>התפסים בחודש (${cs.length}):</b> <small>הקלפים שתפסו – צבועים</small>${hits}`:""}
+   <b>הטפסים שלה להגרלה הבאה (${next.length}):</b>${nextT}</div>`;}
 function renderTk(){const el=document.getElementById("tkPage");if(!el||el.hidden)return;
   if(!HIST){el.innerHTML='<p class="tplNote" style="padding:16px">טוען…</p>';loadHist().then(renderTk);return;}
   el.innerHTML=`<div class="fWrap">${tkHtml()}</div>`;}
