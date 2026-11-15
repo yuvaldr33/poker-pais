@@ -2384,7 +2384,7 @@ function crN1000(v,k,skip){const AA=allDraws(),A=skip?AA.slice(skip):AA;const ke
 // a small dot = the template-strength rank (1 purple … 4 red), circle = came out in that place, dashed orange ring = the completing card
 function cardTd(v,k,skip,o){o=o||{};const red=SUITS.find(x=>x[0]===k)[3];if(!v)return `<td class="fe">—</td>`;
   const m=c1kMap(skip),n=m[k+v]||0,N=m._N||1000,rk=o.rank?o.rank.replace("cr","rk"):"";
-  return `<td class="${red?"r":""}"><small class="crC hSt">${n}<br>${(n/N*100).toFixed(1)}%</small><span class="cc${o.hit?" fhit":""}${o.ring?" ovR":""}" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}${rk?`<i class="rkd ${rk}"></i>`:""}</span></td>`;}
+  return `<td class="${red?"r":""}"><small class="crC hSt">${n}<br>${(n/N*100).toFixed(1)}%</small><span class="cc${o.hit?" fhit":""}${o.ring?" ovR":""}${o.gold?" wRing":""}" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}${rk?`<i class="rkd ${rk}"></i>`:""}</span></td>`;}
 function c1kMap(skip){const AA=allDraws(),A=skip?AA.slice(skip):AA;const key=A[0].n;let m=_c1k.get(key);
   if(!m){m={_N:Math.min(1000,A.length)};for(const t of A.slice(0,1000))for(const s of SK){const x=s+t[s];m[x]=(m[x]||0)+1;}if(_c1k.size>400)_c1k.clear();_c1k.set(key,m);}return m;}
 function crNum(num,b,t,k,skip){return crCls(num,b,t,k,skip)?crN1000(t[k],k,skip):"";}
@@ -2788,10 +2788,20 @@ function triHtml(){const AA=allDraws(),W=AA.slice(0,trW),N=W.length,sn=k=>SUITS.
     const rec=(j,used,acc)=>{if(j===cards.length){const key=SK.map(k=>acc[k]||"-").join("");if(!seen.has(key)){seen.add(key);arr.push(Object.assign({},acc));}return;}
       for(const k of SK){if(used.includes(k))continue;acc[k]=cards[j];rec(j+1,[...used,k],acc);delete acc[k];}};rec(0,[],{});
     const cnt=(L,tt)=>L.filter(d=>SK.every(k=>!tt[k]||d[k]===tt[k])).length,AAll=AA;
-    const rows=arr.map(tt=>({tt,w:cnt(W,tt),a:cnt(AAll,tt),mine:SK.every(k=>(tt[k]||"")===(t[k]||""))})).sort((x,y)=>y.w-x.w||y.a-x.a);
+    // strong place for a card = the suit where it came out most in the chosen window (gold ring)
+    const fq={};cards.forEach(v=>{fq[v]={};SK.forEach(k=>fq[v][k]=W.filter(d=>d[k]===v).length);});
+    const best={};cards.forEach(v=>{const mx=Math.max(...SK.map(k=>fq[v][k]));best[v]=SK.filter(k=>fq[v][k]===mx);});
+    const avgA=arr.reduce((s2,tt)=>s2+cnt(AAll,tt),0)/arr.length||1;
+    const rows=arr.map(tt=>{const w=cnt(W,tt),a=cnt(AAll,tt),pl=SK.filter(k=>tt[k]).reduce((s2,k)=>s2+fq[tt[k]][k]/(N/8),0)/cards.length,gold=SK.filter(k=>tt[k]&&best[tt[k]].includes(k)).length;
+      return {tt,w,a,pl,gold,score:w*2+a/avgA+pl*1.5+gold*0.3,mine:SK.every(k=>(tt[k]||"")===(t[k]||""))};}).sort((x,y)=>y.w-x.w||y.a-x.a);
     res+=`<h3 class="ovH">כל האפשרויות של <bdi dir="ltr">${cards.join(" ")}</bdi> – ${rows.length} טפסים</h3>
-      <div class="fTbl"><table dir="ltr"><tr><th>יצא</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${rows.map(r=>`<tr class="${r.mine?"trMine":""}"><td class="fl"><b>${r.w}</b> ב־${N.toLocaleString("he-IL")}<br><small>${r.a} בכל ההיסטוריה${r.mine?"<br>★ הסידור שלך":""}</small></td>${SK.map(k=>r.tt[k]?cardTd(r.tt[k],k,0,{}):`<td class="fe">—</td>`).join("")}</tr>`).join("")}</table></div>
-      <p class="tplNote">כל הסידורים של אותם ${cards.length} קלפים – כל קלף בכל צורה ובכל סדר. מסודר לפי כמה פעמים הסידור יצא בדיוק בטווח שבחרת, ואחר כך בכל ההיסטוריה (${AAll.length.toLocaleString("he-IL")} הגרלות). ★ = הסידור שבחרת בטבלה.</p>`;}
+      <div class="fTbl"><table dir="ltr"><tr><th>יצא</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${rows.map(r=>`<tr class="${r.mine?"trMine":""}"><td class="fl"><b>${r.w}</b> ב־${N.toLocaleString("he-IL")}<br><small>${r.a} בכל ההיסטוריה${r.mine?"<br>★ הסידור שלך":""}</small></td>${SK.map(k=>r.tt[k]?cardTd(r.tt[k],k,0,{gold:best[r.tt[k]].includes(k)}):`<td class="fe">—</td>`).join("")}</tr>`).join("")}</table></div>
+      <p class="tplNote">עיגול זהב = המקום החזק של הקלף: הצורה שבה הוא יצא הכי הרבה ב־${N.toLocaleString("he-IL")} ההגרלות. כל הסידורים של אותם ${cards.length} קלפים – כל קלף בכל צורה ובכל סדר. מסודר לפי כמה פעמים הסידור יצא בדיוק בטווח שבחרת, ואחר כך בכל ההיסטוריה (${AAll.length.toLocaleString("he-IL")} הגרלות). ★ = הסידור שבחרת בטבלה.</p>`;
+    const top=rows.slice().sort((x,y)=>y.score-x.score).slice(0,5),b0=top[0],mineR=rows.find(r=>r.mine),mineRank=rows.slice().sort((x,y)=>y.score-x.score).indexOf(mineR)+1;
+    const why=r=>[r.w?`יצא ${r.w} פעמים בטווח`:null,`${r.a} בהיסטוריה (ממוצע ${avgA.toFixed(0)})`,r.gold?`${r.gold} ${r.gold>1?"קלפים":"קלף"} במקום החזק`:null].filter(Boolean).join(" · ");
+    res+=`<h3 class="ovH">🏆 5 הסידורים הכי חזקים לפי האלגוריתם</h3>
+      <div class="fTbl"><table dir="ltr"><tr><th>ציון</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${top.map((r,i)=>`<tr class="${i===0?"fWin":""}"><td class="fl"><b>${i+1}</b> · ${r.score.toFixed(1)}<br><small>${why(r)}</small></td>${SK.map(k=>r.tt[k]?cardTd(r.tt[k],k,0,{gold:best[r.tt[k]].includes(k)}):`<td class="fe">—</td>`).join("")}</tr>`).join("")}</table></div>
+      <div class="crLeg"><b>הסיכום:</b> הסידור הכי חזק הוא <b><bdi dir="ltr">${SK.map(k=>b0.tt[k]?`${b0.tt[k]}${sn(k)[1]}`:"–").join(" ")}</bdi></b> – ${why(b0)}. הסידור שבחרת בטבלה נמצא במקום <b>${mineRank}</b> מתוך ${rows.length}${mineRank<=5?" – בין החמישה החזקים 👍":mineRank<=Math.ceil(rows.length/2)?" – באמצע":" – בחלק החלש; שווה לשקול את אחד מהחמישה"}.<br><small>הציון משקלל: כמה פעמים הסידור יצא בדיוק בטווח (משקל גבוה), כמה פעמים בכל ההיסטוריה ביחס לממוצע של שאר הסידורים, כמה כל קלף יוצא בצורה שלו בטווח, ובונוס לקלף במקום החזק שלו.</small></div>`;}
   else if(trCard&&sel){const c=trCard,free=SK.filter(k=>k!==sel.k1&&k!==sel.k2);
     const has=(d,a,b)=>{const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)return false;v.splice(i,1);return v.includes(b);};
     const together=x=>W.filter(d=>has(d,x,c)).length,avgT=x=>V.reduce((s,y)=>s+W.filter(d=>has(d,x,y)).length,0)/V.length;
