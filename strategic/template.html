@@ -287,6 +287,10 @@ table.pairs td.nn{font-family:var(--mono)}
 table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight:700;color:var(--muted);text-align:center;width:1.6em;background:var(--bg)}
 .myLast td{padding:6px 3px}.myLast .cc{font-size:1.05rem;min-width:1.8em}
 .ccW1,.ccW2{display:inline-flex;align-items:center;justify-content:center;min-width:1.9em;height:1.9em;border-radius:999px}.ccW1{border:2.5px solid var(--felt)}.ccW2{border:2.5px dashed var(--felt)}
+.trkTbl td,.trkTbl th{padding:5px 3px}.trkC{font-size:1.2rem}.trkW{white-space:nowrap}.trkW span{display:inline-block;min-width:1.15em;margin:0 1px;border-radius:5px;background:var(--line);font-weight:700;font-size:.85em}.trkW span.on{background:var(--felt);color:var(--felt-ink)}
+.trkS{white-space:normal!important;font-size:.72em;max-width:5em}.trkF{display:block}.trkF.dn{color:#d42c2c}.trkF.up{color:#1f9a4a}.trkF.ok{color:var(--felt)}
+.trkTbl td.fi svg{width:28px;height:28px}.trkTbl .wTp{font-size:.65em}.trkTbl td.fi{max-width:60px}.tkRow{cursor:pointer}.tkRow.on td{background:var(--win)}.tkRk{font-weight:800}
+.tkDet{white-space:normal!important;text-align:start!important;padding:10px!important;background:var(--surface)}.tkD{direction:rtl;font-size:.88rem;line-height:1.6}.tkD p{margin:4px 0}.tkT{display:inline-block;margin:2px 4px;padding:1px 6px;border:1px solid var(--line);border-radius:6px;font-family:var(--mono,monospace)}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -615,6 +619,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 <div id="formsPage" class="fPage" hidden></div>
 <div id="cardsPage" class="fPage" hidden></div>
 <div id="myPage" class="fPage" hidden></div>
+<div id="tkPage" class="fPage" hidden></div>
 <button class="chFab" id="chFab" type="button" aria-label="פתח צ'אט"><span class="dot"></span>שאל את העוזר</button>
 <div class="chBox" id="chBox" dir="rtl" hidden role="dialog" aria-label="העוזר של צ'אנס">
   <div class="chHead"><div><b>העוזר של צ'אנס</b><small>עונה לפי הניתוח החי של האתר</small></div><button type="button" id="chClose" aria-label="סגור">✕</button></div>
@@ -1221,7 +1226,7 @@ function renderTrack(){
 renderTrack();renderTrack3();
 
 // ---- manual result entry ----
-function rerenderAll(){last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();renderMyP();renderFut();renderItz();renderForms();renderCards();tick();showManNote();}
+function rerenderAll(){try{renderTk();}catch(e){}last=DRAWS[0];preSel=0;triForced=null;triSel=0;renderStatic();preDraw();renderPairs();renderTrack();renderTrack3();renderTri();renderHot();renderAnchor();renderSwap();renderMyP();renderFut();renderItz();renderForms();renderCards();tick();showManNote();}
 function showManNote(){const n=document.getElementById("manNote");let t=last.manual?`הגרלה ${last.n} הוזנה ידנית. היא תוחלף בתוצאה הרשמית ברגע שזו תיכנס לאתר.`:"";
   const wait=manualDraws.filter(m=>m.n>last.n+1);if(wait.length)t+=` ${wait.map(m=>`הגרלה ${m.n} (${m.time})`).join(", ")} שמורה וממתינה: היא תיכנס לניתוח ברגע שהגרלה ${last.n+1} תיכנס (רשמית או ידנית).`;
   n.textContent=[t.trim(),manualMsg].filter(Boolean).join(" ");n.hidden=!n.textContent;}
@@ -2393,7 +2398,8 @@ function allTplRows(skip,d,free){
   const has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
   const ck=A[0].n+":"+A.length;if(!_tplLand.has(ck)){_tplLand.clear();_tplLand.set(ck,new Map());}const LC=_tplLand.get(ck);
   const land=(num,p,b)=>{const key=num+"|"+b+(free?"|f":"");if(LC.has(key))return LC.get(key);const cnt=new Map();const sk=skip||0;
-    for(const h of tplHitList(num,p,b)){if(h.i<sk)continue;if(h.i>=sk+5000)break;for(const o of h.opts)cnt.set(o,(cnt.get(o)||0)+1/h.opts.length);}
+    const HL=tplHitList(num,p,b);let lo=0,hi=HL.length;while(lo<hi){const m=(lo+hi)>>1;if(HL[m].i<sk)lo=m+1;else hi=m;}
+    for(let q=lo;q<HL.length;q++){const h=HL[q];if(h.i>=sk+5000)break;for(const o of h.opts)cnt.set(o,(cnt.get(o)||0)+1/h.opts.length);}
     const top=[...cnt.entries()].sort((x,y)=>y[1]-x[1])[0];const best=free&&top?top:pickRun(cnt,b);LC.set(key,best);return best;};
   return [...ITZ].sort((x,y)=>x[0]-y[0]).map(([num,p])=>({num,p,four:p.length===4,opts:[0,1,2].map(b=>{const cards=p.map(([r,c])=>L[r][SK[b+c]]);
     const [perm,ln]=land(num,p,b);const ticket={};cards.forEach((c,j)=>{ticket[perm[j]]=c;});
@@ -2556,6 +2562,7 @@ function formItzSub(it,sub){
   const d=it.d,sn=k=>SUITS.find(x=>x[0]===k),has=(t,cards)=>{const v=SK.map(k=>t[k]);for(const x of cards){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
   const items=[];
   if(sub==="free"){freeTix(it.skip).forEach(x=>items.push(x));}
+  else if(sub==="tk"){tkItems().forEach(x=>items.push(x));}
   else if(sub==="ult"){ultTix(it.skip).forEach(x=>items.push(x));}
   else if(sub==="win"){winTix(it.skip).forEach(x=>items.push(x));}
   else if(sub==="stat"){statTix(it.skip).forEach(x=>items.push(x));}
@@ -2570,7 +2577,7 @@ function formItzSub(it,sub){
     return `<tr class="${win?"fWin":""}"><td class="fi ${itzTierCls(x.num)}">${itzSvg(x.p)}<small class="fSp">${x.label}</small></td>${SK.map(k=>{const v=x.t[k],red=sn(k)[3];return cardTd(v,k,it.skip,{hit:d&&d[k]===v,rank:crCls(x.num,x.b,x.t,k,it.skip),ring:x.ring&&x.ring.includes(k)});}).join("")}${d?`<td class="fm">${hit?"✓":""}</td>`:""}</tr>`;}).join("");
   const AA=allDraws(),A=it.skip?AA.slice(it.skip):AA;
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} טפסים פגעו ✓ (כל הקלפים יצאו)</b>`:"אף טופס לא פגע בהגרלה הזו."}${nw?` · <b class="fOk">${nw} תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
-  <p class="tplNote">${sub==="free"?`עם רווחים – בלי כפילויות: כל טופס מונח בצורה שבה שלושת הקלפים נחתו הכי הרבה ב־5,000 ההגרלות, גם אם יש רווח באמצע. טופס שכמה תבניות נותנות בדיוק באותם מקומות מופיע פעם אחת (×N = כמה תבניות נתנו אותו). ${items.length} טפסים במקום 54.`:sub==="win"?`הקלף המנצח: הצירופים של "עם רווחים" עם הקלף המנצח במקום הריק (בעיגול) – טופס של 4 קלפים (צ'אנס 4). ✓ = 4 הקלפים יצאו; שורה ירוקה = 4 הקלפים בדיוק במקומות. ★ = אקסטרה חזק.`:sub==="ult"?`התפסים האולטימטיביים: סריקה של כל הטפסים של כל הכפתורים (5 החזקות, כל התבניות, עם רווחים, ספטמבר, סטטיסטיקת שבלונות, זוגות בתוך תבניות, שבלונה על שבלונה). כל שלישייה בסדר שלה (למשל J K K) שהכפתורים נותנים יחד ${ULT_MIN} פעמים או יותר נחשבת חזקה, ומופיעה בשתי האפשרויות: מתחילה מעלה (א) ומתחילה מלב (ב). ×N = כמה פעמים כל הכפתורים נתנו אותה; מתחת – מאילו כפתורים ותבניות. ${items.length} טפסים.`:sub==="over"?`שבלונה על שבלונה: 15 טפסי צ'אנס 3 הכי חזקים (5 החזקות) מונחים על 15 טפסי צ'אנס 2 הכי חזקים (זוגות), מקום על מקום – זוג מצ'אנס 2 + קלף אחד מצ'אנס 3 במקום פנוי, או 2 קלפים מצ'אנס 3 + קלף אחד מצ'אנס 2. כל קלף נשאר בצורה שלו. ×N = כמה הנחות נותנות את אותו טופס; מוצגים 30 החזקים. מתחת: מכמה טפסים בכל טבלה הוא נבנה.`:sub==="mix"?`זוגות בתוך תבניות: כל טופס של "זוגות" (2 קלפים בצורות שלהם) מונח על כל תבנית שיש בה את שני הקלפים, והקלף השלישי של התבנית משלים לשלישייה – בכל אחת משתי הצורות שנשארו. ×N = כמה אפשרויות של תבניות נותנות את אותו טופס; המסודר מהחזק לחלש. ${items.length} טפסים.`:sub==="stat"?`סטטיסטיקת שבלונות: שלישיות קלפים שלפחות 2 תבניות נותנות. כל טופס שלהן מופיע פעם אחת בלבד, ועוד אותו סדר בהזזה של צורה אחת (מעלה-לב-יהלום ללב-יהלום-תלתן או להפך) – כדי לתפוס גם אם הקלפים זזו מקום. ${items.length} טפסים.`:sub==="top"?`15 הטפסים ש"5 החזקות" הציעה להגרלה הזו (★ = אחת מ־5 הנבחרות).`:`18 הטפסים של "ספטמבר": לכל תבנית נקודת ההתחלה שפגעה הכי הרבה בספטמבר, בצורה שבה נחתה שם.`} ✓ = כל הקלפים של הטופס יצאו (בכל צורה). שורה ירוקה = כל הקלפים יצאו בדיוק בצורות של הטופס.</p>
+  <p class="tplNote">${sub==="tk"?`${items.length} טפסים – כל הטפסים של התבניות החזקות (כל התבניות ועם רווחים), כל טופס פעם אחת.`:sub==="free"?`עם רווחים – בלי כפילויות: כל טופס מונח בצורה שבה שלושת הקלפים נחתו הכי הרבה ב־5,000 ההגרלות, גם אם יש רווח באמצע. טופס שכמה תבניות נותנות בדיוק באותם מקומות מופיע פעם אחת (×N = כמה תבניות נתנו אותו). ${items.length} טפסים במקום 54.`:sub==="win"?`הקלף המנצח: הצירופים של "עם רווחים" עם הקלף המנצח במקום הריק (בעיגול) – טופס של 4 קלפים (צ'אנס 4). ✓ = 4 הקלפים יצאו; שורה ירוקה = 4 הקלפים בדיוק במקומות. ★ = אקסטרה חזק.`:sub==="ult"?`התפסים האולטימטיביים: סריקה של כל הטפסים של כל הכפתורים (5 החזקות, כל התבניות, עם רווחים, ספטמבר, סטטיסטיקת שבלונות, זוגות בתוך תבניות, שבלונה על שבלונה). כל שלישייה בסדר שלה (למשל J K K) שהכפתורים נותנים יחד ${ULT_MIN} פעמים או יותר נחשבת חזקה, ומופיעה בשתי האפשרויות: מתחילה מעלה (א) ומתחילה מלב (ב). ×N = כמה פעמים כל הכפתורים נתנו אותה; מתחת – מאילו כפתורים ותבניות. ${items.length} טפסים.`:sub==="over"?`שבלונה על שבלונה: 15 טפסי צ'אנס 3 הכי חזקים (5 החזקות) מונחים על 15 טפסי צ'אנס 2 הכי חזקים (זוגות), מקום על מקום – זוג מצ'אנס 2 + קלף אחד מצ'אנס 3 במקום פנוי, או 2 קלפים מצ'אנס 3 + קלף אחד מצ'אנס 2. כל קלף נשאר בצורה שלו. ×N = כמה הנחות נותנות את אותו טופס; מוצגים 30 החזקים. מתחת: מכמה טפסים בכל טבלה הוא נבנה.`:sub==="mix"?`זוגות בתוך תבניות: כל טופס של "זוגות" (2 קלפים בצורות שלהם) מונח על כל תבנית שיש בה את שני הקלפים, והקלף השלישי של התבנית משלים לשלישייה – בכל אחת משתי הצורות שנשארו. ×N = כמה אפשרויות של תבניות נותנות את אותו טופס; המסודר מהחזק לחלש. ${items.length} טפסים.`:sub==="stat"?`סטטיסטיקת שבלונות: שלישיות קלפים שלפחות 2 תבניות נותנות. כל טופס שלהן מופיע פעם אחת בלבד, ועוד אותו סדר בהזזה של צורה אחת (מעלה-לב-יהלום ללב-יהלום-תלתן או להפך) – כדי לתפוס גם אם הקלפים זזו מקום. ${items.length} טפסים.`:sub==="top"?`15 הטפסים ש"5 החזקות" הציעה להגרלה הזו (★ = אחת מ־5 הנבחרות).`:`18 הטפסים של "ספטמבר": לכל תבנית נקודת ההתחלה שפגעה הכי הרבה בספטמבר, בצורה שבה נחתה שם.`} ✓ = כל הקלפים של הטופס יצאו (בכל צורה). שורה ירוקה = כל הקלפים יצאו בדיוק בצורות של הטופס.</p>
   ${sub==="over"?ovSrcHtml(items,d,head.replace("<th>טופס</th>","<th>#</th>"),res,it.skip):""}
   ${sub==="over"?`<h3 class="ovH">טבלה 3 · שבלונה על שבלונה</h3><p class="tplNote">הקלף בעיגול כתום מקווקו = הקלף המשלים – זה שהגיע מהשקף השני.</p>`:""}
   ${CR_LEGEND}<div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;}
@@ -2762,6 +2769,78 @@ document.getElementById("myPage").addEventListener("click",e=>{if(e.target.close
 document.getElementById("myPage").addEventListener("change",e=>{const sl=e.target.closest(".mySel");if(!sl)return;const r=myRows[+sl.dataset.i];if(sl.value)r[sl.dataset.k]=sl.value;else delete r[sl.dataset.k];mySave();if(myMode)renderMy();});
 window.addEventListener("hashchange",()=>openMy(location.hash==="#mystats"));
 if(location.hash==="#mystats")openMy(true);
+// ---- "מעקב תבניות": every draw, rank the 18 templates by their catches in the last month (recent catches weigh more),
+// keep as "strong" the best ones while their tickets stay within 10–35, and track who is at risk and who is rising ----
+// catch = one of the template's tickets (כל התבניות or עם רווחים) came out exactly in its places
+const TK_M=420,TK_MONTH=180,TK_WEEK=40,TK_MAXT=35,TK_GOOD=30;var tkSide="strong",tkOpen=null,_tk=null;
+function tkCalc(){const AA=allDraws(),ck=AA[0].n+":"+AA.length;if(!_tk||_tk.ck!==ck)_tk={ck,i:0,c:{},done:false,nums:allTplRows(1,null).map(r=>r.num)};const st=_tk;
+  st.nums.forEach(n=>{if(!st.c[n])st.c[n]=[];});const t0=performance.now();
+  while(!st.done&&performance.now()-t0<50){const i=st.i++;if(i>=TK_M||i+3>=AA.length){st.done=true;break;}const d=AA[i];if(AA[i+1].n!==d.n-1||AA[i+2].n!==d.n-2)continue;
+    const e=allTplRows(i+1,d),f=allTplRows(i+1,d,true);
+    e.forEach((r,k)=>{const w=[];r.opts.forEach(o=>{if(o.win)w.push({t:o.ticket,src:"כל התבניות",start:o.start});});f[k].opts.forEach(o=>{if(o.win&&!w.some(x=>runOf(x.t)===runOf(o.ticket)&&SK.every(q=>x.t[q]===o.ticket[q])))w.push({t:o.ticket,src:"עם רווחים",start:o.start});});
+      if(w.length)st.c[r.num].push({i,d,w});});}
+  return st;}
+// score at offset s (s=0 now, s=1 one draw ago): last week ×3, the week before ×2, the rest of the month ×1
+function tkScore(st,n,s){let sc=0,c=0,w1=0,w2=0,w3=0,last=-1;for(const x of st.c[n]){const a=x.i-s;if(a<0||a>=TK_MONTH)continue;c++;if(last<0||a<last)last=a;
+    if(a<TK_WEEK){sc+=3;w1++;}else if(a<2*TK_WEEK){sc+=2;w2++;}else{sc+=1;if(a<3*TK_WEEK)w3++;}}return {n,sc,c,w1,w2,w3,last};}
+function tkTickets(nums,skip){const m=new Map(),e=allTplRows(skip,null),f=allTplRows(skip,null,true);
+  e.forEach((r,k)=>{if(!nums.includes(r.num))return;[[r,"כל התבניות"],[f[k],"עם רווחים"]].forEach(([R,src])=>R.opts.forEach((o,b)=>{const key=SK.map(x=>o.ticket[x]||"-").join("");
+    if(!m.has(key))m.set(key,{t:o.ticket,num:r.num,b,p:r.p,src:[]});m.get(key).src.push(`${r.num} מ${o.start}`);}));});return [...m.values()];}
+function tkRank(st,s){const R=st.nums.map(n=>tkScore(st,n,s)).sort((a,b)=>b.sc-a.sc||b.c-a.c||(a.last<0?1e9:a.last)-(b.last<0?1e9:b.last));
+  // strong = best templates while the unique tickets stay ≤ 35 (aim ≤ 30); only templates that caught this month
+  const S=[];for(const r of R){if(!r.c)break;const n2=tkTickets(S.concat(r.n).map(x=>x.n||x),s).length;if(n2>TK_MAXT)break;S.push(r);if(n2>=TK_GOOD)break;}
+  const sN=S.map(r=>r.n);return {R,S:sN,W:R.filter(r=>!sN.includes(r.n)).map(r=>r.n)};}
+function tkItems(){const st=_tk;if(!st||!st.done)return [];const K=tkRank(st,0);return tkTickets(K.S,0).map(x=>({t:x.t,num:x.num,b:x.b,p:x.p,label:`${x.src.length>1?`<b>×${x.src.length}</b> · `:""}תבנית ${x.src.join("<br>תבנית ")}`}));}
+function tkHtml(){const st=tkCalc(),AA=allDraws(),nx=AA[0].n+1;
+  if(!st.done){setTimeout(()=>{const el=document.getElementById("tkPage");if(el&&!el.hidden)renderTk();},0);return `<p class="tplNote">מחשב את התפסים של כל תבנית… ${st.i} מתוך ${TK_M} הגרלות</p>`;}
+  const K=tkRank(st,0),P=tkRank(st,1),byN=Object.fromEntries(K.R.map(r=>[r.n,r]));const tix=tkTickets(K.S,0);
+  const inN=K.S.filter(n=>!P.S.includes(n)),outN=P.S.filter(n=>!K.S.includes(n));
+  const minS=K.S.length?Math.min(...K.S.map(n=>byN[n].sc)):0;
+  // live check over the last ~240 draws: each week, the strong set by the month before it, and who caught in the week after
+  let a=0,b=0,fr=0,pts=0;for(let s=0;s+TK_WEEK+TK_MONTH<=TK_M;s+=TK_WEEK){const k=tkRank(st,s+TK_WEEK);let x=0,y=0;st.nums.forEach(n=>{const c=st.c[n].filter(q=>q.i>=s&&q.i<s+TK_WEEK).length;y+=c;if(k.S.includes(n))x+=c;});a+=x;b+=y;fr+=k.S.length/st.nums.length;pts++;}
+  const p=Object.fromEntries(ITZ.map(([n,pp])=>[n,pp]));
+  const flag=r=>{const strong=K.S.includes(r.n);
+    if(strong&&(r.last<0||r.last>=2*TK_WEEK))return `<b class="trkF dn">⚠ בסיכון</b>`;
+    if(strong)return `<b class="trkF ok">✓ חזקה</b>`;
+    if(r.sc>=minS&&r.c)return `<b class="trkF up">⬆ עוקפת</b>`;
+    if(r.last>=0&&r.last<TK_WEEK)return `<b class="trkF up">⬆ מועמדת</b>`;
+    if(!r.c)return `<b class="trkF dn">✗ לא תפסה</b>`;return "חלשה";};
+  const list=(tkSide==="strong"?K.S:K.W).map(n=>byN[n]);
+  const rows=list.map(r=>{const rk=K.R.indexOf(r)+1,open=tkOpen===r.n;
+    return `<tr class="tkRow${open?" on":""}" data-n="${r.n}"><td class="tkRk">${rk}</td><td class="fi ${itzTierCls(r.n)}"><b class="wTp">תבנית ${r.n}</b>${itzSvg(p[r.n])}</td><td><b class="trkC">${r.c}</b><small class="cdP">ניקוד ${r.sc}</small></td><td class="trkW">${[r.w3,r.w2,r.w1].map(x=>`<span class="${x?"on":""}">${x}</span>`).join("")}</td><td>${r.last<0?"—":r.last===0?"עכשיו":`לפני ${r.last}`}</td><td class="trkS">${flag(r)}</td></tr>${open?`<tr><td colspan="6" class="tkDet">${tkDetail(st,r,K,rk)}</td></tr>`:""}`;}).join("");
+  const big=(k,t,n,sub)=>`<button type="button" class="fBig tkB${tkSide===k?" on":""}" data-s="${k}">${t}<small>${n} תבניות · ${sub}</small></button>`;
+  return `<div class="fHead"><button type="button" class="fBack" id="tkClose" aria-label="חזרה לאתר">→ חזרה</button><h2>מעקב תבניות</h2></div>
+  <p class="tplNote">להגרלה <b>${nx}</b>. כל הגרלה המערכת מדרגת מחדש את 18 התבניות לפי התפסים בחודש האחרון (${TK_MONTH} הגרלות): תפס בשבוע האחרון = 3 נקודות, בשבוע שלפניו = 2, בשאר החודש = 1. <b>החזקות</b> = הכי גבוהות בדירוג, כל עוד הטפסים שלהן נשארים בין 10 ל־${TK_MAXT}. תפס = טופס של התבנית (כל התבניות או עם רווחים) שיצא בדיוק במקום.</p>
+  <div class="myBtns">${big("strong","💪 תבניות חזקות",K.S.length,`${tix.length} טפסים`)}${big("weak","📉 תבניות חלשות",K.W.length,"במעקב")}</div>
+  <div class="crLeg"><b>מההגרלה הקודמת:</b> ${inN.length||outN.length?`${inN.length?`נכנסו לחזקות: <b>${inN.join(", ")}</b>. `:""}${outN.length?`ירדו לחלשות: <b>${outN.join(", ")}</b>.`:""}`:"אין החלפות."}<br><small>✓ חזקה · ⚠ בסיכון = חזקה בלי תפס שבועיים – הבאה בתור לרדת · ⬆ מועמדת = חלשה שתפסה השבוע · ⬆ עוקפת = חלשה עם ניקוד כמו האחרונה בחזקות (נשארה בחוץ רק בגלל מגבלת הטפסים) · ✗ לא תפסה בחודש. לחיצה על תבנית = כל הנתונים שלה.</small></div>
+  <div class="fTbl trkTbl tkTbl"><table dir="ltr"><tr><th>מקום</th><th>תבנית</th><th>תפסים<br>בחודש</th><th>שבוע 3·2·1</th><th>תפס<br>אחרון</th><th>מצב</th></tr>${rows||`<tr><td colspan="6">אין תבניות כאן כרגע</td></tr>`}</table></div>
+  <p class="tplNote">"שבוע 3·2·1" = תפסים בכל אחד מ־3 השבועות האחרונים (${TK_WEEK} הגרלות לשבוע; הימני = השבוע הזה). "תפס אחרון" = לפני כמה הגרלות.</p>
+  <div class="crLeg"><b>בדיקת אמת חיה (${pts} שבועות אחורה):</b> כל שבוע המערכת בחרה חזקות לפי החודש שלפניו, וספרה את התפסים של השבוע שאחריו. החזקות היו בממוצע ${(fr/pts*100).toFixed(0)}% מהתבניות ונתנו <b>${b?(a/b*100).toFixed(0):0}%</b> מהתפסים (${a} מתוך ${b}).</div>
+  ${tkSide==="strong"?`<h3 class="ovH">הטפסים להגרלה ${nx} – ${tix.length} טפסים</h3>${formItzSub({skip:0,n:nx,d:null},"tk")}`:""}`;}
+function tkDetail(st,r,K,rk){const AA=allDraws(),sn=k=>SUITS.find(x=>x[0]===k);const cs=st.c[r.n].filter(x=>x.i<TK_MONTH);const all=st.c[r.n];
+  const gaps=[];for(let j=1;j<all.length;j++)gaps.push(all[j].i-all[j-1].i);const avgGap=gaps.length?Math.round(gaps.reduce((a,b)=>a+b,0)/gaps.length):null;
+  const cc={};cs.forEach(x=>x.w.forEach(w=>SK.forEach(k=>{if(w.t[k]){const kk=w.t[k];cc[kk]=(cc[kk]||0)+1;}})));const fav=Object.entries(cc).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
+  const strong=K.S.includes(r.n);
+  const why=strong?`נמצאת במקום <b>${rk}</b> מתוך 18: <b>${r.c}</b> תפסים בחודש האחרון (ממוצע לתבנית: בערך 2), מהם ${r.w1} בשבוע האחרון ו־${r.w2} בשבוע שלפניו – ניקוד ${r.sc}.${r.last>=2*TK_WEEK?` <b>שים לב:</b> לא תפסה כבר ${r.last} הגרלות – בסיכון לרדת.`:""}`
+    :`במקום <b>${rk}</b>: ${r.c?`${r.c} תפסים בחודש, ניקוד ${r.sc}`:"לא תפסה בחודש האחרון"}.${r.last>=0&&r.last<TK_WEEK?" תפסה השבוע – מועמדת לעלות אם תתפוס שוב.":""}`;
+  const hits=cs.map(x=>`<li><b>${x.d.n}</b> · ${(x.d.date||"").split("-").reverse().slice(0,2).join("/")} ${x.d.time||""} · ${x.w.map(w=>`<bdi dir="ltr">${SK.filter(k=>w.t[k]).map(k=>`${w.t[k]}${sn(k)[1]}`).join(" ")}</bdi> (${w.src}, מ${w.start})`).join(" · ")}</li>`).join("");
+  const next=tkTickets([r.n],0);
+  return `<div class="tkD"><p>${why}</p>
+   <p>${all.length} תפסים ב־${TK_M} ההגרלות האחרונות${avgGap?` · בממוצע תפס כל <b>${avgGap}</b> הגרלות`:""}.${fav.length?` הקלפים שהכי הרבה היו בתפסים שלה: ${fav.map(([v,n])=>`${chip(v)} ×${n}`).join(" ")}.`:""}</p>
+   ${hits?`<b>התפסים בחודש:</b><ul class="myN">${hits}</ul>`:""}
+   <b>הטפסים שלה להגרלה הבאה (${next.length}):</b> ${next.map(x=>`<bdi dir="ltr" class="tkT">${SK.map(k=>x.t[k]?`${x.t[k]}${sn(k)[1]}`:"–").join(" ")}</bdi>`).join(" ")}</div>`;}
+function renderTk(){const el=document.getElementById("tkPage");if(!el||el.hidden)return;
+  if(!HIST){el.innerHTML='<p class="tplNote" style="padding:16px">טוען…</p>';loadHist().then(renderTk);return;}
+  el.innerHTML=`<div class="fWrap">${tkHtml()}</div>`;}
+function openTk(on){const el=document.getElementById("tkPage");el.hidden=!on;fOpenSync();
+  if(on){renderTk();el.scrollTop=0;try{if(location.hash!=="#trk")history.pushState(null,"","#trk");}catch(e){}}
+  else{try{if(location.hash==="#trk")history.pushState(null,"",location.pathname+location.search);}catch(e){}}}
+document.getElementById("tkPage").addEventListener("click",e=>{if(e.target.closest("#tkClose")){openTk(false);return;}
+  const b=e.target.closest(".tkB");if(b){tkSide=b.dataset.s;tkOpen=null;renderTk();return;}
+  const r=e.target.closest(".tkRow");if(r){const n=+r.dataset.n;tkOpen=tkOpen===n?null:n;renderTk();const x=document.querySelector(`.tkRow[data-n="${n}"]`);if(x)x.scrollIntoView({block:"start"});}});
+window.addEventListener("hashchange",()=>openTk(location.hash==="#trk"));
+if(location.hash==="#trk")openTk(true);
 // ---- row numbers: every table of forms (a column per suit) gets a "#" column – one number per form, 1, 2, 3 … ----
 function numberTables(root){(root||document).querySelectorAll("table").forEach(tb=>{if(tb.dataset.rn)return;tb.dataset.rn="1";
   if(tb.closest(".ccTbl,.cdTbl"))return;const rows=[...tb.rows];if(!rows.length)return;const h=rows[0];
@@ -2776,6 +2855,7 @@ function numberTables(root){(root||document).querySelectorAll("table").forEach(t
   const items=[
     ["📋 בדיקת טפסים",()=>{openForms(true);return null;}],
     ["🃏 טבלת קלפים",()=>{openCards(true);return null;}],
+    ["🎯 מעקב תבניות",()=>{openTk(true);return null;}],
     ["📊 סטטיסטיקה אישית",()=>{openMy(true);return null;}],
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
