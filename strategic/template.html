@@ -294,6 +294,7 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .pqPick{display:flex;align-items:center;gap:10px;margin:10px 0;font-size:1.4rem}.pqPick .mySel{font-size:1.3rem;padding:8px}.pqOff{opacity:.45}.pqAgo{font-size:.75em;white-space:nowrap}.pqTbl td{padding:5px 3px}
 .trP{cursor:pointer}.trP.on td{background:var(--win)}
 .tkMini{margin:6px 0 12px}.tkMini td,.tkMini th{padding:4px 2px}.tkSrc{font-size:.7em;white-space:normal!important;line-height:1.3}
+.trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -2760,7 +2761,7 @@ function myHtml(){const S=myStatsCalc(),sn=k=>SUITS.find(x=>x[0]===k);
   <div class="myBtns"><button type="button" class="fBig myGo${myMode==="c3"?" on":""}" data-m="c3">צ'אנס 3<small>השלמה ל־3 קלפים</small></button><button type="button" class="fBig myGo${myMode==="c4"?" on":""}" data-m="c4">צ'אנס 4<small>השלמה ל־4 קלפים</small></button></div>
   ${res}<p class="tplNote">שים לב: "יצא הרבה" ו"אוהב" מתארים את העבר. כל הגרלה עצמאית, וההשלמה לא משנה את הסיכוי לזכות (צ'אנס 3: 1 ל־512 לטופס).</p>`;}
 // "חיפוש זוג": two cards (any order, any suits) – every draw in the whole history where both came out
-var myView="forms",pairQ={a:"",b:""},pairShow=200,trW=180,trPair=0,trCard="";
+var myView="forms",pairQ={a:"",b:""},pairShow=200,trW=180,trPair=0,trCard="",trExtra={};
 // "זוג + הקלף שלי": the strongest placed pairs of the chosen window; the user adds a card; every placement is built and scored
 function triHtml(){const AA=allDraws(),W=AA.slice(0,trW),N=W.length,sn=k=>SUITS.find(x=>x[0]===k),V=MY_VALS;
   const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
@@ -2768,9 +2769,19 @@ function triHtml(){const AA=allDraws(),W=AA.slice(0,trW),N=W.length,sn=k=>SUITS.
   const P=[...pc.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,n])=>{const [x,y]=k.split("|");return {k1:x[0],v1:x.slice(1),k2:y[0],v2:y.slice(1),n};});
   const sel=P[Math.min(trPair,P.length-1)];
   const wins=[[100,"100"],[180,"חודש"],[500,"500"],[1000,"1,000"],[5000,"5,000"]];
-  const pairTbl=`<div class="fTbl"><table dir="ltr"><tr><th></th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>יצא</th></tr>${P.map((q,i)=>`<tr class="trP${i===trPair?" on":""}" data-i="${i}"><td class="fl">${i===trPair?"✔":""}</td>${SK.map(k=>`<td>${k===q.k1?chip(q.v1):k===q.k2?chip(q.v2):"—"}</td>`).join("")}<td><b>${q.n}</b><small class="cdP">${(q.n/N*100).toFixed(1)}%</small></td></tr>`).join("")}</table></div>`;
+  const pairTbl=`<div class="fTbl"><table dir="ltr"><tr><th></th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>יצא</th></tr>${P.map((q,i)=>`<tr class="trP${i===trPair?" on":""}" data-i="${i}"><td class="fl">${i===trPair?"✔":""}</td>${SK.map(k=>{if(k===q.k1)return `<td>${chip(q.v1)}</td>`;if(k===q.k2)return `<td>${chip(q.v2)}</td>`;const v=i===trPair?trExtra[k]||"":"";
+    return `<td class="trCellTd">${v?chip(v):""}<select class="trCell${v?" set":""}" data-i="${i}" data-k="${k}" aria-label="קלף ב${sn(k)[2]}"><option value="">${v?"✕":"＋"}</option>${V.map(x=>`<option${v===x?" selected":""}>${x}</option>`).join("")}</select></td>`;}).join("")}<td><b>${q.n}</b><small class="cdP">${(q.n/N*100).toFixed(1)}%</small></td></tr>`).join("")}</table></div>`;
   let res="";
-  if(trCard&&sel){const c=trCard,free=SK.filter(k=>k!==sel.k1&&k!==sel.k2);
+  const ex=Object.entries(trExtra).filter(([k,v])=>v);
+  if(ex.length&&sel){const t={[sel.k1]:sel.v1,[sel.k2]:sel.v2};ex.forEach(([k,v])=>t[k]=v);const ks=SK.filter(k=>t[k]);
+    const exact=W.filter(d=>ks.every(k=>d[k]===t[k])).length;
+    const has=(d,a,b)=>{const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)return false;v.splice(i,1);return v.includes(b);};
+    const lines=ex.map(([k,c])=>{const ce=W.filter(d=>d[k]===c).length;const li=AA.findIndex(d=>d[k]===c);const lov=[sel.v1,sel.v2].map(x=>{const tg=W.filter(d=>has(d,x,c)).length,av=V.reduce((s2,y)=>s2+W.filter(d=>has(d,x,y)).length,0)/V.length;return `עם <b><bdi dir="ltr">${x}</bdi></b> ${tg} ${tg>av?"✓":"✗"}`;}).join(" · ");
+      return `<li>${chip(c)} ב${sn(k)[2]}: יצא שם <b>${ce}</b> פעמים (${(ce/N*100).toFixed(1)}%)${li>=0?` · לאחרונה לפני ${li} הגרלות`:""} · ${lov}</li>`;}).join("");
+    res=`<h3 class="ovH">הטופס שלך – ${ks.length===4?"צ'אנס 4":ks.length===3?"צ'אנס 3":"צ'אנס "+ks.length}</h3>
+      <div class="fTbl"><table dir="ltr"><tr>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr><tr>${SK.map(k=>t[k]?cardTd(t[k],k,0,{ring:!!trExtra[k]}):`<td class="fe">—</td>`).join("")}</tr></table></div>
+      <div class="fAgg">כל ${ks.length} הקלפים יצאו בדיוק במקומות האלה <b>${exact}</b> פעמים ב־${N.toLocaleString("he-IL")} ההגרלות.<ul class="myN">${lines}</ul><small>✓ = יצאו יחד יותר מהרגיל · ✗ = פחות. לחיצה על ✕ בריבוע מוחקת.</small></div>`;}
+  else if(trCard&&sel){const c=trCard,free=SK.filter(k=>k!==sel.k1&&k!==sel.k2);
     const has=(d,a,b)=>{const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)return false;v.splice(i,1);return v.includes(b);};
     const together=x=>W.filter(d=>has(d,x,c)).length,avgT=x=>V.reduce((s,y)=>s+W.filter(d=>has(d,x,y)).length,0)/V.length;
     const lastIdx=AA.findIndex(d=>SK.some(k=>d[k]===c));
@@ -2782,7 +2793,7 @@ function triHtml(){const AA=allDraws(),W=AA.slice(0,trW),N=W.length,sn=k=>SUITS.
       <h3 class="ovH">כל האפשרויות – ${opts.length} טפסים</h3>
       <div class="fTbl"><table dir="ltr"><tr><th>טופס</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${opts.map((o,i)=>`<tr class="${i===0&&o.exact?"fWin":""}"><td class="fl">${i+1}${i===0?" · הכי חזק":""}<br><small>3 במקום: ${o.exact}<br>${c} ב${sn(o.e)[2]}: ${o.ce} (${(o.ce/N*100).toFixed(1)}%)</small></td>${SK.map(k=>o.t[k]?cardTd(o.t[k],k,0,{ring:k===o.e}):`<td class="fe">—</td>`).join("")}</tr>`).join("")}</table></div>
       <p class="tplNote">"3 במקום" = כמה פעמים שלושת הקלפים יצאו בדיוק בצורות האלה ב־${N.toLocaleString("he-IL")} ההגרלות. הקלף שלך מוקף בעיגול כתום.</p>`;}
-  return `<p class="tplNote">1. בחר טווח. 2. המערכת נותנת את הזוגות (2 קלפים במקומם) שיצאו הכי הרבה בטווח – לחץ על זוג. 3. הוסף קלף משלך – והמערכת בונה את כל האפשרויות, עם הסטטיסטיקה של כל אחת.</p>
+  return `<p class="tplNote">1. בחר טווח. 2. המערכת נותנת את הזוגות (2 קלפים במקומם) שיצאו הכי הרבה בטווח – לחץ על זוג. 3. לחץ על ריבוע ריק (＋) ובחר קלף – או בחר "הקלף שלי" למטה והמערכת תבנה את כל האפשרויות.</p>
   <div class="itzTabs cdTabs">${wins.map(([n,t])=>`<button type="button" class="cdN trW${n===trW?" on":""}" data-n="${n}">${t}</button>`).join("")}</div>
   <h3 class="ovH">הזוגות הכי חזקים ב־${N.toLocaleString("he-IL")} ההגרלות האחרונות</h3>${pairTbl}
   <div class="pqPick"><b>הקלף שלי:</b><select class="mySel trSel"><option value="">—</option>${V.map(x=>`<option${trCard===x?" selected":""}>${x}</option>`).join("")}</select></div>${res||`<p class="tplNote">בחר קלף.</p>`}`;}
@@ -2815,12 +2826,14 @@ document.getElementById("myPage").addEventListener("click",e=>{if(e.target.close
   const mv=e.target.closest(".myV");if(mv){myView=mv.dataset.v;renderMy();return;}
   if(e.target.closest("#pqMore")){pairShow+=500;renderMy();return;}
   const tw=e.target.closest(".trW");if(tw){trW=+tw.dataset.n;trPair=0;renderMy();return;}
-  const tp=e.target.closest(".trP");if(tp){trPair=+tp.dataset.i;renderMy();return;}
+  if(e.target.closest(".trCell"))return;
+  const tp=e.target.closest(".trP");if(tp){if(+tp.dataset.i!==trPair)trExtra={};trPair=+tp.dataset.i;renderMy();return;}
   if(e.target.closest("#myAdd")){myRows.push({});mySave();renderMy();return;}
   if(e.target.closest("#myClear")){myRows=[{},{},{}];myMode=null;mySave();renderMy();return;}
   const d=e.target.closest(".myDel");if(d){myRows.splice(+d.dataset.i,1);if(!myRows.length)myRows.push({});mySave();renderMy();return;}
   const g=e.target.closest(".myGo");if(g){myMode=g.dataset.m;renderMy();const x=document.querySelector(".myRes");if(x)x.scrollIntoView({behavior:"smooth",block:"start"});}});
-document.getElementById("myPage").addEventListener("change",e=>{const ts=e.target.closest(".trSel");if(ts){trCard=ts.value;renderMy();return;}const pq=e.target.closest(".pqSel");if(pq){pairQ[pq.dataset.k]=pq.value;pairShow=200;renderMy();return;}const sl=e.target.closest(".mySel");if(!sl)return;const r=myRows[+sl.dataset.i];if(sl.value)r[sl.dataset.k]=sl.value;else delete r[sl.dataset.k];mySave();if(myMode)renderMy();});
+document.getElementById("myPage").addEventListener("change",e=>{const ts=e.target.closest(".trSel");if(ts){trCard=ts.value;renderMy();return;}
+  const tc=e.target.closest(".trCell");if(tc){const i=+tc.dataset.i;if(i!==trPair){trPair=i;trExtra={};}if(tc.value)trExtra[tc.dataset.k]=tc.value;else delete trExtra[tc.dataset.k];renderMy();return;}const pq=e.target.closest(".pqSel");if(pq){pairQ[pq.dataset.k]=pq.value;pairShow=200;renderMy();return;}const sl=e.target.closest(".mySel");if(!sl)return;const r=myRows[+sl.dataset.i];if(sl.value)r[sl.dataset.k]=sl.value;else delete r[sl.dataset.k];mySave();if(myMode)renderMy();});
 window.addEventListener("hashchange",()=>openMy(location.hash==="#mystats"));
 if(location.hash==="#mystats")openMy(true);
 // ---- "מעקב תבניות": every draw, rank the 18 templates by their catches in the last month (recent catches weigh more),
