@@ -310,6 +310,7 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .trP{cursor:pointer}.trP.on td{background:var(--win)}
 .tkMini{margin:6px 0 12px}.tkMini td,.tkMini th{padding:4px 2px}.tkSrc{font-size:.7em;white-space:normal!important;line-height:1.3}
 .trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
+.trMine td{background:var(--win)!important}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
 .cr1,.cr2,.cr3,.cr4{display:inline-block;min-width:1.5em;padding:0 4px;border-radius:5px;font-weight:700}
 .cr1{background:#8b2fc9;color:#fff!important}.cr2{background:#f2c200;color:#1a1a1a!important}.cr3{background:#1f9a4a;color:#fff!important}.cr4{background:#d42c2c;color:#fff!important}
@@ -1340,7 +1341,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="380bde5130";
+const BUILD="738e5d7392";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2795,7 +2796,16 @@ function triHtml(){const AA=allDraws(),W=AA.slice(0,trW),N=W.length,sn=k=>SUITS.
       return `<li>${chip(c)} ב${sn(k)[2]}: יצא שם <b>${ce}</b> פעמים (${(ce/N*100).toFixed(1)}%)${li>=0?` · לאחרונה לפני ${li} הגרלות`:""} · ${lov}</li>`;}).join("");
     res=`<h3 class="ovH">הטופס שלך – ${ks.length===4?"צ'אנס 4":ks.length===3?"צ'אנס 3":"צ'אנס "+ks.length}</h3>
       <div class="fTbl"><table dir="ltr"><tr>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr><tr>${SK.map(k=>t[k]?cardTd(t[k],k,0,{ring:!!trExtra[k]}):`<td class="fe">—</td>`).join("")}</tr></table></div>
-      <div class="fAgg">כל ${ks.length} הקלפים יצאו בדיוק במקומות האלה <b>${exact}</b> פעמים ב־${N.toLocaleString("he-IL")} ההגרלות.<ul class="myN">${lines}</ul><small>✓ = יצאו יחד יותר מהרגיל · ✗ = פחות. לחיצה על ✕ בריבוע מוחקת.</small></div>`;}
+      <div class="fAgg">כל ${ks.length} הקלפים יצאו בדיוק במקומות האלה <b>${exact}</b> פעמים ב־${N.toLocaleString("he-IL")} ההגרלות.<ul class="myN">${lines}</ul><small>✓ = יצאו יחד יותר מהרגיל · ✗ = פחות. לחיצה על ✕ בריבוע מוחקת.</small></div>`;
+    // every arrangement of the same cards: each card on any suit, in any order
+    const cards=ks.map(k=>t[k]),seen=new Set(),arr=[];
+    const rec=(j,used,acc)=>{if(j===cards.length){const key=SK.map(k=>acc[k]||"-").join("");if(!seen.has(key)){seen.add(key);arr.push(Object.assign({},acc));}return;}
+      for(const k of SK){if(used.includes(k))continue;acc[k]=cards[j];rec(j+1,[...used,k],acc);delete acc[k];}};rec(0,[],{});
+    const cnt=(L,tt)=>L.filter(d=>SK.every(k=>!tt[k]||d[k]===tt[k])).length,AAll=AA;
+    const rows=arr.map(tt=>({tt,w:cnt(W,tt),a:cnt(AAll,tt),mine:SK.every(k=>(tt[k]||"")===(t[k]||""))})).sort((x,y)=>y.w-x.w||y.a-x.a);
+    res+=`<h3 class="ovH">כל האפשרויות של <bdi dir="ltr">${cards.join(" ")}</bdi> – ${rows.length} טפסים</h3>
+      <div class="fTbl"><table dir="ltr"><tr><th>יצא</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}</tr>${rows.map(r=>`<tr class="${r.mine?"trMine":""}"><td class="fl"><b>${r.w}</b> ב־${N.toLocaleString("he-IL")}<br><small>${r.a} בכל ההיסטוריה${r.mine?"<br>★ הסידור שלך":""}</small></td>${SK.map(k=>r.tt[k]?cardTd(r.tt[k],k,0,{}):`<td class="fe">—</td>`).join("")}</tr>`).join("")}</table></div>
+      <p class="tplNote">כל הסידורים של אותם ${cards.length} קלפים – כל קלף בכל צורה ובכל סדר. מסודר לפי כמה פעמים הסידור יצא בדיוק בטווח שבחרת, ואחר כך בכל ההיסטוריה (${AAll.length.toLocaleString("he-IL")} הגרלות). ★ = הסידור שבחרת בטבלה.</p>`;}
   else if(trCard&&sel){const c=trCard,free=SK.filter(k=>k!==sel.k1&&k!==sel.k2);
     const has=(d,a,b)=>{const v=SK.map(k=>d[k]);const i=v.indexOf(a);if(i<0)return false;v.splice(i,1);return v.includes(b);};
     const together=x=>W.filter(d=>has(d,x,c)).length,avgT=x=>V.reduce((s,y)=>s+W.filter(d=>has(d,x,y)).length,0)/V.length;
@@ -2830,7 +2840,7 @@ function pairHtml(){const AA=allDraws(),{a,b}=pairQ,V=MY_VALS,sn=k=>SUITS.find(x
   return `<p class="tplNote">בחר שני קלפים – לא משנה הסדר ולא משנה באיזו צורה. המערכת מוצאת את כל ההגרלות בכל ההיסטוריה שבהן שניהם יצאו יחד, עם מספר הגרלה ותאריך. הקלפים של הזוג צבועים.</p>
   <div class="pqPick">${sel("a",a)}<b>+</b>${sel("b",b)}</div>${res||`<p class="tplNote">בחר שני קלפים.</p>`}`;}
 function renderMy(){const el=document.getElementById("myPage");if(!el||el.hidden)return;
-  if((myView==="pair"||(myView==="tri"&&trW>DRAWS.length))&&(!HIST||!HDATES)){el.innerHTML='<p class="tplNote" style="padding:16px">טוען את כל ההיסטוריה…</p>';Promise.all([loadHist(),loadHDates()]).then(renderMy);return;}
+  if((myView==="pair"||myView==="tri")&&(!HIST||!HDATES)){el.innerHTML='<p class="tplNote" style="padding:16px">טוען את כל ההיסטוריה…</p>';Promise.all([loadHist(),loadHDates()]).then(renderMy);return;}
   const tabs=`<div class="myBtns"><button type="button" class="fBig myV${myView==="forms"?" on":""}" data-v="forms">📝 הטפסים שלי<small>השלמה לצ'אנס 3/4</small></button><button type="button" class="fBig myV${myView==="pair"?" on":""}" data-v="pair">🔍 חיפוש זוג<small>כל ההגרלות עם שני הקלפים</small></button></div><div class="myBtns"><button type="button" class="fBig myV${myView==="tri"?" on":""}" data-v="tri">🃏 זוג + הקלף שלי<small>המערכת נותנת זוג, אתה מוסיף קלף</small></button></div>`;
   let h=myHtml();if(myView==="pair"||myView==="tri"){const i=h.indexOf('</div>')+6;h=h.slice(0,i)+tabs+(myView==="pair"?pairHtml():triHtml());}else{const i=h.indexOf('</div>')+6;h=h.slice(0,i)+tabs+h.slice(i);}
   el.innerHTML=`<div class="fWrap">${h}</div>`;}
