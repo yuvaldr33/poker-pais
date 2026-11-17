@@ -297,7 +297,7 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 .trMine td{background:var(--win)!important}
 .h5r{box-shadow:inset 0 0 0 4px #dc2626;background:rgba(220,38,38,.16)!important}.h5y{box-shadow:inset 0 0 0 4px #eab308;background:rgba(234,179,8,.2)!important}.h5g{box-shadow:inset 0 0 0 4px #16a34a;background:rgba(22,163,74,.18)!important}.h5rR>td{background:rgba(220,38,38,.16)!important;box-shadow:inset 0 3px 0 #dc2626,inset 0 -3px 0 #dc2626}.h5yR>td{background:rgba(234,179,8,.2)!important;box-shadow:inset 0 3px 0 #eab308,inset 0 -3px 0 #eab308}.h5gR>td{background:rgba(22,163,74,.18)!important;box-shadow:inset 0 3px 0 #16a34a,inset 0 -3px 0 #16a34a}.h5n{display:block;font-size:.8rem;margin-top:2px}.h5c{display:inline-block;padding:0 8px;border-radius:6px}.h5c.h5r,.h5c.h5y,.h5c.h5g{box-shadow:inset 0 0 0 2px var(--h5,#888)}.h5c.h5r{--h5:#dc2626}.h5c.h5y{--h5:#eab308}.h5c.h5g{--h5:#16a34a}
-.pfG{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}.pfC{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px;border-radius:14px;border:1px solid var(--line,#cbd5e1);background:transparent;color:inherit;font:inherit;text-align:center;cursor:pointer}.pfC.on{outline:3px solid #0b7a45}.pfC small{font-size:.75rem;opacity:.8;line-height:1.3}.pfC u{font-size:.8rem;color:#0b7a45}.pfT{font-size:.85rem}.pfS b{color:#0b7a45;font-size:1.1rem}
+.pfList{display:flex;flex-direction:column;gap:8px;margin:8px 0}.pfR{border:1px solid var(--card-edge,#cbd5e1);border-radius:14px;overflow:hidden}.pfR.on{outline:3px solid #0b7a45}.pfC{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:transparent;color:inherit;font:inherit;text-align:start;cursor:pointer}.pfI{display:flex;flex-direction:column;flex:1;min-width:0}.pfI small{opacity:.8}.pfC i{font-style:normal;font-size:1.2rem;opacity:.7}.pfD{padding:4px 10px 12px;min-width:0}.pfD h4{margin:14px 0 4px}.pfD p{margin:0;line-height:1.6}.pfBig{width:100%;height:auto;display:block;margin:4px 0}.pfN4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.pfN4>div{border:1px solid var(--card-edge,#cbd5e1);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column}.pfN4 b{font-size:1.15rem;color:#0b7a45}.pfN4 span{font-size:.78rem;opacity:.8}
 .skL{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;line-height:1.25}.skL small{font-size:.95em}
 .tkHbs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.tkHb{padding:4px 10px;font-size:.85rem}.tkHb small{opacity:.75}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
@@ -3002,35 +3002,49 @@ window.addEventListener("hashchange",()=>openTk(location.hash==="#trk"));
 // ---- "✅ תפסים של השבלונות": where the 8 + 4 skipping templates (from the 3–4 draw analysis) hit ----
 const SKP4=[[[1,2],[2,3],[3,2],[4,1]],[[1,3],[2,3],[3,2],[4,1]],[[1,1],[2,1],[3,1],[4,3]],[[1,1],[2,2],[3,1],[4,0]]];
 var pfN=1000,pfOpenT=null,_pfTok=0;
-function pfCalc(N){const AA=allDraws(),has=(t,cs)=>{const v=SK.map(k=>t[k]);for(const x of cs){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
+function pfCalc(N,off){off=off||0;const AA=allDraws(),has=(t,cs)=>{const v=SK.map(k=>t[k]);for(const x of cs){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
   const seq=j=>[1,2,3,4].every(r=>AA[j+r]&&AA[j+r].n===AA[j].n-r);
-  return [...SKP.slice(0,8),...SKP4].map((p,q)=>{let n=0;const hits=[];for(let j=0;j<N&&j+4<AA.length;j++){if(!seq(j))continue;n++;const cs=p.map(([r,c])=>AA[j+r][SK[c]]);if(has(AA[j],cs))hits.push({j,d:AA[j],cs,src:p.map(([r,c])=>AA[j+r])});}
-    return {p,q,four:p.length===4,no:q<8?q+1:q-7,n,hits};});}
-function pfHtml(){const AA=allDraws(),T=pfCalc(pfN),sn=k=>SUITS.find(x=>x[0]===k);
+  return SKP.slice(0,8).map((p,q)=>{let n=0;const hits=[];for(let j=off;j<off+N&&j+4<AA.length;j++){if(!seq(j))continue;n++;const cs=p.map(([r,c])=>AA[j+r][SK[c]]);if(has(AA[j],cs))hits.push({j,d:AA[j],cs,src:p.map(([r,c])=>AA[j+r])});}
+    return {p,q,no:q+1,n,hits};});}
+// big drawing: the 4 newest draws as a card grid, the template's cells in colour, arrows in its order
+function pfBig(p,AA){const W=64,H=58,X0=96,Y0=34,cx=c=>X0+(3-c)*W+W/2,cy=r=>Y0+(r-1)*H+H/2,on=(r,c)=>p.some(x=>x[0]===r&&x[1]===c);
+  let s=`<svg class="pfBig" viewBox="0 0 ${X0+4*W+8} ${Y0+4*H+8}" role="img" aria-label="ציור השבלונה">`;
+  SK.forEach((k,c)=>{s+=`<text x="${cx(c)}" y="22" text-anchor="middle" font-size="15" fill="currentColor" opacity=".7">${SKP_NM[k]}</text>`;});
+  for(let r=1;r<=4;r++){const d=AA[r-1];s+=`<text x="${X0-8}" y="${cy(r)-3}" direction="rtl" text-anchor="start" font-size="14" font-weight="700" fill="currentColor">${d.n}</text><text x="${X0-8}" y="${cy(r)+15}" direction="rtl" text-anchor="start" font-size="12" fill="currentColor" opacity=".7">${r===1?"אחרונה":r+" אחורה"}</text>`;
+    for(let c=0;c<4;c++){const v=d[SK[c]],o=on(r,c);s+=`<rect x="${cx(c)-26}" y="${cy(r)-23}" width="52" height="46" rx="9" fill="${o?CARD_COL[v]:"#e5e7eb"}" stroke="${o?"#0b231a":"#cbd5e1"}" stroke-width="${o?2.5:1}"/><text x="${cx(c)}" y="${cy(r)+7}" text-anchor="middle" font-size="20" font-weight="800" fill="${o?(CARD_INK[v]||"#fff"):"#9ca3af"}">${v}</text>`;}}
+  for(let i=0;i+1<p.length;i++){const [r1,c1]=p[i],[r2,c2]=p[i+1];let x1=cx(c1),y1=cy(r1),x2=cx(c2),y2=cy(r2);const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;x1+=ux*24;y1+=uy*24;x2-=ux*26;y2-=uy*26;
+    s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#2563eb" stroke-width="4"/><path d="M${x2+ux*6},${y2+uy*6} L${x2-uy*7},${y2+ux*7} L${x2+uy*7},${y2-ux*7}z" fill="#2563eb"/>`;}
+  p.forEach(([r,c],i)=>{s+=`<circle cx="${cx(c)+22}" cy="${cy(r)-20}" r="11" fill="${i?"#2563eb":"#0b7a45"}"/><text x="${cx(c)+22}" y="${cy(r)-15}" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">${i+1}</text>`;});
+  return s+'</svg>';}
+function pfHtml(){const AA=allDraws(),T=pfCalc(pfN),P=pfCalc(pfN,pfN),sn=k=>SUITS.find(x=>x[0]===k),NX=skpTix(AA);
   const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
   const dt=d=>(d.date||dateOfN(d.n)||"").split("-").reverse().join("/")||"—";
-  const from=p=>p.map(([r,c])=>`${r===1?"אחרונה":r+" אחורה"} ${SKP_NM[SK[c]]}`).join(" · ");
-  const card=x=>{const id=(x.four?"f":"t")+x.no,open=pfOpenT===id,last=x.hits[0];
-    return `<button type="button" class="pfC${open?" on":""}" data-t="${id}"><b class="pfT">שבלונה #${x.no}</b>${skpSvg(x.p).replace('width="48" height="48"','width="84" height="84"')}
-      <span class="pfS">פגעה <b>${x.hits.length}</b> מ־${x.n} · ${(x.hits.length/Math.max(1,x.n)*100).toFixed(1)}%</span><small>${from(x.p)}</small><small>${last?`אחרונה: ${last.d.n} (לפני ${last.j+1})`:"לא פגעה"}</small><u>${open?"סגור":"איפה פגעה"}</u></button>`;};
-  const list=x=>{const used=h=>{const v=[...h.cs];return k=>{const i=v.indexOf(h.d[k]);if(i<0)return false;v.splice(i,1);return true;};};
-    return `<div class="pfL"><h3 class="ovH">שבלונה #${x.no} – ${x.hits.length} פגיעות ב־${x.n} הגרלות</h3><p class="tplNote">${from(x.p)}. בכל שורה: מה יצא בהגרלה. קלף צבוע = קלף שהשבלונה נתנה ויצא. "מאיפה" = הקלפים של השבלונה, לפי הסדר שלה.</p>
+  const pct=(h,n)=>(h/Math.max(1,n)*100).toFixed(1)+"%";
+  const step=([r,c],i)=>`${i+1}. הקלף ב<b>${SKP_NM[SK[c]]}</b> ${r===1?"מההגרלה האחרונה":`מ־${r} הגרלות אחורה`}`;
+  const detail=x=>{const pv=P[x.q],nx=NX[x.q],cs=x.p.map(([r,c])=>AA[r-1][SK[c]]),skipped=[1,2,3,4].filter(r=>!x.p.some(q=>q[0]===r));
+    const gaps=x.hits.slice(1).map((h,i)=>h.j-x.hits[i].j),avgGap=x.hits.length?(x.n/x.hits.length).toFixed(1):"—",maxGap=gaps.length?Math.max(...gaps):0;
+    const used=h=>{const v=[...h.cs];return k=>{const i=v.indexOf(h.d[k]);if(i<0)return false;v.splice(i,1);return true;};};
+    return `<div class="pfD">${pfBig(x.p,AA)}
+    <h4>איך היא עובדת</h4><p>${x.p.map(step).join("<br>")}${skipped.length?`<br>היא מדלגת על ${skipped.map(r=>r===1?"ההגרלה האחרונה":`ההגרלה של ${r} אחורה`).join(" ועל ")}.`:""}<br>אם שלושת הקלפים האלה יוצאים בהגרלה הבאה, בכל צורה – זו פגיעה.</p>
+    <h4>עכשיו, להגרלה ${AA[0].n+1}</h4><p>הקלפים: ${cs.map(chip).join(" ")}. הטופס בכפתור "שבלונות מדלגות": ${SK.map(k=>nx.t[k]?`${SKP_NM[k]} ${chip(nx.t[k])}`:"").filter(Boolean).join(" · ")} (בצורות שבהן הקלפים שלה יצאו הכי הרבה).</p>
+    <h4>במספרים</h4><div class="pfN4"><div><b>${x.hits.length}</b><span>פגיעות ב־${x.n} הגרלות</span></div><div><b>${pct(x.hits.length,x.n)}</b><span>מההגרלות</span></div><div><b>${avgGap}</b><span>פגיעה כל כמה הגרלות בממוצע</span></div><div><b>${x.hits.length?x.hits[0].j+1:"—"}</b><span>הגרלות מאז הפגיעה האחרונה</span></div><div><b>${maxGap||"—"}</b><span>ההפסקה הכי ארוכה בין פגיעות</span></div><div><b>${pv.hits.length} · ${pct(pv.hits.length,pv.n)}</b><span>ב־${pv.n} ההגרלות שלפני</span></div></div>
+    <h4>איפה היא פגעה (${x.hits.length})</h4><p class="tplNote">קלף צבוע = קלף של השבלונה שיצא. "מאיפה" = הקלפים של השבלונה לפי הסדר, ומאיזו הגרלה כל אחד.</p>
     <div class="fTbl hTbl"><table dir="ltr"><tr><th>הגרלה<br>ותאריך</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>מאיפה</th></tr>
     ${x.hits.map(h=>{const u=used(h);return `<tr><td class="hDt"><b>${h.d.n}</b><br>${dt(h.d)}${h.d.time?`<br><small>${h.d.time}</small>`:""}</td>${SK.map(k=>u(k)?`<td>${chip(h.d[k])}</td>`:`<td class="${sn(k)[3]?"r":""} hOff">${h.d[k]}</td>`).join("")}<td class="hTp">${x.p.map(([r,c],i)=>`${chip(h.cs[i])} <small>${h.src[i].n} ${SKP_NM[SK[c]]}</small>`).join("<br>")}</td></tr>`;}).join("")||`<tr><td colspan="6">אין פגיעות בטווח הזה</td></tr>`}</table></div></div>`;};
-  const T3=T.filter(x=>!x.four),T4=T.filter(x=>x.four),op=T.find(x=>(x.four?"f":"t")+x.no===pfOpenT);
-  const avg=L=>(L.reduce((a,x)=>a+x.hits.length,0)/Math.max(1,L.reduce((a,x)=>a+x.n,0))*100);
-  const grid=L=>`<div class="pfG">${L.map(card).join("")}</div>${op&&L.includes(op)?list(op):""}`;
+  const row=x=>{const open=pfOpenT===x.no;return `<div class="pfR${open?" on":""}"><button type="button" class="pfC" data-t="${x.no}" aria-expanded="${open}">${skpSvg(x.p)}<span class="pfI"><b>שבלונה ${x.no}</b><small>פגעה ${x.hits.length} מ־${x.n} · ${pct(x.hits.length,x.n)}</small></span><i>${open?"▴":"▾"}</i></button>${open?detail(x):""}</div>`;};
+  const avg=T.reduce((a,x)=>a+x.hits.length,0)/Math.max(1,T.reduce((a,x)=>a+x.n,0))*100;
   return `<div class="fHead"><button type="button" class="fBack" id="pfClose" aria-label="חזרה לאתר">→ חזרה</button><h2>תפסים של השבלונות</h2></div>
   <div class="itzTabs cdTabs">${[100,200,500,1000].map(n=>`<button type="button" class="cdN pfN${pfN===n?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")} הגרלות</button>`).join("")}</div>
-  <p class="tplNote">8 השבלונות החזקות של 3 קלפים מהניתוח של 3–4 הגרלות (שבלונות 1–8 בכפתור "שבלונות מדלגות"). בשרטוט: שורה עליונה = ההגרלה האחרונה, ושורה תחתונה = 4 הגרלות אחורה. העמודות מימין לשמאל: עלה, לב, יהלום, תלתן. נקודה ירוקה = הקלף הראשון. <b>פגיעה</b> = כל הקלפים של השבלונה יצאו בהגרלה, בכל צורה. לחיצה על שבלונה = כל ההגרלות שבהן היא פגעה, מהחדשה לישנה.</p>
-  <h3 class="ovH">שמונה השבלונות · ממוצע ${avg(T3).toFixed(1)}%</h3>${grid(T3)}
+  <p class="tplNote">שמונה השבלונות החזקות של 3 קלפים מהניתוח של 3–4 הגרלות (שבלונות 1–8 בכפתור "שבלונות מדלגות"). כל שבלונה לוקחת קלף אחד מכל אחת מ־3 הגרלות, מתוך 4 ההגרלות האחרונות. <b>פגיעה</b> = שלושת הקלפים יצאו בהגרלה הבאה, בכל צורה. לחיצה על שבלונה פותחת את כל הפירוט שלה, ולחיצה נוספת סוגרת.</p>
+  <div class="fAgg">ממוצע לשמונה השבלונות: <b>${avg.toFixed(1)}%</b> ב־${pfN.toLocaleString("he-IL")} ההגרלות האחרונות.</div>
+  <div class="pfList">${T.map(row).join("")}</div>
   <p class="tplNote">השבלונות נבחרו לפי 1,000 ההגרלות 52925–53924, כך שבטווח של 1,000 הן נבדקות על אותן הגרלות שלפיהן נבחרו. לשם השוואה: הממוצע לכל 256 השבלונות של 3 קלפים מהסוג הזה הוא 3.3%.</p>`;}
 function pfStep(tok){if(tok!==_pfTok)return;const el=document.getElementById("pfPage");if(!el||el.hidden)return;el.innerHTML=`<div class="fWrap">${pfHtml()}</div>`;}
 function openPf(on){const el=document.getElementById("pfPage");el.hidden=!on;fOpenSync();
   if(on){el.scrollTop=0;if(!HIST||!HDATES){el.innerHTML='<p class="tplNote" style="padding:16px">טוען את כל ההיסטוריה…</p>';Promise.all([loadHist(),loadHDates()]).then(()=>openPf(true));return;}pfStep(++_pfTok);}}
 document.getElementById("pfPage").addEventListener("click",e=>{if(e.target.closest("#pfClose")){openPf(false);return;}
   const b=e.target.closest(".pfN");if(b){pfN=+b.dataset.n;pfStep(++_pfTok);return;}
-  const c=e.target.closest(".pfC");if(c){const id=c.dataset.t;pfOpenT=pfOpenT===id?null:id;pfStep(++_pfTok);const x=document.querySelector(pfOpenT?".pfL":`.pfC[data-t="${id}"]`);if(x)x.scrollIntoView({block:"start"});}});
+  const c=e.target.closest(".pfC");if(c){const id=+c.dataset.t;pfOpenT=pfOpenT===id?null:id;pfStep(++_pfTok);const x=document.querySelector(`.pfC[data-t="${id}"]`);if(x)x.scrollIntoView({block:"start"});}});
 
 if(location.hash==="#trk")openTk(true);
 // ---- row numbers: every table of forms (a column per suit) gets a "#" column – one number per form, 1, 2, 3 … ----
