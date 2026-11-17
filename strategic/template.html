@@ -297,7 +297,6 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 .trMine td{background:var(--win)!important}
 .h5r{box-shadow:inset 0 0 0 4px #dc2626;background:rgba(220,38,38,.16)!important}.h5y{box-shadow:inset 0 0 0 4px #eab308;background:rgba(234,179,8,.2)!important}.h5g{box-shadow:inset 0 0 0 4px #16a34a;background:rgba(22,163,74,.18)!important}.h5rR>td{background:rgba(220,38,38,.16)!important;box-shadow:inset 0 3px 0 #dc2626,inset 0 -3px 0 #dc2626}.h5yR>td{background:rgba(234,179,8,.2)!important;box-shadow:inset 0 3px 0 #eab308,inset 0 -3px 0 #eab308}.h5gR>td{background:rgba(22,163,74,.18)!important;box-shadow:inset 0 3px 0 #16a34a,inset 0 -3px 0 #16a34a}.h5n{display:block;font-size:.8rem;margin-top:2px}.h5c{display:inline-block;padding:0 8px;border-radius:6px}.h5c.h5r,.h5c.h5y,.h5c.h5g{box-shadow:inset 0 0 0 2px var(--h5,#888)}.h5c.h5r{--h5:#dc2626}.h5c.h5y{--h5:#eab308}.h5c.h5g{--h5:#16a34a}
-.pfList{display:flex;flex-direction:column;gap:8px;margin:8px 0}.pfR{border:1px solid var(--card-edge,#cbd5e1);border-radius:14px;overflow:hidden}.pfR.on{outline:3px solid #0b7a45}.pfC{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;background:transparent;color:inherit;font:inherit;text-align:start;cursor:pointer}.pfI{display:flex;flex-direction:column;flex:1;min-width:0}.pfI small{opacity:.8}.pfC i{font-style:normal;font-size:1.2rem;opacity:.7}.pfD{padding:4px 10px 12px;min-width:0}.pfD h4{margin:14px 0 4px}.pfD p{margin:0;line-height:1.6}.pfBig{width:100%;height:auto;display:block;margin:4px 0}.pfN4{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.pfN4>div{border:1px solid var(--card-edge,#cbd5e1);border-radius:10px;padding:6px 8px;display:flex;flex-direction:column}.pfN4 b{font-size:1.15rem;color:#0b7a45}.pfN4 span{font-size:.78rem;opacity:.8}
 .skL{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;line-height:1.25}.skL small{font-size:.95em}
 .tkHbs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.tkHb{padding:4px 10px;font-size:.85rem}.tkHb small{opacity:.75}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
@@ -492,12 +491,11 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
     <div class="top"><h2>ניתוח לפני ההגרלה</h2><span class="sub" id="preFor"></span></div>
     <p class="sub" id="preWhy"></p>
     <div class="pairbig" id="prePair"></div>
-    <div class="tplBar tplScroll"><button class="btn pri" type="button" id="futBtn" aria-pressed="false">תוצאות להגרלה עתידית ▾</button><button class="btn pri" type="button" id="itzBtn" aria-pressed="false">התבניות של איציק ▾</button><button class="btn pri" type="button" id="skpBtn" aria-pressed="false">שבלונות מדלגות ▾</button><button class="btn pri" type="button" id="sysBtn" aria-pressed="false">השבלונות של המערכת ▾</button><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">תבניות ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
+    <div class="tplBar tplScroll"><button class="btn pri" type="button" id="futBtn" aria-pressed="false">תוצאות להגרלה עתידית ▾</button><button class="btn pri" type="button" id="itzBtn" aria-pressed="false">התבניות של איציק ▾</button><button class="btn pri" type="button" id="skpBtn" aria-pressed="false">שבלונות מדלגות ▾</button><button class="btn pri" type="button" id="mypBtn" aria-pressed="false">תבניות ▾</button><button class="btn" type="button" id="triBtn" aria-pressed="false">שלישיות ▾</button><button class="btn" type="button" id="hotBtn" aria-pressed="false">שלישיות חמות להגרלה הבאה ▾</button><button class="btn" type="button" id="ancBtn" aria-pressed="false">עוגן + 2 שותפים ▾</button><button class="btn" type="button" id="swpBtn" aria-pressed="false">חילופי מקומות ▾</button></div>
     <p class="tplNote">שלישיות שמיועדות לבוא, לפי 200 ההגרלות האחרונות</p>
     <div id="futPanel" class="c3" hidden></div>
     <div id="itzPanel" class="c3" hidden></div>
     <div id="skpPanel" class="c3" hidden></div>
-    <div id="sysPanel" class="c3" hidden></div>
     <div id="mypPanel" class="c3" hidden></div>
     <div id="triPanel" class="c3" hidden></div>
     <div id="hotPanel" class="c3" hidden></div>
@@ -631,7 +629,6 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 <div id="cardsPage" class="fPage" hidden></div>
 <div id="myPage" class="fPage" hidden></div>
 <div id="tkPage" class="fPage" hidden></div>
-<div id="pfPage" class="fPage" hidden></div>
 <button class="chFab" id="chFab" type="button" aria-label="פתח צ'אט"><span class="dot"></span>שאל את העוזר</button>
 <div class="chBox" id="chBox" dir="rtl" hidden role="dialog" aria-label="העוזר של צ'אנס">
   <div class="chHead"><div><b>העוזר של צ'אנס</b><small>עונה לפי הניתוח החי של האתר</small></div><button type="button" id="chClose" aria-label="סגור">✕</button></div>
@@ -2373,8 +2370,6 @@ document.getElementById("itzPanel").addEventListener("click",e=>{const b=e.targe
   const ipn=e.target.closest(".ipN");if(ipn){itzPairsN=+ipn.dataset.n;renderItz();return;}
   const r=e.target.closest(".itzRow");if(r){const n=+r.dataset.num;itzOpenRow=itzOpenRow===n?null:n;renderItz();const x=document.querySelector(`.itzRow[data-num="${n}"]`);if(x)x.scrollIntoView({block:"start",behavior:"smooth"});}});
 // templates as [row (1 = newest draw … 4 = four draws back), suit index in SK]
-// "השבלונות של המערכת": 8 templates that take one card from each of 3 of the last 4 draws (found on draws 52925–53924)
-const SYS=[[[1,2],[2,3],[4,1]],[[1,2],[3,3],[4,1]],[[2,2],[3,1],[4,0]],[[2,3],[3,0],[4,1]],[[1,1],[2,2],[3,3]],[[1,3],[2,1],[3,2]],[[1,2],[3,2],[4,2]],[[1,1],[2,2],[4,0]]];
 // "שבלונות מדלגות": Itzik's two templates (draw 53929), each from its 2 possible starting points – the green one: start 2 back, then the last draw one to the left, then 2 to the right; the orange one: start 2 back, then 2 to the left in the same draw, then straight up
 const SKP=[[[2,2],[1,1],[1,3]],[[2,1],[1,0],[1,2]],[[2,2],[2,0],[1,0]],[[2,3],[2,1],[1,1]]];
 const SKP_ITZ={1:"ירוקה · מיהלום",2:"ירוקה · מלב",3:"כתומה · מיהלום",4:"כתומה · מתלתן"};
@@ -2385,7 +2380,7 @@ function skpSvg(p){const cx=c=>c*15+7.5,cy=r=>(r-1)*15+7.5;let s='<svg width="48
   p.forEach(([r,c],i)=>{s+=`<circle cx="${cx(c)}" cy="${cy(r)}" r="5" fill="${i?"#2563eb":"#0b7a45"}"/>`;});return s+'</svg>';}
 var _skpC=new Map();
 // tickets for the draw after base[0]; each template's cards go in the suit order they came out in most over the 1,000 draws before
-function skpTix(base,sys){const L=sys?SYS:SKP,key=(sys?"s":"k")+base[0].n+":"+base.length;if(_skpC.has(key))return _skpC.get(key);
+function skpTix(base){const L=SKP,key="k"+base[0].n+":"+base.length;if(_skpC.has(key))return _skpC.get(key);
   const has=(t,cs)=>{const v=SK.map(k=>t[k]);for(const x of cs){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
   const seq=j=>[1,2,3,4].every(r=>base[j+r]&&base[j+r].n===base[j].n-r);
   const out=L.map((p,i)=>{let n=0,h=0;const cnt=new Map();
@@ -2396,9 +2391,9 @@ function skpTix(base,sys){const L=sys?SYS:SKP,key=(sys?"s":"k")+base[0].n+":"+ba
     if(!perm){const ks=p.map(x=>SK[x[1]]);perm=new Set(ks).size===3?ks.join(""):"SHD";}
     const t={};cards.forEach((c,q)=>{t[perm[q]]=c;});
     const from=p.map(([r,c])=>`${r===1?"אחרונה":r+" אחורה"} ${SKP_NM[SK[c]]}`).join(" · ");
-    return {t,p,num:i+1,h,n,label:`<span class="skL" title="${from}">${skpSvg(p)}<b>שבלונה ${i+1}</b>${!sys&&SKP_ITZ[i+1]?`<small>${SKP_ITZ[i+1]}</small>`:""}<small>פגעה ${h}<br>מ־${n}</small></span>`};});
+    return {t,p,num:i+1,h,n,label:`<span class="skL" title="${from}">${skpSvg(p)}<b>שבלונה ${i+1}</b>${SKP_ITZ[i+1]?`<small>${SKP_ITZ[i+1]}</small>`:""}<small>פגעה ${h}<br>מ־${n}</small></span>`};});
   if(_skpC.size>400)_skpC.clear();_skpC.set(key,out);return out;}
-var skpOpen=false,sysOpen=false;
+var skpOpen=false;
 function renderSkp(){const el=document.getElementById("skpPanel"),bt=document.getElementById("skpBtn");if(!el)return;
   bt.textContent="שבלונות מדלגות"+(skpOpen?" ▴":" ▾");bt.classList.toggle("on",skpOpen);bt.setAttribute("aria-pressed",skpOpen);el.hidden=!skpOpen;if(!skpOpen)return;
   if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(skpOpen)renderSkp();});return;}
@@ -2409,16 +2404,6 @@ function renderSkp(){const el=document.getElementById("skpPanel"),bt=document.ge
   ${CR_LEGEND}${formMethodHtml({skip:0,d:null},"skz")}
   <p class="tplNote">אחרי כל הגרלה אפשר לראות ב"בדיקת טפסים" ← "שבלונות מדלגות" איך כל טופס יצא.</p>`;}
 document.getElementById("skpBtn").addEventListener("click",()=>{skpOpen=!skpOpen;renderSkp();if(skpOpen)document.getElementById("skpPanel").scrollIntoView({behavior:"smooth",block:"start"});});
-function renderSys(){const el=document.getElementById("sysPanel"),bt=document.getElementById("sysBtn");if(!el)return;
-  bt.textContent="השבלונות של המערכת"+(sysOpen?" ▴":" ▾");bt.classList.toggle("on",sysOpen);bt.setAttribute("aria-pressed",sysOpen);el.hidden=!sysOpen;if(!sysOpen)return;
-  if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(sysOpen)renderSys();});return;}
-  const AA=allDraws();
-  el.innerHTML=`<h3 class="tplH">השבלונות של המערכת · להגרלה <bdi dir="ltr">${AA[0].n+1}</bdi></h3>
-  <p class="tplNote">8 השבלונות מהמחקר על 3–4 הגרלות: כל אחת לוקחת קלף אחד מכל אחת מ־3 הגרלות, מתוך 4 ההגרלות האחרונות (יש הגרלות שהיא מדלגת עליהן). בשרטוט: שורה עליונה = ההגרלה האחרונה, ושורה תחתונה = 4 הגרלות אחורה. העמודות משמאל לימין: עלה, לב, יהלום, תלתן. נקודה ירוקה = הקלף הראשון.</p>
-  <p class="tplNote">הקלפים מונחים בצורות שבהן קלפי השבלונה יצאו הכי הרבה ב־1,000 ההגרלות האחרונות. "פגעה X מ־Y" = בכמה מתוך 1,000 ההגרלות האחרונות שלושת הקלפים של השבלונה יצאו (בכל צורה). השבלונות נבחרו לפי 1,000 ההגרלות 52925–53924. ב־1,000 ההגרלות שלפני כן הן פגעו ב־2.2%–3.6% מההגרלות, והממוצע לכל השבלונות מהסוג הזה הוא 3.0%. כל הפירוט ואיפה כל אחת פגעה – בתפריט ⋮ ← "✅ תפסים של השבלונות".</p>
-  ${CR_LEGEND}${formMethodHtml({skip:0,d:null},"sys")}
-  <p class="tplNote">אחרי כל הגרלה אפשר לראות ב"בדיקת טפסים" ← "השבלונות של המערכת" איך כל טופס יצא.</p>`;}
-document.getElementById("sysBtn").addEventListener("click",()=>{sysOpen=!sysOpen;renderSys();if(sysOpen)document.getElementById("sysPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 
 document.getElementById("itzBtn").addEventListener("click",()=>{itzOpen=!itzOpen;renderItz();if(itzOpen)document.getElementById("itzPanel").scrollIntoView({behavior:"smooth",block:"start"});});
 
@@ -2581,7 +2566,7 @@ function formItz(it){
 }
 
 // what every other method offered for the draw after DRAWS[skip]: tickets as {suit:card}
-const FMETH=[["itz","התבניות של איציק"],["skz","שבלונות מדלגות"],["sys","השבלונות של המערכת"],["pairs","זוגות"],["myp","תבניות"],["tri","שלישיות"],["hot","שלישיות חמות"],["anc","עוגן + 2 שותפים"],["swp","חילופי מקומות"]];
+const FMETH=[["itz","התבניות של איציק"],["skz","שבלונות מדלגות"],["pairs","זוגות"],["myp","תבניות"],["tri","שלישיות"],["hot","שלישיות חמות"],["anc","עוגן + 2 שותפים"],["swp","חילופי מקומות"]];
 var formsMethod="itz",_fmCache=new Map(),formsItzSub="top";
 const FITZ=[["ult","התפסים האולטימטיביים"],["win","הקלף המנצח"],["top","5 החזקות"],["every","כל התבניות"],["stat","סטטיסטיקת שבלונות"],["mix","זוגות בתוך תבניות"],["over","שבלונה על שבלונה"],["free","עם רווחים"],["sep","ספטמבר"]];
 // "שבלונה על שבלונה": the 15 strongest Chance 3 tickets (5 החזקות) laid on the 15 strongest Chance 2 tickets (זוגות), place on place.
@@ -2676,7 +2661,6 @@ function formTickets(skip,m){
   else if(m==="hot"){hotTri(base).forEach((x,i)=>T(x.t.cards,`מהזוג ${x.R.P.a}+${x.R.P.b}`));}
   else if(m==="anc"){for(const sk of SK){const A=anchorPred(base,sk);if(A)A.tix.slice(0,3).forEach(x=>T(x.cards,`עוגן ${A.a} ב${SUITS.find(z=>z[0]===sk)[2]}`));}}
   else if(m==="skz"){skpTix(base).forEach(x=>out.push(x));}
-  else if(m==="sys"){skpTix(base,true).forEach(x=>out.push(x));}
   else if(m==="swp"){const last=base[0];pickAll(base.slice(0,5)).forEach(p=>{const A=RANKS[p.a],B=RANKS[p.b];if(A===B)return;
       for(const x of SK)for(const y of SK){if(x!==y&&last[x]===A&&last[y]===B)T([[x,B],[y,A]],`${A}+${B} מתחלפים`);}});}
   }catch(e){}
@@ -3013,52 +2997,6 @@ document.getElementById("tkPage").addEventListener("click",e=>{if(e.target.close
   const hbt=e.target.closest(".tkHb");if(hbt){const n=+hbt.dataset.d;tkHit=tkHit===n?null:n;renderTk();const x=document.querySelector(`.tkHb[data-d="${n}"]`);if(x)x.scrollIntoView({block:"center"});return;}
   const r=e.target.closest(".tkRow");if(r){const n=+r.dataset.n;tkOpen=tkOpen===n?null:n;tkHit=null;renderTk();const x=document.querySelector(`.tkRow[data-n="${n}"]`);if(x)x.scrollIntoView({block:"start"});}});
 window.addEventListener("hashchange",()=>openTk(location.hash==="#trk"));
-// ---- "✅ תפסים של השבלונות": where the 8 + 4 skipping templates (from the 3–4 draw analysis) hit ----
-const SKP4=[[[1,2],[2,3],[3,2],[4,1]],[[1,3],[2,3],[3,2],[4,1]],[[1,1],[2,1],[3,1],[4,3]],[[1,1],[2,2],[3,1],[4,0]]];
-var pfN=1000,pfOpenT=null,_pfTok=0;
-function pfCalc(N,off){off=off||0;const AA=allDraws(),has=(t,cs)=>{const v=SK.map(k=>t[k]);for(const x of cs){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
-  const seq=j=>[1,2,3,4].every(r=>AA[j+r]&&AA[j+r].n===AA[j].n-r);
-  return SYS.map((p,q)=>{let n=0;const hits=[];for(let j=off;j<off+N&&j+4<AA.length;j++){if(!seq(j))continue;n++;const cs=p.map(([r,c])=>AA[j+r][SK[c]]);if(has(AA[j],cs))hits.push({j,d:AA[j],cs,src:p.map(([r,c])=>AA[j+r])});}
-    return {p,q,no:q+1,n,hits};});}
-// big drawing: the 4 newest draws as a card grid, the template's cells in colour, arrows in its order
-function pfBig(p,AA){const W=64,H=58,X0=96,Y0=34,cx=c=>X0+c*W+W/2,cy=r=>Y0+(r-1)*H+H/2,on=(r,c)=>p.some(x=>x[0]===r&&x[1]===c);
-  let s=`<svg class="pfBig" viewBox="0 0 ${X0+4*W+8} ${Y0+4*H+8}" role="img" aria-label="ציור השבלונה">`;
-  SK.forEach((k,c)=>{s+=`<text x="${cx(c)}" y="22" text-anchor="middle" font-size="15" fill="currentColor" opacity=".7">${SKP_NM[k]}</text>`;});
-  for(let r=1;r<=4;r++){const d=AA[r-1];s+=`<text x="${X0-8}" y="${cy(r)-3}" direction="rtl" text-anchor="start" font-size="14" font-weight="700" fill="currentColor">${d.n}</text><text x="${X0-8}" y="${cy(r)+15}" direction="rtl" text-anchor="start" font-size="12" fill="currentColor" opacity=".7">${r===1?"אחרונה":r+" אחורה"}</text>`;
-    for(let c=0;c<4;c++){const v=d[SK[c]],o=on(r,c);s+=`<rect x="${cx(c)-26}" y="${cy(r)-23}" width="52" height="46" rx="9" fill="${o?CARD_COL[v]:"#e5e7eb"}" stroke="${o?"#0b231a":"#cbd5e1"}" stroke-width="${o?2.5:1}"/><text x="${cx(c)}" y="${cy(r)+7}" text-anchor="middle" font-size="20" font-weight="800" fill="${o?(CARD_INK[v]||"#fff"):"#9ca3af"}">${v}</text>`;}}
-  for(let i=0;i+1<p.length;i++){const [r1,c1]=p[i],[r2,c2]=p[i+1];let x1=cx(c1),y1=cy(r1),x2=cx(c2),y2=cy(r2);const dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L;x1+=ux*24;y1+=uy*24;x2-=ux*26;y2-=uy*26;
-    s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#2563eb" stroke-width="4"/><path d="M${x2+ux*6},${y2+uy*6} L${x2-uy*7},${y2+ux*7} L${x2+uy*7},${y2-ux*7}z" fill="#2563eb"/>`;}
-  p.forEach(([r,c],i)=>{s+=`<circle cx="${cx(c)+22}" cy="${cy(r)-20}" r="11" fill="${i?"#2563eb":"#0b7a45"}"/><text x="${cx(c)+22}" y="${cy(r)-15}" text-anchor="middle" font-size="13" font-weight="800" fill="#fff">${i+1}</text>`;});
-  return s+'</svg>';}
-function pfHtml(){const AA=allDraws(),T=pfCalc(pfN),P=pfCalc(pfN,pfN),sn=k=>SUITS.find(x=>x[0]===k),NX=skpTix(AA,true);
-  const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
-  const dt=d=>(d.date||dateOfN(d.n)||"").split("-").reverse().join("/")||"—";
-  const pct=(h,n)=>(h/Math.max(1,n)*100).toFixed(1)+"%";
-  const step=([r,c],i)=>`${i+1}. הקלף ב<b>${SKP_NM[SK[c]]}</b> ${r===1?"מההגרלה האחרונה":`מ־${r} הגרלות אחורה`}`;
-  const detail=x=>{const pv=P[x.q],nx=NX[x.q],cs=x.p.map(([r,c])=>AA[r-1][SK[c]]),skipped=[1,2,3,4].filter(r=>!x.p.some(q=>q[0]===r));
-    const gaps=x.hits.slice(1).map((h,i)=>h.j-x.hits[i].j),avgGap=x.hits.length?(x.n/x.hits.length).toFixed(1):"—",maxGap=gaps.length?Math.max(...gaps):0;
-    const used=h=>{const v=[...h.cs];return k=>{const i=v.indexOf(h.d[k]);if(i<0)return false;v.splice(i,1);return true;};};
-    return `<div class="pfD">${pfBig(x.p,AA)}
-    <h4>איך היא עובדת</h4><p>${x.p.map(step).join("<br>")}${skipped.length?`<br>היא מדלגת על ${skipped.map(r=>r===1?"ההגרלה האחרונה":`ההגרלה של ${r} אחורה`).join(" ועל ")}.`:""}<br>אם שלושת הקלפים האלה יוצאים בהגרלה הבאה, בכל צורה – זו פגיעה.</p>
-    <h4>עכשיו, להגרלה ${AA[0].n+1}</h4><p>הקלפים: ${cs.map(chip).join(" ")}. הטופס בכפתור "שבלונות מדלגות": ${SK.map(k=>nx.t[k]?`${SKP_NM[k]} ${chip(nx.t[k])}`:"").filter(Boolean).join(" · ")} (בצורות שבהן הקלפים שלה יצאו הכי הרבה).</p>
-    <h4>במספרים</h4><div class="pfN4"><div><b>${x.hits.length}</b><span>פגיעות ב־${x.n} הגרלות</span></div><div><b>${pct(x.hits.length,x.n)}</b><span>מההגרלות</span></div><div><b>${avgGap}</b><span>פגיעה כל כמה הגרלות בממוצע</span></div><div><b>${x.hits.length?x.hits[0].j+1:"—"}</b><span>הגרלות מאז הפגיעה האחרונה</span></div><div><b>${maxGap||"—"}</b><span>ההפסקה הכי ארוכה בין פגיעות</span></div><div><b>${pv.hits.length} · ${pct(pv.hits.length,pv.n)}</b><span>ב־${pv.n} ההגרלות שלפני</span></div></div>
-    <h4>איפה היא פגעה (${x.hits.length})</h4><p class="tplNote">קלף צבוע = קלף של השבלונה שיצא. "מאיפה" = הקלפים של השבלונה לפי הסדר, ומאיזו הגרלה כל אחד.</p>
-    <div class="fTbl hTbl"><table dir="ltr"><tr><th>הגרלה<br>ותאריך</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>מאיפה</th></tr>
-    ${x.hits.map(h=>{const u=used(h);return `<tr><td class="hDt"><b>${h.d.n}</b><br>${dt(h.d)}${h.d.time?`<br><small>${h.d.time}</small>`:""}</td>${SK.map(k=>u(k)?`<td>${chip(h.d[k])}</td>`:`<td class="${sn(k)[3]?"r":""} hOff">${h.d[k]}</td>`).join("")}<td class="hTp">${x.p.map(([r,c],i)=>`${chip(h.cs[i])} <small>${h.src[i].n} ${SKP_NM[SK[c]]}</small>`).join("<br>")}</td></tr>`;}).join("")||`<tr><td colspan="6">אין פגיעות בטווח הזה</td></tr>`}</table></div></div>`;};
-  const row=x=>{const open=pfOpenT===x.no;return `<div class="pfR${open?" on":""}"><button type="button" class="pfC" data-t="${x.no}" aria-expanded="${open}">${skpSvg(x.p)}<span class="pfI"><b>שבלונה ${x.no}</b><small>פגעה ${x.hits.length} מ־${x.n} · ${pct(x.hits.length,x.n)}</small></span><i>${open?"▴":"▾"}</i></button>${open?detail(x):""}</div>`;};
-  const avg=T.reduce((a,x)=>a+x.hits.length,0)/Math.max(1,T.reduce((a,x)=>a+x.n,0))*100;
-  return `<div class="fHead"><button type="button" class="fBack" id="pfClose" aria-label="חזרה לאתר">→ חזרה</button><h2>תפסים של השבלונות</h2></div>
-  <div class="itzTabs cdTabs">${[100,200,500,1000].map(n=>`<button type="button" class="cdN pfN${pfN===n?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")} הגרלות</button>`).join("")}</div>
-  <p class="tplNote">שמונה השבלונות החזקות של 3 קלפים מהניתוח של 3–4 הגרלות (הכפתור "השבלונות של המערכת"). כל שבלונה לוקחת קלף אחד מכל אחת מ־3 הגרלות, מתוך 4 ההגרלות האחרונות. <b>פגיעה</b> = שלושת הקלפים יצאו בהגרלה הבאה, בכל צורה. לחיצה על שבלונה פותחת את כל הפירוט שלה, ולחיצה נוספת סוגרת.</p>
-  <div class="fAgg">ממוצע לשמונה השבלונות: <b>${avg.toFixed(1)}%</b> ב־${pfN.toLocaleString("he-IL")} ההגרלות האחרונות.</div>
-  <div class="pfList">${T.map(row).join("")}</div>
-  <p class="tplNote">השבלונות נבחרו לפי 1,000 ההגרלות 52925–53924, כך שבטווח של 1,000 הן נבדקות על אותן הגרלות שלפיהן נבחרו. לשם השוואה: הממוצע לכל 256 השבלונות של 3 קלפים מהסוג הזה הוא 3.3%.</p>`;}
-function pfStep(tok){if(tok!==_pfTok)return;const el=document.getElementById("pfPage");if(!el||el.hidden)return;el.innerHTML=`<div class="fWrap">${pfHtml()}</div>`;}
-function openPf(on){const el=document.getElementById("pfPage");el.hidden=!on;fOpenSync();
-  if(on){el.scrollTop=0;if(!HIST||!HDATES){el.innerHTML='<p class="tplNote" style="padding:16px">טוען את כל ההיסטוריה…</p>';Promise.all([loadHist(),loadHDates()]).then(()=>openPf(true));return;}pfStep(++_pfTok);}}
-document.getElementById("pfPage").addEventListener("click",e=>{if(e.target.closest("#pfClose")){openPf(false);return;}
-  const b=e.target.closest(".pfN");if(b){pfN=+b.dataset.n;pfStep(++_pfTok);return;}
-  const c=e.target.closest(".pfC");if(c){const id=+c.dataset.t;pfOpenT=pfOpenT===id?null:id;pfStep(++_pfTok);const x=document.querySelector(`.pfC[data-t="${id}"]`);if(x)x.scrollIntoView({block:"start"});}});
 
 if(location.hash==="#trk")openTk(true);
 // ---- row numbers: every table of forms (a column per suit) gets a "#" column – one number per form, 1, 2, 3 … ----
@@ -3076,7 +3014,6 @@ function numberTables(root){(root||document).querySelectorAll("table").forEach(t
     ["📋 בדיקת טפסים",()=>{openForms(true);return null;}],
     ["🃏 טבלת קלפים",()=>{openCards(true);return null;}],
     ["🎯 מעקב תבניות",()=>{openTk(true);return null;}],
-    ["✅ תפסים של השבלונות",()=>{openPf(true);return null;}],
     ["📊 סטטיסטיקה אישית",()=>{openMy(true);return null;}],
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
