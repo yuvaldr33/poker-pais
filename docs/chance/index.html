@@ -312,6 +312,7 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 .trMine td{background:var(--win)!important}
 .h5r{box-shadow:inset 0 0 0 4px #dc2626;background:rgba(220,38,38,.16)!important}.h5y{box-shadow:inset 0 0 0 4px #eab308;background:rgba(234,179,8,.2)!important}.h5g{box-shadow:inset 0 0 0 4px #16a34a;background:rgba(22,163,74,.18)!important}.h5rR>td{background:rgba(220,38,38,.16)!important;box-shadow:inset 0 3px 0 #dc2626,inset 0 -3px 0 #dc2626}.h5yR>td{background:rgba(234,179,8,.2)!important;box-shadow:inset 0 3px 0 #eab308,inset 0 -3px 0 #eab308}.h5gR>td{background:rgba(22,163,74,.18)!important;box-shadow:inset 0 3px 0 #16a34a,inset 0 -3px 0 #16a34a}.h5n{display:block;font-size:.8rem;margin-top:2px}.h5c{display:inline-block;padding:0 8px;border-radius:6px}.h5c.h5r,.h5c.h5y,.h5c.h5g{box-shadow:inset 0 0 0 2px var(--h5,#888)}.h5c.h5r{--h5:#dc2626}.h5c.h5y{--h5:#eab308}.h5c.h5g{--h5:#16a34a}
+.pfG{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:8px 0}.pfC{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px;border-radius:14px;border:1px solid var(--line,#cbd5e1);background:transparent;color:inherit;font:inherit;text-align:center;cursor:pointer}.pfC.on{outline:3px solid #0b7a45}.pfC small{font-size:.75rem;opacity:.8;line-height:1.3}.pfC u{font-size:.8rem;color:#0b7a45}.pfT{font-size:.85rem}.pfS b{color:#0b7a45;font-size:1.1rem}
 .skL{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;line-height:1.25}.skL small{font-size:.95em}
 .tkHbs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.tkHb{padding:4px 10px;font-size:.85rem}.tkHb small{opacity:.75}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
@@ -1346,7 +1347,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="d1de908386";
+const BUILD="33f609d172";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -3013,40 +3014,38 @@ document.getElementById("tkPage").addEventListener("click",e=>{if(e.target.close
   const hbt=e.target.closest(".tkHb");if(hbt){const n=+hbt.dataset.d;tkHit=tkHit===n?null:n;renderTk();const x=document.querySelector(`.tkHb[data-d="${n}"]`);if(x)x.scrollIntoView({block:"center"});return;}
   const r=e.target.closest(".tkRow");if(r){const n=+r.dataset.n;tkOpen=tkOpen===n?null:n;tkHit=null;renderTk();const x=document.querySelector(`.tkRow[data-n="${n}"]`);if(x)x.scrollIntoView({block:"start"});}});
 window.addEventListener("hashchange",()=>openTk(location.hash==="#trk"));
-// ---- "✅ תפסים של השבלונות": every exact Chance 3 catch of the template buttons, draw by draw ----
-var pfN=100,_pfSt={},_pfTok=0;
-function pfSrc(){return [...FITZ.map(([k,t])=>["itz",k,t]),["skp","","שבלונות מדלגות"]];}
-function pfCalc(N){let st=_pfSt[N];const AA=allDraws(),ck=AA[0].n+":"+AA.length;if(!st||st.ck!==ck)st=_pfSt[N]={ck,i:0,rows:[],agg:pfSrc().map(([m,sub,name])=>({m,sub,name,off:0,cau:0,dr:0,four:sub==="win"}))};return st;}
-function pfStep(tok){if(tok!==_pfTok)return;const el=document.getElementById("pfPage");if(!el||el.hidden)return;
-  const st=pfCalc(pfN),AA=allDraws(),N=Math.min(pfN,AA.length-5),t0=performance.now();
-  while(st.i<N&&performance.now()-t0<150){const i=st.i,d=AA[i],it={skip:i+1,n:d.n,d};
-    st.agg.forEach(a=>{let sc;try{sc=fScore(it,a.m,a.sub);}catch(e){return;}a.off+=sc.off;a.cau+=sc.cau||0;if(!sc.cau)return;a.dr++;
-      let tix=[];try{tix=fTix(it,a.m,a.sub);}catch(e){}
-      tix.filter(t=>{const ks=SK.filter(k=>t[k]);return ks.length>=3&&ks.every(k=>d[k]===t[k]);}).forEach(t=>{const key=i+"|"+SK.map(k=>t[k]||"-").join("");let r=st.rows.find(x=>x.key===key);
-        if(!r){r={key,i,d,t,labs:[]};st.rows.push(r);}if(!r.labs.includes(a.name))r.labs.push(a.name);});});
-    st.i++;}
-  el.innerHTML=`<div class="fWrap">${pfHtml()}</div>`;if(st.i<N)setTimeout(()=>pfStep(tok),0);}
-function pfHtml(){const st=pfCalc(pfN),AA=allDraws(),N=Math.min(pfN,AA.length-5),done=st.i>=N,sn=k=>SUITS.find(x=>x[0]===k);
+// ---- "✅ תפסים של השבלונות": where the 8 + 4 skipping templates (from the 3–4 draw analysis) hit ----
+const SKP4=[[[1,2],[2,3],[3,2],[4,1]],[[1,3],[2,3],[3,2],[4,1]],[[1,1],[2,1],[3,1],[4,3]],[[1,1],[2,2],[3,1],[4,0]]];
+var pfN=1000,pfOpenT=null,_pfTok=0;
+function pfCalc(N){const AA=allDraws(),has=(t,cs)=>{const v=SK.map(k=>t[k]);for(const x of cs){const i=v.indexOf(x);if(i<0)return false;v.splice(i,1);}return true;};
+  const seq=j=>[1,2,3,4].every(r=>AA[j+r]&&AA[j+r].n===AA[j].n-r);
+  return [...SKP.slice(0,8),...SKP4].map((p,q)=>{let n=0;const hits=[];for(let j=0;j<N&&j+4<AA.length;j++){if(!seq(j))continue;n++;const cs=p.map(([r,c])=>AA[j+r][SK[c]]);if(has(AA[j],cs))hits.push({j,d:AA[j],cs,src:p.map(([r,c])=>AA[j+r])});}
+    return {p,q,four:p.length===4,no:q<8?q+1:q-7,n,hits};});}
+function pfHtml(){const AA=allDraws(),T=pfCalc(pfN),sn=k=>SUITS.find(x=>x[0]===k);
   const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
   const dt=d=>(d.date||dateOfN(d.n)||"").split("-").reverse().join("/")||"—";
-  const R=st.rows.slice().sort((a,b)=>a.i-b.i),nd=new Set(R.map(r=>r.i)).size;
-  const tot=st.agg.reduce((a,x)=>a+x.cau,0),off=st.agg.reduce((a,x)=>a+x.off,0),exp=st.agg.reduce((a,x)=>a+x.off/(x.four?4096:512),0);
-  const sum=`<div class="fTbl"><table><tr><th>כפתור</th><th>טפסים</th><th>תפסו</th><th>הגרלות<br>עם תפס</th><th>לפי 1 ל־512</th></tr>${st.agg.map(a=>`<tr class="${a.cau?"fWin":""}"><td class="fl" style="max-width:none">${a.name}</td><td>${a.off.toLocaleString("he-IL")}</td><td><b>${a.cau}</b></td><td>${a.dr}</td><td>${(a.off/(a.four?4096:512)).toFixed(1)}</td></tr>`).join("")}
-    <tr><td class="fl" style="max-width:none"><b>סה״כ</b></td><td><b>${off.toLocaleString("he-IL")}</b></td><td><b>${tot}</b></td><td><b>${nd}</b></td><td><b>${exp.toFixed(1)}</b></td></tr></table></div>`;
-  const body=R.map(r=>`<tr><td class="hDt"><b>${r.d.n}</b><br>${dt(r.d)}${r.d.time?`<br><small>${r.d.time}</small>`:""}</td>${SK.map(k=>{const v=r.d[k],red=sn(k)[3];return r.t[k]?`<td>${chip(v)}</td>`:`<td class="${red?"r":""} hOff">${v}</td>`;}).join("")}<td class="hTp">${r.labs.join("<br>")}</td></tr>`).join("");
+  const from=p=>p.map(([r,c])=>`${r===1?"אחרונה":r+" אחורה"} ${SKP_NM[SK[c]]}`).join(" · ");
+  const card=x=>{const id=(x.four?"f":"t")+x.no,open=pfOpenT===id,last=x.hits[0];
+    return `<button type="button" class="pfC${open?" on":""}" data-t="${id}"><b class="pfT">שבלונה #${x.no}</b>${skpSvg(x.p).replace('width="48" height="48"','width="84" height="84"')}
+      <span class="pfS">פגעה <b>${x.hits.length}</b> מ־${x.n} · ${(x.hits.length/Math.max(1,x.n)*100).toFixed(1)}%</span><small>${from(x.p)}</small><small>${last?`אחרונה: ${last.d.n} (לפני ${last.j+1})`:"לא פגעה"}</small><u>${open?"סגור":"איפה פגעה"}</u></button>`;};
+  const list=x=>{const used=h=>{const v=[...h.cs];return k=>{const i=v.indexOf(h.d[k]);if(i<0)return false;v.splice(i,1);return true;};};
+    return `<div class="pfL"><h3 class="ovH">שבלונה #${x.no} – ${x.hits.length} פגיעות ב־${x.n} הגרלות</h3><p class="tplNote">${from(x.p)}. בכל שורה: מה יצא בהגרלה. קלף צבוע = קלף שהשבלונה נתנה ויצא. "מאיפה" = הקלפים של השבלונה, לפי הסדר שלה.</p>
+    <div class="fTbl hTbl"><table dir="ltr"><tr><th>הגרלה<br>ותאריך</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>מאיפה</th></tr>
+    ${x.hits.map(h=>{const u=used(h);return `<tr><td class="hDt"><b>${h.d.n}</b><br>${dt(h.d)}${h.d.time?`<br><small>${h.d.time}</small>`:""}</td>${SK.map(k=>u(k)?`<td>${chip(h.d[k])}</td>`:`<td class="${sn(k)[3]?"r":""} hOff">${h.d[k]}</td>`).join("")}<td class="hTp">${x.p.map(([r,c],i)=>`${chip(h.cs[i])} <small>${h.src[i].n} ${SKP_NM[SK[c]]}</small>`).join("<br>")}</td></tr>`;}).join("")||`<tr><td colspan="6">אין פגיעות בטווח הזה</td></tr>`}</table></div></div>`;};
+  const T3=T.filter(x=>!x.four),T4=T.filter(x=>x.four),op=T.find(x=>(x.four?"f":"t")+x.no===pfOpenT);
+  const avg=L=>(L.reduce((a,x)=>a+x.hits.length,0)/Math.max(1,L.reduce((a,x)=>a+x.n,0))*100);
+  const grid=L=>`<div class="pfG">${L.map(card).join("")}</div>${op&&L.includes(op)?list(op):""}`;
   return `<div class="fHead"><button type="button" class="fBack" id="pfClose" aria-label="חזרה לאתר">→ חזרה</button><h2>תפסים של השבלונות</h2></div>
-  <div class="itzTabs cdTabs">${[50,100,200,500].map(n=>`<button type="button" class="cdN pfN${pfN===n?" on":""}" data-n="${n}">${n} הגרלות</button>`).join("")}</div>
-  <p class="tplNote">כל הטפסים לצ'אנס 3 שהשבלונות באתר נתנו: ${pfSrc().map(x=>x[2]).join(", ")}. לכל אחת מ־${N} ההגרלות האחרונות המערכת לקחה את הטפסים שכל כפתור נתן לפני ההגרלה (רק לפי ההגרלות שהיו לפניה), ובדקה מה יצא. <b>תפס</b> = כל הקלפים של הטופס יצאו בדיוק בצורות שלהם (בהקלף המנצח – 4 קלפים).</p>
-  <div class="fAgg">${done?"":`<small class="fPend">בודק… ${st.i} מתוך ${N} הגרלות</small>`}נמצאו <b>${tot}</b> תפסים מדויקים, ב־<b>${nd}</b> הגרלות שונות מתוך ${Math.min(st.i,N)}.</div>
-  <h3 class="ovH">כל כפתור</h3>${sum}
-  <p class="tplNote">"טפסים" = כמה טפסים הכפתור נתן בכל ההגרלות יחד. "תפסו" = כמה מהם תפסו בדיוק. "לפי 1 ל־512" = כמה תפסים יוצאים מהמספר הזה של טפסים, כשלכל טופס של 3 קלפים יש סיכוי של 1 ל־512 (בהקלף המנצח 1 ל־4,096). טופס שמופיע בכמה כפתורים נספר בכל אחד מהם.</p>
-  <h3 class="ovH">ההגרלות שבהן השבלונות תפסו (${R.length})</h3>
-  <div class="fTbl hTbl"><table dir="ltr"><tr><th>הגרלה<br>ותאריך</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>מי תפס</th></tr>${body||`<tr><td colspan="6">${done?"אין תפסים בטווח הזה":"בודק…"}</td></tr>`}</table></div>
-  <p class="tplNote">בכל שורה: התוצאה של ההגרלה. קלף צבוע = קלף של הטופס שתפס, במקום שלו. קלף אפור = הקלף שלא היה בטופס.</p>`;}
+  <div class="itzTabs cdTabs">${[100,200,500,1000].map(n=>`<button type="button" class="cdN pfN${pfN===n?" on":""}" data-n="${n}">${n.toLocaleString("he-IL")} הגרלות</button>`).join("")}</div>
+  <p class="tplNote">8 השבלונות החזקות של 3 קלפים מהניתוח של 3–4 הגרלות (שבלונות 1–8 בכפתור "שבלונות מדלגות"). בשרטוט: שורה עליונה = ההגרלה האחרונה, ושורה תחתונה = 4 הגרלות אחורה. העמודות מימין לשמאל: עלה, לב, יהלום, תלתן. נקודה ירוקה = הקלף הראשון. <b>פגיעה</b> = כל הקלפים של השבלונה יצאו בהגרלה, בכל צורה. לחיצה על שבלונה = כל ההגרלות שבהן היא פגעה, מהחדשה לישנה.</p>
+  <h3 class="ovH">שמונה השבלונות · ממוצע ${avg(T3).toFixed(1)}%</h3>${grid(T3)}
+  <p class="tplNote">השבלונות נבחרו לפי 1,000 ההגרלות 52925–53924, כך שבטווח של 1,000 הן נבדקות על אותן הגרלות שלפיהן נבחרו. לשם השוואה: הממוצע לכל 256 השבלונות של 3 קלפים מהסוג הזה הוא 3.3%.</p>`;}
+function pfStep(tok){if(tok!==_pfTok)return;const el=document.getElementById("pfPage");if(!el||el.hidden)return;el.innerHTML=`<div class="fWrap">${pfHtml()}</div>`;}
 function openPf(on){const el=document.getElementById("pfPage");el.hidden=!on;fOpenSync();
   if(on){el.scrollTop=0;if(!HIST||!HDATES){el.innerHTML='<p class="tplNote" style="padding:16px">טוען את כל ההיסטוריה…</p>';Promise.all([loadHist(),loadHDates()]).then(()=>openPf(true));return;}pfStep(++_pfTok);}}
 document.getElementById("pfPage").addEventListener("click",e=>{if(e.target.closest("#pfClose")){openPf(false);return;}
-  const b=e.target.closest(".pfN");if(b){pfN=+b.dataset.n;pfStep(++_pfTok);}});
+  const b=e.target.closest(".pfN");if(b){pfN=+b.dataset.n;pfStep(++_pfTok);return;}
+  const c=e.target.closest(".pfC");if(c){const id=c.dataset.t;pfOpenT=pfOpenT===id?null:id;pfStep(++_pfTok);const x=document.querySelector(pfOpenT?".pfL":`.pfC[data-t="${id}"]`);if(x)x.scrollIntoView({block:"start"});}});
 
 if(location.hash==="#trk")openTk(true);
 // ---- row numbers: every table of forms (a column per suit) gets a "#" column – one number per form, 1, 2, 3 … ----
