@@ -297,6 +297,7 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 .trMine td{background:var(--win)!important}
 .h5r{box-shadow:inset 0 0 0 4px #dc2626;background:rgba(220,38,38,.16)!important}.h5y{box-shadow:inset 0 0 0 4px #eab308;background:rgba(234,179,8,.2)!important}.h5g{box-shadow:inset 0 0 0 4px #16a34a;background:rgba(22,163,74,.18)!important}.h5rR>td{background:rgba(220,38,38,.16)!important;box-shadow:inset 0 3px 0 #dc2626,inset 0 -3px 0 #dc2626}.h5yR>td{background:rgba(234,179,8,.2)!important;box-shadow:inset 0 3px 0 #eab308,inset 0 -3px 0 #eab308}.h5gR>td{background:rgba(22,163,74,.18)!important;box-shadow:inset 0 3px 0 #16a34a,inset 0 -3px 0 #16a34a}.h5n{display:block;font-size:.8rem;margin-top:2px}.h5c{display:inline-block;padding:0 8px;border-radius:6px}.h5c.h5r,.h5c.h5y,.h5c.h5g{box-shadow:inset 0 0 0 2px var(--h5,#888)}.h5c.h5r{--h5:#dc2626}.h5c.h5y{--h5:#eab308}.h5c.h5g{--h5:#16a34a}
+.wnCubes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}.wnCubes>div{border:1px solid var(--card-edge,#cbd5e1);border-radius:14px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}.wnCubes b{font-size:1.6rem;line-height:1.1}.wnCubes span{font-size:.75rem;opacity:.8}.wnCubes .wnW b{color:#0b7a45}.wnR{cursor:pointer}.wnR.on>td{background:var(--winH,#e2f3e7)}.wnC{text-align:center;font-size:.8rem}.wnC u{color:#0b7a45}.wnDr>td{padding:0;text-align:start;white-space:normal}.wnD{font-family:var(--body);font-size:.88rem;font-weight:400;text-align:start;padding:8px;line-height:1.6;max-width:100%;overflow:hidden}.wnD ul{margin:0 0 6px;padding-inline-start:20px}.wnD .fTbl{overflow-x:auto}
 .skG{text-align:center;vertical-align:middle}.skG b{display:block;font-size:.8rem;margin-bottom:2px}.fTbl td.skO{max-width:none;text-align:center;line-height:1.25}.skO b,.skO small{display:block}.skO small{font-weight:400}
 .skL{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;line-height:1.25}.skL small{font-size:.95em}
 .tkHbs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.tkHb{padding:4px 10px;font-size:.85rem}.tkHb small{opacity:.75}
@@ -630,6 +631,7 @@ button.tk .lb u{color:var(--felt);text-decoration:none;font-weight:700}
 <div id="cardsPage" class="fPage" hidden></div>
 <div id="myPage" class="fPage" hidden></div>
 <div id="tkPage" class="fPage" hidden></div>
+<div id="wnPage" class="fPage" hidden></div>
 <button class="chFab" id="chFab" type="button" aria-label="פתח צ'אט"><span class="dot"></span>שאל את העוזר</button>
 <div class="chBox" id="chBox" dir="rtl" hidden role="dialog" aria-label="העוזר של צ'אנס">
   <div class="chHead"><div><b>העוזר של צ'אנס</b><small>עונה לפי הניתוח החי של האתר</small></div><button type="button" id="chClose" aria-label="סגור">✕</button></div>
@@ -3009,6 +3011,53 @@ document.getElementById("tkPage").addEventListener("click",e=>{if(e.target.close
   const hbt=e.target.closest(".tkHb");if(hbt){const n=+hbt.dataset.d;tkHit=tkHit===n?null:n;renderTk();const x=document.querySelector(`.tkHb[data-d="${n}"]`);if(x)x.scrollIntoView({block:"center"});return;}
   const r=e.target.closest(".tkRow");if(r){const n=+r.dataset.n;tkOpen=tkOpen===n?null:n;tkHit=null;renderTk();const x=document.querySelector(`.tkRow[data-n="${n}"]`);if(x)x.scrollIntoView({block:"start"});}});
 window.addEventListener("hashchange",()=>openTk(location.hash==="#trk"));
+// ---- "🏆 בדיקת זכיות": pick a button (and an Itzik sub-button) and a window – every draw it won, with the form ----
+var wnM="itz",wnSub="ult",wnN=180,wnOpenD=null,_wnSt={},_wnTok=0;
+const WN_NS=[[100,"100"],[180,"180 · חודש"],[200,"200"],[500,"500"],[1000,"1,000"]];
+function wnOdds(m,sub){return m==="pairs"||m==="swp"?64:m==="itz"&&sub==="win"?4096:512;}
+function wnKey(){return wnM+"|"+(wnM==="itz"?wnSub:"");}
+function wnCalc(){const AA=allDraws(),ck=AA[0].n+":"+AA.length,k=wnKey();let st=_wnSt[k];if(!st||st.ck!==ck)st=_wnSt[k]={ck,i:0,off:[],hits:[]};return st;}
+function wnStep(tok){if(tok!==_wnTok)return;const el=document.getElementById("wnPage");if(!el||el.hidden)return;
+  const st=wnCalc(),AA=allDraws(),N=Math.min(wnN,AA.length-3),t0=performance.now();
+  while(st.i<N&&performance.now()-t0<150){const i=st.i,d=AA[i],it={skip:i+1,n:d.n,d};let sc={off:0,cau:0};try{sc=fScore(it,wnM,wnSub);}catch(e){}
+    st.off[i]=sc.off;if(sc.cau>0){let tix=[];try{tix=fTix(it,wnM,wnSub);}catch(e){}
+      const w=tix.filter(t=>{const ks=SK.filter(k=>t[k]);return ks.length>=2&&ks.every(k=>d[k]===t[k]);});st.hits.push({i,d,off:sc.off,w});}
+    st.i++;}
+  const sy=el.scrollTop;el.innerHTML=`<div class="fWrap">${wnHtml()}</div>`;el.scrollTop=sy;if(st.i<N)setTimeout(()=>wnStep(tok),0);}
+function wnHtml(){const st=wnCalc(),AA=allDraws(),N=Math.min(wnN,AA.length-3),done=Math.min(st.i,N),sn=k=>SUITS.find(x=>x[0]===k);
+  const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
+  const dt=d=>(d.date||dateOfN(d.n)||"").split("-").reverse().join("/")||"—";
+  const H=st.hits.filter(h=>h.i<N),wins=H.reduce((a,h)=>a+h.w.length,0),off=st.off.slice(0,done).reduce((a,x)=>a+(x||0),0),odds=wnOdds(wnM,wnSub),exp=off/odds,name=fMethName(wnM,wnSub);
+  const tabs=`<div class="itzTabs cdTabs">${FMETH.map(([k,t])=>`<button type="button" class="cdN wnM${wnM===k?" on":""}" data-m="${k}">${t}</button>`).join("")}</div>
+    ${wnM==="itz"?`<div class="itzTabs cdTabs wnSubs">${FITZ.map(([k,t])=>`<button type="button" class="cdN wnS${wnSub===k?" on":""}" data-s="${k}">${t}</button>`).join("")}</div>`:""}
+    <div class="itzTabs cdTabs">${WN_NS.map(([n,t])=>`<button type="button" class="cdN wnN${wnN===n?" on":""}" data-n="${n}">${t} הגרלות</button>`).join("")}</div>`;
+  const cubes=`<div class="wnCubes"><div><b>${done.toLocaleString("he-IL")}</b><span>הגרלות נבדקו${done<N?` (מתוך ${N.toLocaleString("he-IL")}…)`:""}</span></div><div class="wnW"><b>${wins}</b><span>זכיות · ב־${H.length} הגרלות</span></div><div><b>${done?(off/done).toFixed(1):"—"}</b><span>טפסים לכל הגרלה</span></div></div>
+    <p class="tplNote wnCalc"><b>החישוב:</b> ב־${done.toLocaleString("he-IL")} הגרלות הכפתור נתן ${off.toLocaleString("he-IL")} טפסים. ${wins} מהם זכו – כל הקלפים של הטופס יצאו בדיוק בצורות שלהם (אחוז זכייה לטופס: ${off?(wins/off*100).toFixed(2):"0"}%). לכל טופס כזה יש סיכוי של 1 ל־${odds.toLocaleString("he-IL")}, ולפי זה מ־${off.toLocaleString("he-IL")} טפסים יוצאות בממוצע ${exp.toFixed(1)} זכיות. בממוצע הייתה זכייה כל ${H.length?(done/H.length).toFixed(1):"—"} הגרלות.</p>`;
+  const rows=H.map(h=>{const open=wnOpenD===h.d.n,won=new Set();h.w.forEach(t=>SK.forEach(k=>{if(t[k])won.add(k);}));
+    const det=open?wnDetail(h):"";
+    return `<tr class="wnR${open?" on":""}" data-d="${h.d.n}"><td class="hDt"><b>${h.d.n}</b><br>${dt(h.d)}${h.d.time?`<br><small>${h.d.time}</small>`:""}</td>${SK.map(k=>won.has(k)?`<td>${chip(h.d[k])}</td>`:`<td class="${sn(k)[3]?"r":""} hOff">${h.d[k]}</td>`).join("")}<td class="wnC"><b>${h.w.length}</b> ${h.w.length>1?"טפסים":"טופס"}<br><small>מתוך ${h.off}</small><br><u>${open?"סגור":"פתח"}</u></td></tr>${open?`<tr class="wnDr"><td colspan="6">${det}</td></tr>`:""}`;}).join("");
+  return `<div class="fHead"><button type="button" class="fBack" id="wnClose" aria-label="חזרה לאתר">→ חזרה</button><h2>בדיקת זכיות</h2></div>${tabs}
+  <p class="tplNote">בחר כפתור${wnM==="itz"?" ותת־כפתור":""} וטווח. לכל הגרלה המערכת לוקחת את הטפסים שהכפתור נתן לפני ההגרלה (רק לפי ההגרלות שהיו לפניה), ובודקת מה יצא. <b>זכייה</b> = כל הקלפים של הטופס יצאו בדיוק בצורות שלהם.</p>
+  <h3 class="ovH">${name}</h3>${cubes}
+  <h3 class="ovH">ההגרלות שבהן ${name} זכה (${H.length})</h3>
+  <div class="fTbl hTbl"><table dir="ltr"><tr><th>הגרלה<br>ותאריך</th>${SUITS.map(([k,sym,nm,red])=>`<th>${nm}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}<th>זכיות</th></tr>${rows||`<tr><td colspan="6">${done<N?"בודק…":"אין זכיות בטווח הזה"}</td></tr>`}</table></div>
+  <p class="tplNote">בטבלה: קלף צבוע = קלף של טופס שזכה, במקום שלו. לחיצה על הגרלה פותחת את הטופס המלא שלה והסבר.</p>`;}
+function wnDetail(h){const AA=allDraws(),d=h.d,it={skip:h.i+1,n:d.n,d},prev=AA[h.i+1],prev2=AA[h.i+2],odds=wnOdds(wnM,wnSub),name=fMethName(wnM,wnSub);
+  const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
+  const tk=t=>SK.filter(k=>t[k]).map(k=>`${SUITS.find(x=>x[0]===k)[2]} ${chip(t[k])}`).join(" · ");
+  let form="";try{form=wnM==="itz"?formItzSub(it,wnSub):formMethodHtml(it,wnM);}catch(e){form='<p class="tplNote">לא הצלחתי לבנות את הטופס.</p>';}
+  return `<div class="wnD"><p><b>מה יצא בהגרלה ${d.n}:</b> ${SK.map(k=>`${SUITS.find(x=>x[0]===k)[2]} ${chip(d[k])}`).join(" · ")}</p>
+  <p><b>מי זכה:</b> ${name} נתן להגרלה הזו ${h.off} טפסים, לפי ההגרלות שלפניה (${prev?prev.n:""}${prev2?` ו־${prev2.n}`:""}). ${h.w.length} מהם זכו:</p><ul>${h.w.map(t=>`<li>${tk(t)}</li>`).join("")}</ul>
+  <p><b>כמה:</b> כל טופס כזה הוא 1 ל־${odds.toLocaleString("he-IL")}. איזו תבנית או שיטה נתנה כל טופס – בעמודה הראשונה בטבלה, והשורה הירוקה היא הטופס שזכה.</p>${form}</div>`;}
+function openWn(on){const el=document.getElementById("wnPage");el.hidden=!on;fOpenSync();
+  if(on){el.scrollTop=0;if(!HIST||!HDATES){el.innerHTML='<p class="tplNote" style="padding:16px">טוען את כל ההיסטוריה…</p>';Promise.all([loadHist(),loadHDates()]).then(()=>openWn(true));return;}wnStep(++_wnTok);}}
+document.getElementById("wnPage").addEventListener("click",e=>{if(e.target.closest("#wnClose")){openWn(false);return;}
+  let b=e.target.closest(".wnM");if(b){wnM=b.dataset.m;wnOpenD=null;wnStep(++_wnTok);return;}
+  b=e.target.closest(".wnS");if(b){wnSub=b.dataset.s;wnOpenD=null;wnStep(++_wnTok);return;}
+  b=e.target.closest(".wnN");if(b){wnN=+b.dataset.n;wnStep(++_wnTok);return;}
+  if(e.target.closest(".wnDr"))return;
+  const r=e.target.closest(".wnR");if(r){const n=+r.dataset.d;wnOpenD=wnOpenD===n?null:n;wnStep(++_wnTok);const x=document.querySelector(`.wnR[data-d="${n}"]`);if(x)x.scrollIntoView({block:"start"});}});
+
 
 if(location.hash==="#trk")openTk(true);
 // ---- row numbers: every table of forms (a column per suit) gets a "#" column – one number per form, 1, 2, 3 … ----
@@ -3026,6 +3075,7 @@ function numberTables(root){(root||document).querySelectorAll("table").forEach(t
     ["📋 בדיקת טפסים",()=>{openForms(true);return null;}],
     ["🃏 טבלת קלפים",()=>{openCards(true);return null;}],
     ["🎯 מעקב תבניות",()=>{openTk(true);return null;}],
+    ["🏆 בדיקת זכיות",()=>{openWn(true);return null;}],
     ["📊 סטטיסטיקה אישית",()=>{openMy(true);return null;}],
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
