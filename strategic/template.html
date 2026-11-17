@@ -297,6 +297,7 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 .trMine td{background:var(--win)!important}
 .h5r{box-shadow:inset 0 0 0 4px #dc2626;background:rgba(220,38,38,.16)!important}.h5y{box-shadow:inset 0 0 0 4px #eab308;background:rgba(234,179,8,.2)!important}.h5g{box-shadow:inset 0 0 0 4px #16a34a;background:rgba(22,163,74,.18)!important}.h5rR>td{background:rgba(220,38,38,.16)!important;box-shadow:inset 0 3px 0 #dc2626,inset 0 -3px 0 #dc2626}.h5yR>td{background:rgba(234,179,8,.2)!important;box-shadow:inset 0 3px 0 #eab308,inset 0 -3px 0 #eab308}.h5gR>td{background:rgba(22,163,74,.18)!important;box-shadow:inset 0 3px 0 #16a34a,inset 0 -3px 0 #16a34a}.h5n{display:block;font-size:.8rem;margin-top:2px}.h5c{display:inline-block;padding:0 8px;border-radius:6px}.h5c.h5r,.h5c.h5y,.h5c.h5g{box-shadow:inset 0 0 0 2px var(--h5,#888)}.h5c.h5r{--h5:#dc2626}.h5c.h5y{--h5:#eab308}.h5c.h5g{--h5:#16a34a}
+.skG{text-align:center;vertical-align:middle}.skG b{display:block;font-size:.8rem;margin-bottom:2px}.fTbl td.skO{max-width:none;text-align:center;line-height:1.25}.skO b,.skO small{display:block}.skO small{font-weight:400}
 .skL{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;line-height:1.25}.skL small{font-size:.95em}
 .tkHbs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.tkHb{padding:4px 10px;font-size:.85rem}.tkHb small{opacity:.75}
 .crC{display:block;font-size:.62em;font-weight:600;line-height:1.1;opacity:.85;color:var(--ink,inherit)}
@@ -2666,8 +2667,18 @@ function formTickets(skip,m){
       for(const x of SK)for(const y of SK){if(x!==y&&last[x]===A&&last[y]===B)T([[x,B],[y,A]],`${A}+${B} מתחלפים`);}});}
   }catch(e){}
   _fmCache.set(key,out);return out;}
+// "שבלונות מדלגות" grouped: one block per template, its two placements (עלה–יהלום / לב–תלתן) under it
+function skzHtml(it,L){const d=it.d,sn=k=>SUITS.find(x=>x[0]===k);let wins=0,body="";
+  for(let i=0;i+1<L.length;i+=2){const nm=SKP_ITZ[i+1].split(" · ")[0];
+    [L[i],L[i+1]].forEach((x,j)=>{const n=Object.keys(x.t).filter(k=>x.t[k]).length,mm=d?SK.filter(k=>x.t[k]&&d[k]===x.t[k]).length:0,win=!!d&&mm===n;if(win)wins++;
+      body+=`<tr class="${win?"fWin":""}${j===0?" fFirst":""}">${j===0?`<td class="fi skG" rowspan="2"><b>${nm}</b>${skpSvg(SKP[i])}</td>`:""}<td class="fl skO">${skpSvg(SKP[i+j]).replace('width="48" height="48"','width="34" height="34"')}<b>${j?"לב–תלתן":"עלה–יהלום"}</b><small>פגעה ${x.h} מ־${x.n}</small></td>${SK.map(k=>cardTd(x.t[k],k,it.skip,{hit:d&&d[k]===x.t[k]})).join("")}${d?`<td class="fm">${win?"✓ ":""}${mm}/${n}</td>`:""}</tr>`;});}
+  const head=`<tr><th>שבלונה</th><th>אפשרות</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>במקום</th>":""}</tr>`;
+  const res=d?`<tr class="fRes"><td colspan="2">יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
+  return `<div class="fSum">${d?(wins?`<b class="fOk">${wins} טפסים תפסו ✓</b>`:"אף טופס לא תפס.")+" עיגול = קלף נכון בצורה הנכונה. שורה ירוקה = כל הקלפים של הטופס במקום.":`${L.length/2} שבלונות, לכל אחת 2 אפשרויות – ${L.length} טפסים להגרלה הבאה.`}</div>
+  <div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;}
 function formMethodHtml(it,m){
   const d=it.d,L=formTickets(it.skip,m);const sn=k=>SUITS.find(x=>x[0]===k);
+  if(m==="skz"&&L.length)return skzHtml(it,L);
   if(!L.length)return `<p class="tplNote">לשיטה הזו לא היה טופס להגרלה הזו.</p>`;
   const head=`<tr><th>מה</th>${SUITS.map(([k,sym,name,red])=>`<th>${name}<br><span class="${red?"r":""}">${sym}</span></th>`).join("")}${d?"<th>במקום</th>":""}</tr>`;
   const res=d?`<tr class="fRes"><td>יצא</td>${SK.map(k=>`<td class="${sn(k)[3]?"r":""}">${d[k]}</td>`).join("")}<td></td></tr>`:"";
