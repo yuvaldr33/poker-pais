@@ -1347,7 +1347,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="4324034ac5";
+const BUILD="aea6beff31";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2388,8 +2388,9 @@ document.getElementById("itzPanel").addEventListener("click",e=>{const b=e.targe
   const r=e.target.closest(".itzRow");if(r){const n=+r.dataset.num;itzOpenRow=itzOpenRow===n?null:n;renderItz();const x=document.querySelector(`.itzRow[data-num="${n}"]`);if(x)x.scrollIntoView({block:"start",behavior:"smooth"});}});
 // ---- "שבלונות מדלגות": 8 templates that take one card from each of 3 of the last 4 draws (found on draws 52925–53924) ----
 // each entry: [row (1 = newest draw … 4 = four draws back), suit index in SK]
-const SKP=[[[1,2],[2,3],[4,1]],[[1,2],[3,3],[4,1]],[[2,2],[3,1],[4,0]],[[2,3],[3,0],[4,1]],[[1,1],[2,2],[3,3]],[[1,3],[2,1],[3,2]],[[1,2],[3,2],[4,2]],[[1,1],[2,2],[4,0]],[[2,2],[1,1],[1,3]],[[1,0],[2,0],[2,2]]];
-const SKP_ITZ=[9,10]; // 9 = the pink one, 10 = the orange one, from Itzik's page (draw 53929)
+const SKP=[[[1,2],[2,3],[4,1]],[[1,2],[3,3],[4,1]],[[2,2],[3,1],[4,0]],[[2,3],[3,0],[4,1]],[[1,1],[2,2],[3,3]],[[1,3],[2,1],[3,2]],[[1,2],[3,2],[4,2]],[[1,1],[2,2],[4,0]],[[2,2],[1,1],[1,3]],[[2,1],[1,0],[1,2]],[[2,2],[2,0],[1,0]],[[2,3],[2,1],[1,1]]];
+// 9–12: Itzik's two templates (draw 53929), each from its 2 possible starting points – the green one: start 2 back, then the last draw one to the left, then 2 to the right; the orange one: start 2 back, then 2 to the left in the same draw, then straight up
+const SKP_ITZ={9:"ירוקה · מיהלום",10:"ירוקה · מלב",11:"כתומה · מיהלום",12:"כתומה · מתלתן"};
 const SKP_NM={S:"עלה",H:"לב",D:"יהלום",C:"תלתן"};
 function skpSvg(p){const cx=c=>c*15+7.5,cy=r=>(r-1)*15+7.5;let s='<svg width="48" height="48" viewBox="0 0 60 60" aria-hidden="true"><rect x="0.5" y="0.5" width="59" height="59" fill="#f1f5f9" stroke="#94a3b8"/>';
   for(let i=1;i<4;i++)s+=`<line x1="${i*15}" y1="0" x2="${i*15}" y2="60" stroke="#cbd5e1" stroke-width="1"/><line x1="0" y1="${i*15}" x2="60" y2="${i*15}" stroke="#cbd5e1" stroke-width="1"/>`;
@@ -2408,7 +2409,7 @@ function skpTix(base){const key=base[0].n+":"+base.length;if(_skpC.has(key))retu
     if(!perm){const ks=p.map(x=>SK[x[1]]);perm=new Set(ks).size===3?ks.join(""):"SHD";}
     const t={};cards.forEach((c,q)=>{t[perm[q]]=c;});
     const from=p.map(([r,c])=>`${r===1?"אחרונה":r+" אחורה"} ${SKP_NM[SK[c]]}`).join(" · ");
-    return {t,p,num:i+1,h,n,label:`<span class="skL" title="${from}">${skpSvg(p)}<b>שבלונה ${i+1}</b>${SKP_ITZ.includes(i+1)?"<small>של איציק</small>":""}<small>פגעה ${h}<br>מ־${n}</small></span>`};});
+    return {t,p,num:i+1,h,n,label:`<span class="skL" title="${from}">${skpSvg(p)}<b>שבלונה ${i+1}</b>${SKP_ITZ[i+1]?`<small>של איציק<br>${SKP_ITZ[i+1]}</small>`:""}<small>פגעה ${h}<br>מ־${n}</small></span>`};});
   if(_skpC.size>400)_skpC.clear();_skpC.set(key,out);return out;}
 var skpOpen=false;
 function renderSkp(){const el=document.getElementById("skpPanel"),bt=document.getElementById("skpBtn");if(!el)return;
@@ -2416,8 +2417,8 @@ function renderSkp(){const el=document.getElementById("skpPanel"),bt=document.ge
   if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(skpOpen)renderSkp();});return;}
   const AA=allDraws();
   el.innerHTML=`<h3 class="tplH">שבלונות מדלגות · להגרלה <bdi dir="ltr">${AA[0].n+1}</bdi></h3>
-  <p class="tplNote">שבלונות 1–8: לוקחות קלף אחד מכל אחת מ־3 הגרלות, מתוך 4 ההגרלות האחרונות (יש הגרלות שהן מדלגות עליהן). שבלונות 9–10 הן של איציק: הן לוקחות קלפים מ־2 ההגרלות האחרונות ומדלגות על קלפים באמצע. שתיהן תפסו בהגרלה 53929. בשרטוט: שורה עליונה = ההגרלה האחרונה, ושורה תחתונה = 4 הגרלות אחורה. העמודות משמאל לימין: עלה, לב, יהלום, תלתן. נקודה ירוקה = הקלף הראשון.</p>
-  <p class="tplNote">הקלפים מונחים בצורות שבהן קלפי השבלונה יצאו הכי הרבה ב־1,000 ההגרלות האחרונות. "פגעה X מ־Y" = בכמה מתוך 1,000 ההגרלות האחרונות שלושת הקלפים של השבלונה יצאו (בכל צורה). שבלונות 1–8 נבחרו לפי 1,000 ההגרלות 52925–53924. ב־1,000 ההגרלות שלפני כן הן פגעו ב־2.2%–3.6% מההגרלות, והממוצע לכל השבלונות מהסוג הזה הוא 3.0%. שבלונות 9–10 פגעו ב־1,000 ההגרלות שלפני כן ב־2.8% וב־2.3%.</p>
+  <p class="tplNote">שבלונות 1–8: לוקחות קלף אחד מכל אחת מ־3 הגרלות, מתוך 4 ההגרלות האחרונות (יש הגרלות שהן מדלגות עליהן). שבלונות 9–12 הן 2 השבלונות של איציק, כל אחת מ־2 נקודות ההתחלה האפשריות. הן לוקחות קלפים מ־2 ההגרלות האחרונות ומדלגות על קלף באמצע. <b>הירוקה</b>: מתחילה בהגרלה שלפני האחרונה, עולה לקלף משמאל בהגרלה האחרונה, וקופצת 2 ימינה (מעל קלף אחד). <b>הכתומה</b>: מתחילה בהגרלה שלפני האחרונה, קופצת 2 שמאלה באותה הגרלה, ועולה ישר להגרלה האחרונה. בהגרלה 53929 תפסו הירוקה והכתומה מיהלום. בשרטוט: שורה עליונה = ההגרלה האחרונה, ושורה תחתונה = 4 הגרלות אחורה. העמודות משמאל לימין: עלה, לב, יהלום, תלתן. נקודה ירוקה = הקלף הראשון.</p>
+  <p class="tplNote">הקלפים מונחים בצורות שבהן קלפי השבלונה יצאו הכי הרבה ב־1,000 ההגרלות האחרונות. "פגעה X מ־Y" = בכמה מתוך 1,000 ההגרלות האחרונות שלושת הקלפים של השבלונה יצאו (בכל צורה). שבלונות 1–8 נבחרו לפי 1,000 ההגרלות 52925–53924. ב־1,000 ההגרלות שלפני כן הן פגעו ב־2.2%–3.6% מההגרלות, והממוצע לכל השבלונות מהסוג הזה הוא 3.0%. </p>
   ${CR_LEGEND}${formMethodHtml({skip:0,d:null},"skp")}
   <p class="tplNote">אחרי כל הגרלה אפשר לראות ב"בדיקת טפסים" ← "שבלונות מדלגות" איך כל טופס יצא.</p>`;}
 document.getElementById("skpBtn").addEventListener("click",()=>{skpOpen=!skpOpen;renderSkp();if(skpOpen)document.getElementById("skpPanel").scrollIntoView({behavior:"smooth",block:"start"});});
