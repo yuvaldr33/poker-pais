@@ -311,8 +311,9 @@ table td.rnC,table th.rnH{padding:2px 2px!important;font-size:.68rem;font-weight
 .tkMini{margin:6px 0 12px}.tkMini td,.tkMini th{padding:4px 2px}.tkSrc{font-size:.7em;white-space:normal!important;line-height:1.3}
 .trCellTd{position:relative}.trCell{appearance:none;-webkit-appearance:none;border:1.5px dashed var(--line);border-radius:8px;background:var(--surface);color:var(--muted);font:inherit;font-size:1.1rem;width:2.2em;height:2.2em;text-align:center;text-align-last:center;cursor:pointer}.trCell.set{position:absolute;inset:0;width:100%;height:100%;opacity:0}
 .trMine td{background:var(--win)!important}
-.h5r{box-shadow:inset 0 0 0 4px #dc2626;background:rgba(220,38,38,.16)!important}.h5y{box-shadow:inset 0 0 0 4px #eab308;background:rgba(234,179,8,.2)!important}.h5g{box-shadow:inset 0 0 0 4px #16a34a;background:rgba(22,163,74,.18)!important}.h5rR>td{background:rgba(220,38,38,.16)!important;box-shadow:inset 0 3px 0 #dc2626,inset 0 -3px 0 #dc2626}.h5yR>td{background:rgba(234,179,8,.2)!important;box-shadow:inset 0 3px 0 #eab308,inset 0 -3px 0 #eab308}.h5gR>td{background:rgba(22,163,74,.18)!important;box-shadow:inset 0 3px 0 #16a34a,inset 0 -3px 0 #16a34a}.h5n{display:block;font-size:.8rem;margin-top:2px}.h5c{display:inline-block;padding:0 8px;border-radius:6px}.h5c.h5r,.h5c.h5y,.h5c.h5g{box-shadow:inset 0 0 0 2px var(--h5,#888)}.h5c.h5r{--h5:#dc2626}.h5c.h5y{--h5:#eab308}.h5c.h5g{--h5:#16a34a}
+.h5r{box-shadow:inset 0 0 0 4px #dc2626;background:rgba(220,38,38,.16)!important}.h5y{box-shadow:inset 0 0 0 4px #eab308;background:rgba(234,179,8,.2)!important}.h5g{box-shadow:inset 0 0 0 4px #16a34a;background:rgba(22,163,74,.18)!important}.h5rR>td{background:rgba(220,38,38,.16)!important;box-shadow:inset 0 3px 0 #dc2626,inset 0 -3px 0 #dc2626}.h5yR>td{background:rgba(234,179,8,.2)!important;box-shadow:inset 0 3px 0 #eab308,inset 0 -3px 0 #eab308}.h5gR>td{background:rgba(22,163,74,.18)!important;box-shadow:inset 0 3px 0 #16a34a,inset 0 -3px 0 #16a34a}.h5n{display:block;margin:2px auto 0;padding:2px 6px;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit;font:inherit;font-weight:700;cursor:pointer;font-size:.8rem;margin-top:2px}.h5c{display:inline-block;padding:0 8px;border-radius:6px}.h5c.h5r,.h5c.h5y,.h5c.h5g{box-shadow:inset 0 0 0 2px var(--h5,#888)}.h5c.h5r{--h5:#dc2626}.h5c.h5y{--h5:#eab308}.h5c.h5g{--h5:#16a34a}
 .wnCubes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:8px 0}.wnCubes>div{border:1px solid var(--card-edge,#cbd5e1);border-radius:14px;padding:10px 6px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:2px}.wnCubes b{font-size:1.6rem;line-height:1.1}.wnCubes span{font-size:.75rem;opacity:.8}.wnCubes .wnW b{color:#0b7a45}.wnR{cursor:pointer}.wnR.on>td{background:var(--winH,#e2f3e7)}.wnC{text-align:center;font-size:.8rem}.wnC u{color:#0b7a45}.wnDr>td{padding:0;text-align:start;white-space:normal}.wnD{font-family:var(--body);font-size:.88rem;font-weight:400;text-align:start;padding:8px;line-height:1.6;max-width:100%;overflow:hidden}.wnD ul{margin:0 0 6px;padding-inline-start:20px}.wnD .fTbl{overflow-x:auto}
+.h5Row>td{text-align:start;white-space:normal;padding:6px!important;background:var(--bg)!important}.h5L{position:sticky;left:0;max-width:calc(100vw - 64px);font-family:var(--body);font-size:.82rem;display:flex;flex-direction:column;gap:4px}.h5Li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px;align-items:center;border-top:1px solid var(--card-edge,#cbd5e1);padding-top:4px}.h5off{opacity:.45;font-weight:700;padding:0 4px}
 .skG{text-align:center;vertical-align:middle}.skG b{display:block;font-size:.8rem;margin-bottom:2px}.fTbl td.skO{max-width:none;text-align:center;line-height:1.25}.skO b,.skO small{display:block}.skO small{font-weight:400}
 .skL{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;line-height:1.25}.skL small{font-size:.95em}
 .tkHbs{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 8px}.tkHb{padding:4px 10px;font-size:.85rem}.tkHb small{opacity:.75}
@@ -1348,7 +1349,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="4b21854321";
+const BUILD="5c28bb2806";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -2297,21 +2298,31 @@ function itzWinHtml(){const S=itzWinCalc(itzWinN),{VALS,tally,slots,co,avg,rank}
 let _h5=null;
 // how many times, in the last 500 draws, this template (start b) offered this exact suit order – and how many of those it hit in that order
 function h5Tpl(num,b,perm){const AA=allDraws(),ck=AA[0].n+":"+AA.length;if(!_h5||_h5.ck!==ck)_h5={ck,m:new Map()};const key=num+"|"+b+"|"+perm;if(_h5.m.has(key))return _h5.m.get(key);
-  const p=ITZ.find(x=>x[0]===num)[1],HL=tplHitList(num,p,b),run=perm==="SHD"||perm==="HDC";let off=0,hit=0;
+  const p=ITZ.find(x=>x[0]===num)[1],HL=tplHitList(num,p,b),run=perm==="SHD"||perm==="HDC";let off=0,hit=0;const hits=[];
   for(let t=0;t<500&&t+3<AA.length;t++){if(AA[t+1].n!==AA[t].n-1||AA[t+2].n!==AA[t].n-2)continue;const sk=t+1,cnt=new Map();let me=null;
     for(const h of HL){if(h.i===t)me=h;if(h.i<sk)continue;if(h.i>=sk+5000)break;for(const o of h.opts)cnt.set(o,(cnt.get(o)||0)+1/h.opts.length);}
-    const offer=run?pickRun(cnt,b)[0]:(([...cnt.entries()].sort((x,y)=>y[1]-x[1])[0])||[""])[0];if(offer!==perm)continue;off++;if(me&&me.opts.includes(perm))hit++;}
-  const r={off,hit};_h5.m.set(key,r);return r;}
-const H5_LEG=`<div class="crLeg h5Leg"><b>צבע השבלונה = כמה פעמים הסדר הזה פגע ב־500 ההגרלות האחרונות.</b> סדר = באילו צורות התבנית מניחה את הקלפים שלה (למשל לב · יהלום · תלתן), לא משנה אילו קלפים היו אז. בכל הגרלה בדקתי מה התבנית הציעה, ואם היא הציעה את הסדר הזה – האם הקלפים יצאו בדיוק בצורות האלה. <span class="h5c h5r">אדום</span> פגעה פעם אחת · <span class="h5c h5y">צהוב</span> 2–3 פעמים · <span class="h5c h5g">ירוק</span> 4 ומעלה · בלי צבע = לא פגעה. על השבלונה (ב"כל התבניות" – על כל השורה) כתוב: פגעה X מתוך Y הפעמים שהציעה את הסדר הזה.</div>`;
+    const offer=run?pickRun(cnt,b)[0]:(([...cnt.entries()].sort((x,y)=>y[1]-x[1])[0])||[""])[0];if(offer!==perm)continue;off++;if(me&&me.opts.includes(perm)){hit++;hits.push(t);}}
+  const r={off,hit,hits,perm};_h5.m.set(key,r);return r;}
+const H5_LEG=`<div class="crLeg h5Leg"><b>צבע השבלונה = כמה פעמים הסדר הזה פגע ב־500 ההגרלות האחרונות.</b> סדר = באילו צורות התבנית מניחה את הקלפים שלה (למשל לב · יהלום · תלתן), לא משנה אילו קלפים היו אז. בכל הגרלה בדקתי מה התבנית הציעה, ואם היא הציעה את הסדר הזה – האם הקלפים יצאו בדיוק בצורות האלה. <span class="h5c h5r">אדום</span> פגעה פעם אחת · <span class="h5c h5y">צהוב</span> 2–3 פעמים · <span class="h5c h5g">ירוק</span> 4 ומעלה · בלי צבע = לא פגעה. על השבלונה (ב"כל התבניות" – על כל השורה) כתוב: פגעה X מתוך Y הפעמים שהציעה את הסדר הזה. <b>לחיצה על "פגעה X"</b> פותחת את ההגרלות המדויקות שבהן היא פגעה.</div>`;
 function itzMark(root){if(!root||!HIST)return;const AA=allDraws(),L=[AA[0],AA[1]];let first=null;
   root.querySelectorAll("table").forEach(tb=>{let any=false;tb.querySelectorAll("tr[data-num]").forEach(tr=>{const cs=[...tr.querySelectorAll(":scope>td[data-cv]")];if(cs.length<3)return;any=true;
     const num=+tr.dataset.num,b=+tr.dataset.b;const it=ITZ.find(x=>x[0]===num);if(!it||isNaN(b))return;const cards=it[1].map(([r,c])=>L[r][SK[b+c]]);
     const t={};cs.forEach(c=>t[c.dataset.ck]=c.dataset.cv);const used=new Set();let perm="";for(const c of cards){const k=SK.find(k=>!used.has(k)&&t[k]===c);if(!k)return;used.add(k);perm+=k;}
     const {off,hit}=h5Tpl(num,b,perm);if(!hit)return;
-    const cls=hit>=4?"h5g":hit>=2?"h5y":"h5r",bd=`<b class="h5n">פגעה ${hit} מ־${off}</b>`,g=[...tr.cells].find(c=>c.querySelector("svg")&&c.rowSpan===1);
+    const cls=hit>=4?"h5g":hit>=2?"h5y":"h5r",bd=`<button type="button" class="h5n" data-k="${num}|${b}|${perm}">פגעה ${hit} מ־${off} ▾</button>`,g=[...tr.cells].find(c=>c.querySelector("svg")&&c.rowSpan===1);
     if(g){g.classList.add(cls);g.insertAdjacentHTML("beforeend",bd);}else{tr.classList.add(cls+"R");const e=[...tr.cells].find(c=>c.classList.contains("fe"))||cs[cs.length-1];e.insertAdjacentHTML("beforeend",bd);}});
     if(any&&!first)first=tb.closest(".fTbl,.itzT")||tb;});
   if(first)first.insertAdjacentHTML("beforebegin",H5_LEG);}
+// the exact draws behind a "פגעה X מ־Y" badge
+function h5List(key){const r=_h5&&_h5.m.get(key);if(!r)return "";const AA=allDraws(),perm=r.perm;
+  const chip=v=>`<span class="cc" style="background:${CARD_COL[v]};color:${CARD_INK[v]||"#fff"}">${v}</span>`;
+  const dt=d=>(d.date||dateOfN(d.n)||"").split("-").reverse().join("/");
+  return `<div class="h5L" dir="rtl"><b>${r.hit} פגיעות מתוך ${r.off} הפעמים שהציעה את הסדר הזה (500 הגרלות אחרונות):</b>${r.hits.map(t=>{const d=AA[t];return `<div class="h5Li"><span><b>${d.n}</b> · ${dt(d)}${d.time?` · ${d.time}`:""} · לפני ${t+1}</span><span dir="ltr">${SK.map(k=>perm.includes(k)?chip(d[k]):`<span class="h5off">${d[k]}</span>`).join(" ")}</span></div>`;}).join("")}</div>`;}
+document.addEventListener("click",e=>{const b=e.target.closest("button.h5n");if(!b)return;e.stopPropagation();const tr=b.closest("tr"),nx=tr&&tr.nextElementSibling;
+  if(nx&&nx.classList.contains("h5Row")&&nx.dataset.k===b.dataset.k){nx.remove();b.textContent=b.textContent.replace("▴","▾");return;}
+  if(nx&&nx.classList.contains("h5Row"))nx.remove();
+  const go=()=>{const row=document.createElement("tr");row.className="h5Row";row.dataset.k=b.dataset.k;row.innerHTML=`<td colspan="${[...tr.parentNode.rows[0].cells].reduce((a,c)=>a+c.colSpan,0)}">${h5List(b.dataset.k)}</td>`;tr.after(row);b.textContent=b.textContent.replace("▾","▴");};
+  if(!HDATES)loadHDates().then(go);else go();},true);
 var itzTab="top",itzOpenRow=null,itzRunBox="";
 function renderItz(){
   const el=document.getElementById("itzPanel"),bt=document.getElementById("itzBtn");if(!el)return;
