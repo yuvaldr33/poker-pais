@@ -2308,13 +2308,39 @@ document.addEventListener("click",e=>{const b=e.target.closest("button.h5n");if(
   if(nx&&nx.classList.contains("h5Row"))nx.remove();
   const go=()=>{const row=document.createElement("tr");row.className="h5Row";row.dataset.k=b.dataset.k;row.innerHTML=`<td colspan="${[...tr.parentNode.rows[0].cells].reduce((a,c)=>a+c.colSpan,0)}">${h5List(b.dataset.k)}</td>`;tr.after(row);b.textContent=b.textContent.replace("▾","▴");};
   if(!HDATES)loadHDates().then(go);else go();},true);
+// "תפסי זהב": the strongest templates of the last 500 draws (exact catches of their "כל התבניות" + "עם רווחים" tickets), and
+// every ticket that all Itzik buttons give for the next draw, merged; tickets of the top 5 templates, ordered by template strength, then by how many times they were given (up to 20)
+const GOLD_W=500,GOLD_TOP=5,GOLD_MAX=20;var _gW=null;
+function goldDraw(i){const AA=allDraws(),ck=AA[0].n+":"+AA.length;if(!_gW||_gW.ck!==ck)_gW={ck,a:[]};if(_gW.a[i])return _gW.a[i];
+  const d=AA[i],m={};if(i+3<AA.length){allTplRows(i+1,d).forEach(r=>{const x=m[r.num]=m[r.num]||[0,0];r.opts.forEach(o=>{if(o.win)x[0]++;if(o.hit)x[1]++;});});
+    allTplRows(i+1,d,true).forEach(r=>{const x=m[r.num]=m[r.num]||[0,0];r.opts.forEach(o=>{if(o.win)x[0]++;});});}
+  _gW.a[i]=m;return m;}
+function goldRank(skip){skip=skip||0;const S={};ITZ.forEach(([n])=>S[n]={num:n,w:0,h:0});const AA=allDraws();
+  for(let i=skip;i<skip+GOLD_W&&i+3<AA.length;i++){const m=goldDraw(i);for(const n in m){S[n].w+=m[n][0];S[n].h+=m[n][1];}}
+  return Object.values(S).sort((a,b)=>(b.w-a.w)||(b.h-a.h)||(a.num-b.num));}
+var _gT=new Map();
+function goldTix(skip){skip=skip||0;const AA=allDraws(),key=AA[skip].n+":"+AA.length;if(_gT.has(key))return _gT.get(key);
+  const R=goldRank(skip),pos={};R.forEach((x,i)=>pos[x.num]=i);const top=R.slice(0,GOLD_TOP).map(x=>x.num),M=new Map(),S=itzSept();
+  const add=(t,src,num,b,p)=>{const ks=SK.filter(k=>t[k]);if(ks.length!==3||!num)return;const k=SK.map(q=>t[q]||"-").join("");
+    if(!M.has(k))M.set(k,{t,n:0,nums:new Set(),src:new Set(),bp:{}});const m=M.get(k);m.n++;m.nums.add(num);m.src.add(src);if(!m.bp[num])m.bp[num]=[b||0,p];};
+  allTplRows(skip,null).forEach(r=>r.opts.forEach((o,b)=>add(o.ticket,"כל התבניות",r.num,b,r.p)));
+  allTplRows(skip,null,true).forEach(r=>r.opts.forEach((o,b)=>add(o.ticket,"עם רווחים",r.num,b,r.p)));
+  allTplRows(skip,null).forEach(r=>{const st=S.by[r.num];if(!st)return;const o=r.opts[st.b],t={};o.cards.forEach((c,j)=>{t[st.land[j]]=c;});add(t,"ספטמבר",r.num,st.b,r.p);});
+  try{statTix(skip).forEach(x=>add(x.t,"סטטיסטיקת שבלונות",x.num,x.b,x.p));}catch(e){}
+  try{mixTix(skip).forEach(x=>add(x.t,"זוגות בתוך תבניות",x.num,x.b,x.p));}catch(e){}
+  try{itzTickets(itzCalc(skip)).forEach(x=>add(x.t,"5 החזקות",x.v.rep.num,x.v.rep.b,x.v.rep.p));}catch(e){}
+  try{overTix(skip).forEach(x=>add(x.t,"שבלונה על שבלונה",x.num,x.b,x.p));}catch(e){}
+  const out=[...M.values()].map(m=>{const strong=[...m.nums].filter(n=>top.includes(n)).sort((a,b)=>pos[a]-pos[b]);return {...m,strong};}).filter(m=>m.strong.length)
+    .sort((a,b)=>(pos[a.strong[0]]-pos[b.strong[0]])||(b.n-a.n)||(b.strong.length-a.strong.length)).slice(0,GOLD_MAX)
+    .map((m,i)=>{const num=m.strong[0],[b,p]=m.bp[num];return {t:m.t,num,b,p,n:m.n,label:`<b>${i+1}</b> · ×${m.n}<br>תבניות ${[...m.nums].sort((a,b)=>pos[a]-pos[b]).map(n=>top.includes(n)?`<b>${n}</b>`:n).join(", ")}<br><small>${[...m.src].join(" · ")}</small>`};});
+  out.rank=R;out.top=top;if(_gT.size>300)_gT.clear();_gT.set(key,out);return out;}
 var itzTab="top",itzOpenRow=null,itzRunBox="";
 function renderItz(){
   const el=document.getElementById("itzPanel"),bt=document.getElementById("itzBtn");if(!el)return;
   bt.textContent="התבניות של איציק"+(itzOpen?" ▴":" ▾");bt.classList.toggle("on",itzOpen);bt.setAttribute("aria-pressed",itzOpen);el.hidden=!itzOpen;if(!itzOpen)return;
   if(!HIST){el.innerHTML='<p class="tplNote">טוען את כל ההיסטוריה…</p>';loadHist().then(()=>{if(itzOpen)renderItz();});return;}
   const R=itzCalc();const nx=R.last.n+1;
-  const tabs=[["ult","התפסים האולטימטיביים"],["top","5 החזקות"],["every","כל התבניות"],["stat","סטטיסטיקת שבלונות"],["mix","זוגות בתוך תבניות"],["over","שבלונה על שבלונה"],["free","עם רווחים"],["win","הקלף המנצח"],["sep","ספטמבר"],["pairs","הזוגות של איציק"],["pic","תמונה"],["track","מעקב"],["all","דירוג"],["cards","הקלפים שחזרו"]];
+  const tabs=[["gold","תפסי זהב"],["ult","התפסים האולטימטיביים"],["top","5 החזקות"],["every","כל התבניות"],["stat","סטטיסטיקת שבלונות"],["mix","זוגות בתוך תבניות"],["over","שבלונה על שבלונה"],["free","עם רווחים"],["win","הקלף המנצח"],["sep","ספטמבר"],["pairs","הזוגות של איציק"],["pic","תמונה"],["track","מעקב"],["all","דירוג"],["cards","הקלפים שחזרו"]];
   let body="";
   if(itzTab==="top"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>, לפי ההגרלות ${R.last.n} (שורה עליונה בשבלונה) ו־${R.prev.n} (שורה תחתונה). אחרי כל הגרלה המערכת בודקת מחדש את כל 12 השיטות: כמה כל אחת חזקה בכלל, וכמה היא פגעה בעבר עם הקלפים המדויקים שהיא מביאה עכשיו. 5 המתאימות ביותר להגרלה הזו נכנסות לכאן, גם אם בדירוג הכללי הן במקום 7 או 8. כל שורה היא טופס צ'אנס 3: הקלפים במקומות שבהם השבלונה נחתה הכי הרבה ב־5,000 ההגרלות האחרונות.</p>
@@ -2332,6 +2358,12 @@ function renderItz(){
     <div class="itzT"><table><tr><th>#</th><th>תבנית</th><th>פגעה<br>חוזרת כל</th><th>מקום 1 / 2 / 3</th><th>שבלונה</th></tr>${R.res.map((r,k)=>`<tr class="itzRow ${itzTierCls(r.num)}" data-num="${r.num}"><td class="n">${k+1}</td><td class="b">${r.star?"★ ":""}${r.num}</td><td><b>${r.any}</b><br>כל ${r.ev.toFixed(1)}</td><td class="itp">${r.vs.map((v,j)=>`<i>${j+1}.</i> ${v.star?"★ ":""}<b>${v.s}</b> · ${v.h} · כל ${v.e}`).join("<br>")}</td><td class="g">${itzSvg(r.p)}</td></tr>${itzOpenRow===r.num?`<tr><td colspan="5">${itzExample(r.num,r.p,r.vs[0].b,R.V.get(r.vs[0].key),R,`תבנית ${r.num} · מתחילה מ${r.vs[0].s} (המקום הכי חזק)`)}</td></tr>`:""}`).join("")}</table></div><p class="tplNote">לחץ על שורה כדי לראות איך התבנית נבנית על שתי ההגרלות האחרונות.</p>`;
   }else if(itzTab==="every"){
     body=`<p class="tplNote">להגרלה <b>${nx}</b>: כל 18 התבניות, עם 3 האפשרויות של כל אחת – 54 טפסים, לפי סדר התבניות. אחרי ההגרלה אפשר לראות איך כל אחד יצא ב"בדיקת טפסים".</p>${formItz({skip:0,d:null})}`;
+  }else if(itzTab==="gold"){
+    const G=goldTix(0),R=G.rank;
+    body=`<p class="tplNote">להגרלה <b>${nx}</b>. <b>החזקות:</b> 18 התבניות מדורגות לפי כמה טפסים שלהן (כל התבניות + עם רווחים) תפסו בדיוק ב־${GOLD_W} ההגרלות האחרונות. ${GOLD_TOP} הראשונות הן החזקות, והן מתעדכנות אחרי כל הגרלה. <b>הצירופים:</b> כל הטפסים שכל הכפתורים של איציק נותנים להגרלה הבאה (כל התבניות, עם רווחים, ספטמבר, סטטיסטיקת שבלונות, זוגות בתוך תבניות, 5 החזקות, שבלונה על שבלונה) נאספים למקום אחד. ×N = כמה פעמים הצירוף (אותם קלפים באותן צורות) ניתן בכל השבלונות. נכנסים רק צירופים שאחת התבניות החזקות נותנת, מהתבנית החזקה ביותר לחלשה, ובתוך כל תבנית לפי ×N – עד ${GOLD_MAX} טפסים.</p>
+    <div class="fTbl"><table><tr><th>מקום</th><th>תבנית</th><th>תפסו בדיוק<br>ב־${GOLD_W}</th><th>פגעו<br>(3 הקלפים)</th></tr>${R.map((x,i)=>`<tr class="${i<GOLD_TOP?"fWin":""}"><td>${i+1}${i<GOLD_TOP?" ★":""}</td><td class="fi ${itzTierCls(x.num)}">${itzSvg(ITZ.find(y=>y[0]===x.num)[1])}<b>${x.num}</b></td><td><b>${x.w}</b></td><td>${x.h}</td></tr>`).join("")}</table></div>
+    <p class="tplNote">★ = החזקות עכשיו: ${G.top.join(", ")}. תפסו בדיוק = טופס של התבנית שכל הקלפים שלו יצאו בדיוק בצורות. פגעו = שלושת הקלפים יצאו, בכל צורה.</p>
+    <h3>תפסי זהב להגרלה ${nx} (${G.length})</h3>${formItzSub({skip:0,n:nx,d:null},"gold")}`;
   }else if(itzTab==="ult"){
     body=formItzSub({skip:0,n:nx,d:null},"ult");
   }else if(itzTab==="win"){
@@ -2583,7 +2615,7 @@ function formItz(it){
 // what every other method offered for the draw after DRAWS[skip]: tickets as {suit:card}
 const FMETH=[["itz","התבניות של איציק"],["skz","שבלונות מדלגות"],["pairs","זוגות"],["myp","תבניות"],["tri","שלישיות"],["hot","שלישיות חמות"],["anc","עוגן + 2 שותפים"],["swp","חילופי מקומות"]];
 var formsMethod="itz",_fmCache=new Map(),formsItzSub="top";
-const FITZ=[["ult","התפסים האולטימטיביים"],["win","הקלף המנצח"],["top","5 החזקות"],["every","כל התבניות"],["stat","סטטיסטיקת שבלונות"],["mix","זוגות בתוך תבניות"],["over","שבלונה על שבלונה"],["free","עם רווחים"],["sep","ספטמבר"]];
+const FITZ=[["gold","תפסי זהב"],["ult","התפסים האולטימטיביים"],["win","הקלף המנצח"],["top","5 החזקות"],["every","כל התבניות"],["stat","סטטיסטיקת שבלונות"],["mix","זוגות בתוך תבניות"],["over","שבלונה על שבלונה"],["free","עם רווחים"],["sep","ספטמבר"]];
 // "שבלונה על שבלונה": the 15 strongest Chance 3 tickets (5 החזקות) laid on the 15 strongest Chance 2 tickets (זוגות), place on place.
 // A Chance 2 ticket + one card of a Chance 3 ticket on a free suit, or 2 cards of a Chance 3 ticket + one card of a Chance 2 ticket – the cards keep their suits.
 // Ranked by how many overlays give the same ticket; the 30 strongest are shown.
@@ -2643,6 +2675,7 @@ function formItzSub(it,sub){
   if(sub==="free"){freeTix(it.skip).forEach(x=>items.push(x));}
   else if(sub==="tk"){tkItems().forEach(x=>items.push(x));}
   else if(sub==="ult"){ultTix(it.skip).forEach(x=>items.push(x));}
+  else if(sub==="gold"){goldTix(it.skip).forEach(x=>items.push(x));}
   else if(sub==="win"){winTix(it.skip).forEach(x=>items.push(x));}
   else if(sub==="stat"){statTix(it.skip).forEach(x=>items.push(x));}
   else if(sub==="mix"){mixTix(it.skip).forEach(x=>items.push(x));}
@@ -2656,7 +2689,7 @@ function formItzSub(it,sub){
     return `<tr class="${win?"fWin":""}" data-num="${x.num}" data-b="${x.b}"><td class="fi ${itzTierCls(x.num)}">${itzSvg(x.p)}<small class="fSp">${x.label}</small></td>${SK.map(k=>{const v=x.t[k],red=sn(k)[3];return cardTd(v,k,it.skip,{hit:d&&d[k]===v,rank:crCls(x.num,x.b,x.t,k,it.skip),ring:x.ring&&x.ring.includes(k)});}).join("")}${d?`<td class="fm">${hit?"✓":""}</td>`:""}</tr>`;}).join("");
   const AA=allDraws(),A=it.skip?AA.slice(it.skip):AA;
   return `<div class="fSum">${d?`${nh?`<b class="fOk">${nh} טפסים פגעו ✓ (כל הקלפים יצאו)</b>`:"אף טופס לא פגע בהגרלה הזו."}${nw?` · <b class="fOk">${nw} תפסו בדיוק בצורות</b>`:""} · עיגול = קלף נכון בצורה הנכונה.`:`להגרלה הבאה, לפי ההגרלות ${A[0].n} ו־${A[1].n}.`}</div>
-  <p class="tplNote">${sub==="tk"?`${items.length} טפסים – כל הטפסים של התבניות החזקות (כל התבניות ועם רווחים), כל טופס פעם אחת.`:sub==="free"?`עם רווחים – בלי כפילויות: כל טופס מונח בצורה שבה שלושת הקלפים נחתו הכי הרבה ב־5,000 ההגרלות, גם אם יש רווח באמצע. טופס שכמה תבניות נותנות בדיוק באותם מקומות מופיע פעם אחת (×N = כמה תבניות נתנו אותו). ${items.length} טפסים במקום 54.`:sub==="win"?`הקלף המנצח: הצירופים של "עם רווחים" עם הקלף המנצח במקום הריק (בעיגול) – טופס של 4 קלפים (צ'אנס 4). ✓ = 4 הקלפים יצאו; שורה ירוקה = 4 הקלפים בדיוק במקומות. ★ = אקסטרה חזק.`:sub==="ult"?`התפסים האולטימטיביים: סריקה של כל הטפסים של כל הכפתורים (5 החזקות, כל התבניות, עם רווחים, ספטמבר, סטטיסטיקת שבלונות, זוגות בתוך תבניות, שבלונה על שבלונה). כל שלישייה בסדר שלה (למשל J K K) שהכפתורים נותנים יחד ${ULT_MIN} פעמים או יותר נחשבת חזקה, ומופיעה בשתי האפשרויות: מתחילה מעלה (א) ומתחילה מלב (ב). ×N = כמה פעמים כל הכפתורים נתנו אותה; מתחת – מאילו כפתורים ותבניות. ${items.length} טפסים.`:sub==="over"?`שבלונה על שבלונה: 15 טפסי צ'אנס 3 הכי חזקים (5 החזקות) מונחים על 15 טפסי צ'אנס 2 הכי חזקים (זוגות), מקום על מקום – זוג מצ'אנס 2 + קלף אחד מצ'אנס 3 במקום פנוי, או 2 קלפים מצ'אנס 3 + קלף אחד מצ'אנס 2. כל קלף נשאר בצורה שלו. ×N = כמה הנחות נותנות את אותו טופס; מוצגים 30 החזקים. מתחת: מכמה טפסים בכל טבלה הוא נבנה.`:sub==="mix"?`זוגות בתוך תבניות: כל טופס של "זוגות" (2 קלפים בצורות שלהם) מונח על כל תבנית שיש בה את שני הקלפים, והקלף השלישי של התבנית משלים לשלישייה – בכל אחת משתי הצורות שנשארו. ×N = כמה אפשרויות של תבניות נותנות את אותו טופס; המסודר מהחזק לחלש. ${items.length} טפסים.`:sub==="stat"?`סטטיסטיקת שבלונות: שלישיות קלפים שלפחות 2 תבניות נותנות. כל טופס שלהן מופיע פעם אחת בלבד, ועוד אותו סדר בהזזה של צורה אחת (מעלה-לב-יהלום ללב-יהלום-תלתן או להפך) – כדי לתפוס גם אם הקלפים זזו מקום. ${items.length} טפסים.`:sub==="top"?`15 הטפסים ש"5 החזקות" הציעה להגרלה הזו (★ = אחת מ־5 הנבחרות).`:`18 הטפסים של "ספטמבר": לכל תבנית נקודת ההתחלה שפגעה הכי הרבה בספטמבר, בצורה שבה נחתה שם.`} ✓ = כל הקלפים של הטופס יצאו (בכל צורה). שורה ירוקה = כל הקלפים יצאו בדיוק בצורות של הטופס.</p>
+  <p class="tplNote">${sub==="gold"?`תפסי זהב: ${items.length} צירופים מכל הכפתורים של איציק, רק של ${GOLD_TOP} התבניות החזקות ב־${GOLD_W} ההגרלות שלפני ההגרלה (${(goldTix(it.skip).top||[]).join(", ")}), מהחזקה לחלשה. ×N = כמה פעמים הצירוף ניתן בכל השבלונות.`:sub==="tk"?`${items.length} טפסים – כל הטפסים של התבניות החזקות (כל התבניות ועם רווחים), כל טופס פעם אחת.`:sub==="free"?`עם רווחים – בלי כפילויות: כל טופס מונח בצורה שבה שלושת הקלפים נחתו הכי הרבה ב־5,000 ההגרלות, גם אם יש רווח באמצע. טופס שכמה תבניות נותנות בדיוק באותם מקומות מופיע פעם אחת (×N = כמה תבניות נתנו אותו). ${items.length} טפסים במקום 54.`:sub==="win"?`הקלף המנצח: הצירופים של "עם רווחים" עם הקלף המנצח במקום הריק (בעיגול) – טופס של 4 קלפים (צ'אנס 4). ✓ = 4 הקלפים יצאו; שורה ירוקה = 4 הקלפים בדיוק במקומות. ★ = אקסטרה חזק.`:sub==="ult"?`התפסים האולטימטיביים: סריקה של כל הטפסים של כל הכפתורים (5 החזקות, כל התבניות, עם רווחים, ספטמבר, סטטיסטיקת שבלונות, זוגות בתוך תבניות, שבלונה על שבלונה). כל שלישייה בסדר שלה (למשל J K K) שהכפתורים נותנים יחד ${ULT_MIN} פעמים או יותר נחשבת חזקה, ומופיעה בשתי האפשרויות: מתחילה מעלה (א) ומתחילה מלב (ב). ×N = כמה פעמים כל הכפתורים נתנו אותה; מתחת – מאילו כפתורים ותבניות. ${items.length} טפסים.`:sub==="over"?`שבלונה על שבלונה: 15 טפסי צ'אנס 3 הכי חזקים (5 החזקות) מונחים על 15 טפסי צ'אנס 2 הכי חזקים (זוגות), מקום על מקום – זוג מצ'אנס 2 + קלף אחד מצ'אנס 3 במקום פנוי, או 2 קלפים מצ'אנס 3 + קלף אחד מצ'אנס 2. כל קלף נשאר בצורה שלו. ×N = כמה הנחות נותנות את אותו טופס; מוצגים 30 החזקים. מתחת: מכמה טפסים בכל טבלה הוא נבנה.`:sub==="mix"?`זוגות בתוך תבניות: כל טופס של "זוגות" (2 קלפים בצורות שלהם) מונח על כל תבנית שיש בה את שני הקלפים, והקלף השלישי של התבנית משלים לשלישייה – בכל אחת משתי הצורות שנשארו. ×N = כמה אפשרויות של תבניות נותנות את אותו טופס; המסודר מהחזק לחלש. ${items.length} טפסים.`:sub==="stat"?`סטטיסטיקת שבלונות: שלישיות קלפים שלפחות 2 תבניות נותנות. כל טופס שלהן מופיע פעם אחת בלבד, ועוד אותו סדר בהזזה של צורה אחת (מעלה-לב-יהלום ללב-יהלום-תלתן או להפך) – כדי לתפוס גם אם הקלפים זזו מקום. ${items.length} טפסים.`:sub==="top"?`15 הטפסים ש"5 החזקות" הציעה להגרלה הזו (★ = אחת מ־5 הנבחרות).`:`18 הטפסים של "ספטמבר": לכל תבנית נקודת ההתחלה שפגעה הכי הרבה בספטמבר, בצורה שבה נחתה שם.`} ✓ = כל הקלפים של הטופס יצאו (בכל צורה). שורה ירוקה = כל הקלפים יצאו בדיוק בצורות של הטופס.</p>
   ${sub==="over"?ovSrcHtml(items,d,head.replace("<th>טופס</th>","<th>#</th>"),res,it.skip):""}
   ${sub==="over"?`<h3 class="ovH">טבלה 3 · שבלונה על שבלונה</h3><p class="tplNote">הקלף בעיגול כתום מקווקו = הקלף המשלים – זה שהגיע מהשקף השני.</p>`:""}
   ${CR_LEGEND}<div class="fTbl"><table dir="ltr">${head}${res}${body}</table></div>`;}
@@ -2704,7 +2737,7 @@ function formMethodHtml(it,m){
 // which Itzik buttons caught this draw exactly. The light buttons are always checked; the heavy ones (5 החזקות, שבלונה על שבלונה,
 // האולטימטיביים, הקלף המנצח) for the newest 50 draws, and further back only if they were already worked out
 function itzSubsWon(it){const d=it.d,out=[];if(!d)return out;const win=t=>{const ks=SK.filter(k=>t[k]);return ks.length>=3&&ks.every(k=>d[k]===t[k]);};
-  for(const [sub,name] of FITZ){const heavy=["top","over","ult","win"].includes(sub);let won=false;
+  for(const [sub,name] of FITZ){const heavy=["top","over","ult","win","gold"].includes(sub);let won=false;
     if(heavy&&it.skip>51){const key=fSumKey(it)+"|itz|"+sub;if(_fsLS[key])won=_fsLS[key][1]>0;else continue;}
     else won=fScore(it,"itz",sub).cau>0;
     if(won)out.push(name);}
@@ -2719,6 +2752,7 @@ function fTix(it,m,sub){
   if(sub==="top")return itzTickets(itzCalc(it.skip)).map(x=>x.t);
   if(sub==="stat")return statTix(it.skip).map(x=>x.t);
   if(sub==="ult")return ultTix(it.skip).map(x=>x.t);
+  if(sub==="gold")return goldTix(it.skip).map(x=>x.t);
   if(sub==="win")return winTix(it.skip).map(x=>x.t);
   if(sub==="mix")return mixTix(it.skip).map(x=>x.t);
   if(sub==="over")return overTix(it.skip).map(x=>x.t);
