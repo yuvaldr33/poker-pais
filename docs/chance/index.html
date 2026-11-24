@@ -1349,7 +1349,7 @@ async function refreshDraws(){
   }catch(e){}
 }
 // ---- page version: reload once when a newer version of the site is published ----
-const BUILD="58bddf3a76";
+const BUILD="b29dda6ce0";
 async function checkVersion(){
   try{
     const r=await fetch("version.json?t="+Date.now(),{cache:"no-store"});if(!r.ok)return;
@@ -3136,6 +3136,7 @@ function numberTables(root){(root||document).querySelectorAll("table").forEach(t
     ["🃏 טבלת קלפים",()=>{openCards(true);return null;}],
     ["🎯 מעקב תבניות",()=>{openTk(true);return null;}],
     ["🏆 בדיקת זכיות",()=>{openWn(true);return null;}],
+    ["🥇 תפסי זהב",()=>{itzOpen=true;itzTab="gold";renderItz();return document.getElementById("itzBtn");}],
     ["📊 סטטיסטיקה אישית",()=>{openMy(true);return null;}],
     ["ההגרלה הבאה וטיימר",()=>document.querySelector("section.next")],
     ["ניתוח לפני ההגרלה (זוגות)",()=>document.querySelector("section.pre")],
